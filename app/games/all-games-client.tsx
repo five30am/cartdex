@@ -1,0 +1,215 @@
+"use client";
+
+import { useState, useMemo } from "react";
+import { SearchBar } from "@/components/search-bar";
+import { GameCard } from "@/components/game-card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface Game {
+  id: number;
+  title: string;
+  year?: string | null;
+  genre?: string | null;
+  box_art_path?: string | null;
+  verified: boolean;
+  created_at: string;
+  system_id: number;
+  system_name: string;
+  system_slug: string;
+}
+
+interface SystemOption {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+interface Props {
+  games: Game[];
+  systems: SystemOption[];
+  genres: string[];
+}
+
+type SortOption = "title" | "year" | "year_desc" | "system" | "recent";
+
+const PAGE_SIZE = 60;
+
+export function AllGamesClient({ games, systems, genres }: Props) {
+  const [search, setSearch] = useState("");
+  const [systemFilter, setSystemFilter] = useState("all");
+  const [genreFilter, setGenreFilter] = useState("all");
+  const [sort, setSort] = useState<SortOption>("title");
+  const [page, setPage] = useState(1);
+
+  const filtered = useMemo(() => {
+    let result = [...games];
+
+    if (search) {
+      const lower = search.toLowerCase();
+      result = result.filter((g) => g.title.toLowerCase().includes(lower));
+    }
+    if (systemFilter !== "all") {
+      result = result.filter((g) => g.system_slug === systemFilter);
+    }
+    if (genreFilter !== "all") {
+      result = result.filter((g) => g.genre === genreFilter);
+    }
+
+    result.sort((a, b) => {
+      switch (sort) {
+        case "year":
+          if (a.year && b.year) return a.year.localeCompare(b.year);
+          if (a.year) return -1;
+          if (b.year) return 1;
+          return a.title.localeCompare(b.title);
+        case "year_desc":
+          if (a.year && b.year) return b.year.localeCompare(a.year);
+          if (b.year) return -1;
+          if (a.year) return 1;
+          return a.title.localeCompare(b.title);
+        case "system":
+          return a.system_name.localeCompare(b.system_name) || a.title.localeCompare(b.title);
+        case "recent":
+          return b.created_at.localeCompare(a.created_at);
+        case "title":
+        default:
+          return a.title.localeCompare(b.title);
+      }
+    });
+
+    return result;
+  }, [games, search, systemFilter, genreFilter, sort]);
+
+  // Reset to page 1 when filters change
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const clampedPage = Math.min(page, Math.max(1, totalPages));
+  const paginated = filtered.slice((clampedPage - 1) * PAGE_SIZE, clampedPage * PAGE_SIZE);
+
+  function handleFilterChange(setter: (v: string) => void) {
+    return (v: string | null) => {
+      setter(v ?? "all");
+      setPage(1);
+    };
+  }
+
+  function handleSearch(v: string) {
+    setSearch(v);
+    setPage(1);
+  }
+
+  return (
+    <div>
+      {/* Controls */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-6 flex-wrap">
+        <SearchBar
+          value={search}
+          onChange={handleSearch}
+          placeholder="Search games..."
+          className="flex-1 min-w-[200px] max-w-sm"
+        />
+        <Select value={systemFilter} onValueChange={handleFilterChange(setSystemFilter)}>
+          <SelectTrigger className="w-[160px] bg-neutral-900 border-neutral-700 text-neutral-200">
+            <SelectValue placeholder="All systems" />
+          </SelectTrigger>
+          <SelectContent className="bg-neutral-900 border-neutral-700">
+            <SelectItem value="all" className="text-neutral-200 focus:bg-neutral-800">All systems</SelectItem>
+            {systems.map((sys) => (
+              <SelectItem key={sys.slug} value={sys.slug} className="text-neutral-200 focus:bg-neutral-800">
+                {sys.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {genres.length > 0 && (
+          <Select value={genreFilter} onValueChange={handleFilterChange(setGenreFilter)}>
+            <SelectTrigger className="w-[140px] bg-neutral-900 border-neutral-700 text-neutral-200">
+              <SelectValue placeholder="All genres" />
+            </SelectTrigger>
+            <SelectContent className="bg-neutral-900 border-neutral-700">
+              <SelectItem value="all" className="text-neutral-200 focus:bg-neutral-800">All genres</SelectItem>
+              {genres.map((g) => (
+                <SelectItem key={g} value={g} className="text-neutral-200 focus:bg-neutral-800">
+                  {g}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
+        <Select value={sort} onValueChange={(v) => setSort((v ?? "title") as SortOption)}>
+          <SelectTrigger className="w-[160px] bg-neutral-900 border-neutral-700 text-neutral-200">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-neutral-900 border-neutral-700">
+            <SelectItem value="title" className="text-neutral-200 focus:bg-neutral-800">Title (A–Z)</SelectItem>
+            <SelectItem value="year" className="text-neutral-200 focus:bg-neutral-800">Year (oldest)</SelectItem>
+            <SelectItem value="year_desc" className="text-neutral-200 focus:bg-neutral-800">Year (newest)</SelectItem>
+            <SelectItem value="system" className="text-neutral-200 focus:bg-neutral-800">System</SelectItem>
+            <SelectItem value="recent" className="text-neutral-200 focus:bg-neutral-800">Recently added</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Result count */}
+      {(search || systemFilter !== "all" || genreFilter !== "all") && (
+        <p className="text-sm text-neutral-500 mb-4">
+          {filtered.length.toLocaleString()} result{filtered.length !== 1 ? "s" : ""}
+          {search && <> for &ldquo;{search}&rdquo;</>}
+        </p>
+      )}
+
+      {/* Grid */}
+      {paginated.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="text-5xl mb-4 opacity-30">🎮</div>
+          <p className="text-neutral-500 text-sm">No games match your filters</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          {paginated.map((game) => (
+            <GameCard
+              key={game.id}
+              id={game.id}
+              title={game.title}
+              year={game.year}
+              box_art_path={game.box_art_path}
+              system_slug={game.system_slug}
+              system_name={game.system_name}
+              showSystem
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-10">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={clampedPage <= 1}
+            className="px-3 py-1.5 text-sm rounded-md bg-neutral-800 text-neutral-300 hover:bg-neutral-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            Previous
+          </button>
+          <span className="text-sm text-neutral-500 px-2">
+            Page {clampedPage} of {totalPages}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={clampedPage >= totalPages}
+            className="px-3 py-1.5 text-sm rounded-md bg-neutral-800 text-neutral-300 hover:bg-neutral-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            Next
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
