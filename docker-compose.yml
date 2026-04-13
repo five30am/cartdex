@@ -1,9 +1,6 @@
 services:
   romvault:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: romvault:local
+    image: ghcr.io/five30am/romvault:latest
     container_name: romvault
     restart: unless-stopped
     ports:
