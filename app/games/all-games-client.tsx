@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { SearchBar } from "@/components/search-bar";
 import { GameCard } from "@/components/game-card";
+import { SelectableGameGrid } from "@/components/selectable-game-grid";
 import {
   Select,
   SelectContent,
@@ -10,6 +11,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { CheckSquare, FolderPlus, X } from "lucide-react";
+import { AddToCollectionModal } from "@/components/add-to-collection-modal";
+import { toast } from "sonner";
+import Link from "next/link";
 
 interface Game {
   id: number;
@@ -46,6 +52,9 @@ export function AllGamesClient({ games, systems, genres }: Props) {
   const [genreFilter, setGenreFilter] = useState("all");
   const [sort, setSort] = useState<SortOption>("title");
   const [page, setPage] = useState(1);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [showCollectionModal, setShowCollectionModal] = useState(false);
 
   const filtered = useMemo(() => {
     let result = [...games];
@@ -103,6 +112,40 @@ export function AllGamesClient({ games, systems, genres }: Props) {
     setPage(1);
   }
 
+  function toggleSelect(id: number) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function selectAll() {
+    setSelected(new Set(filtered.map((g) => g.id)));
+  }
+
+  function deselectAll() {
+    setSelected(new Set());
+  }
+
+  function exitSelectMode() {
+    setSelectMode(false);
+    setSelected(new Set());
+  }
+
+  function handleCollectionSuccess(collectionId: number, collectionName: string) {
+    toast.success(
+      <span>
+        Added {selected.size} {selected.size === 1 ? "game" : "games"} to{" "}
+        <Link href={`/collections/${collectionId}`} className="underline">
+          {collectionName}
+        </Link>
+      </span>
+    );
+    exitSelectMode();
+  }
+
   return (
     <div>
       {/* Controls */}
@@ -155,6 +198,41 @@ export function AllGamesClient({ games, systems, genres }: Props) {
             <SelectItem value="recent" className="text-neutral-200 focus:bg-neutral-800">Recently added</SelectItem>
           </SelectContent>
         </Select>
+
+        {!selectMode ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSelectMode(true)}
+            className="border-neutral-700 text-neutral-400 hover:text-neutral-200 hover:border-neutral-500"
+          >
+            <CheckSquare className="h-4 w-4 mr-1.5" />
+            Select
+          </Button>
+        ) : (
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm text-neutral-400">{selected.size} selected</span>
+            <button onClick={selectAll} className="text-xs text-indigo-400 hover:text-indigo-300">
+              Select all ({filtered.length})
+            </button>
+            <button onClick={deselectAll} className="text-xs text-neutral-500 hover:text-neutral-300">
+              Deselect all
+            </button>
+            {selected.size > 0 && (
+              <Button
+                size="sm"
+                onClick={() => setShowCollectionModal(true)}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white h-7 text-xs"
+              >
+                <FolderPlus className="h-3.5 w-3.5 mr-1.5" />
+                Add to Collection
+              </Button>
+            )}
+            <button onClick={exitSelectMode} className="text-neutral-500 hover:text-neutral-300">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Result count */}
@@ -166,7 +244,14 @@ export function AllGamesClient({ games, systems, genres }: Props) {
       )}
 
       {/* Grid */}
-      {paginated.length === 0 ? (
+      {selectMode ? (
+        <SelectableGameGrid
+          games={paginated}
+          selected={selected}
+          onToggle={toggleSelect}
+          emptyMessage="No games match your filters"
+        />
+      ) : paginated.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="text-5xl mb-4 opacity-30">🎮</div>
           <p className="text-neutral-500 text-sm">No games match your filters</p>
@@ -189,7 +274,7 @@ export function AllGamesClient({ games, systems, genres }: Props) {
       )}
 
       {/* Pagination */}
-      {totalPages > 1 && (
+      {!selectMode && totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 mt-10">
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -210,6 +295,13 @@ export function AllGamesClient({ games, systems, genres }: Props) {
           </button>
         </div>
       )}
+
+      <AddToCollectionModal
+        open={showCollectionModal}
+        onClose={() => setShowCollectionModal(false)}
+        gameIds={Array.from(selected)}
+        onSuccess={handleCollectionSuccess}
+      />
     </div>
   );
 }

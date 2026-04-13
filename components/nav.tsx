@@ -15,6 +15,7 @@ export function Nav() {
             <NavLink href="/">Systems</NavLink>
             <NavLink href="/series">Series</NavLink>
             <NavLink href="/games">All Games</NavLink>
+            <NavLink href="/collections">Collections</NavLink>
           </nav>
         </div>
         <ActionButtons />

@@ -7,6 +7,7 @@ import Image from "next/image";
 import { ChevronLeft, CheckCircle2, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { SystemBadge } from "@/components/system-badge";
+import { AddToCollectionButton } from "./add-to-collection-button";
 
 export const dynamic = "force-dynamic";
 
@@ -157,16 +158,9 @@ export default async function GameDetailPage({ params }: Props) {
               </div>
             </div>
 
-            {/* Add to Collection — placeholder for Phase 4 */}
+            {/* Add to Collection */}
             <div className="mt-6">
-              <button
-                disabled
-                className="px-4 py-2 bg-neutral-800 text-neutral-500 rounded-lg text-sm cursor-not-allowed border border-neutral-700"
-                title="Coming in Phase 4"
-              >
-                Add to Collection
-              </button>
-              <p className="text-xs text-neutral-600 mt-1">Collection management coming soon</p>
+              <AddToCollectionButton gameId={gameId} />
             </div>
           </div>
         </div>
