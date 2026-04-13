@@ -10,14 +10,16 @@ import { systems, games } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 
 export interface IngestResult {
-  scanned: number;
-  added: number;
+  discovered: number;
+  newFiles: number;
+  hashed: number;
   skipped: number;
   errors: string[];
 }
 
 export interface JobStatus {
   state: "idle" | "running" | "done" | "error";
+  phase?: "discovering" | "hashing";
   progress?: { current: number; total: number };
   result?: IngestResult;
   error?: string;
@@ -35,7 +37,6 @@ export function getScanStatus(): JobStatus {
 export function startScanInBackground(romRoot: string): void {
   if (scanJob.state === "running") return;
   scanJob = { state: "running", startedAt: new Date().toISOString() };
-  // Fire and forget — runs outside the request lifecycle
   ingestDirectory(romRoot)
     .then((result) => {
       scanJob = { state: "done", result, startedAt: scanJob.startedAt, finishedAt: new Date().toISOString() };
@@ -53,9 +54,7 @@ function slugify(str: string): string {
 }
 
 function titleFromFilename(filename: string): string {
-  // Strip extension(s) — handles multi-part like .bin.gz
   const name = filename.replace(/(\.[a-z0-9]+)+$/i, "");
-  // Replace underscores and dots with spaces, trim
   return name.replace(/[_\.]+/g, " ").trim();
 }
 
@@ -89,7 +88,6 @@ async function computeHashes(filePath: string): Promise<{
 
 function walkDirectory(dir: string): string[] {
   const results: string[] = [];
-
   if (!fs.existsSync(dir)) return results;
 
   const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -101,38 +99,39 @@ function walkDirectory(dir: string): string[] {
       results.push(fullPath);
     }
   }
-
   return results;
 }
 
 export async function ingestDirectory(romRoot: string): Promise<IngestResult> {
-  const result: IngestResult = { scanned: 0, added: 0, skipped: 0, errors: [] };
+  const result: IngestResult = { discovered: 0, newFiles: 0, hashed: 0, skipped: 0, errors: [] };
 
-  // Load all systems and build an extension → system map
+  // Load all systems and build extension → system map
   const allSystems = db.select().from(systems).all();
-
   type SystemRow = (typeof allSystems)[number];
 
   const extToSystem = new Map<string, SystemRow>();
   for (const system of allSystems) {
     const exts = system.extensions as string[];
     for (const ext of exts) {
-      // Only set if not already mapped (avoids .zip collision — first-come wins)
-      // .zip files will be assigned to whichever system's extension list has it first
       if (!extToSystem.has(ext)) {
         extToSystem.set(ext, system);
       }
     }
   }
-
-  // Build a set of known extensions for quick lookup
   const knownExtensions = new Set(extToSystem.keys());
 
-  const files = walkDirectory(romRoot);
-  result.scanned = files.length;
+  // --- Phase 1: Discover ---
+  // Fast filesystem walk. Insert new file paths with hashed=false. No file reads.
+  scanJob.phase = "discovering";
 
-  // Update global progress
+  const files = walkDirectory(romRoot);
+  result.discovered = files.length;
   scanJob.progress = { current: 0, total: files.length };
+
+  // Build a set of known file paths from the DB for fast lookup
+  const knownPaths = new Set(
+    db.select({ file_path: games.file_path }).from(games).all().map((r) => r.file_path)
+  );
 
   for (let i = 0; i < files.length; i++) {
     const filePath = files[i];
@@ -150,14 +149,8 @@ export async function ingestDirectory(romRoot: string): Promise<IngestResult> {
       continue;
     }
 
-    // Skip if this exact file path is already in the DB
-    const existing = db
-      .select({ id: games.id })
-      .from(games)
-      .where(and(eq(games.file_path, filePath), eq(games.system_id, system.id)))
-      .get();
-
-    if (existing) {
+    // Already tracked — skip entirely
+    if (knownPaths.has(filePath)) {
       result.skipped++;
       continue;
     }
@@ -168,8 +161,6 @@ export async function ingestDirectory(romRoot: string): Promise<IngestResult> {
       const title = titleFromFilename(filename);
       const slug = slugify(title);
 
-      const hashes = await computeHashes(filePath);
-
       db.insert(games)
         .values({
           system_id: system.id,
@@ -177,16 +168,49 @@ export async function ingestDirectory(romRoot: string): Promise<IngestResult> {
           slug,
           file_path: filePath,
           file_size: stat.size,
-          hash_crc32: hashes.crc32,
-          hash_md5: hashes.md5,
-          hash_sha1: hashes.sha1,
+          hashed: false,
           verified: false,
         })
         .run();
 
-      result.added++;
+      result.newFiles++;
     } catch (err) {
       result.errors.push(`${filePath}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  // --- Phase 2: Hash ---
+  // Only process games where hashed = false
+  scanJob.phase = "hashing";
+
+  const unhashed = db
+    .select({ id: games.id, file_path: games.file_path })
+    .from(games)
+    .where(eq(games.hashed, false))
+    .all();
+
+  scanJob.progress = { current: 0, total: unhashed.length };
+
+  for (let i = 0; i < unhashed.length; i++) {
+    const game = unhashed[i];
+    scanJob.progress = { current: i + 1, total: unhashed.length };
+
+    try {
+      const hashes = await computeHashes(game.file_path);
+
+      db.update(games)
+        .set({
+          hash_crc32: hashes.crc32,
+          hash_md5: hashes.md5,
+          hash_sha1: hashes.sha1,
+          hashed: true,
+        })
+        .where(eq(games.id, game.id))
+        .run();
+
+      result.hashed++;
+    } catch (err) {
+      result.errors.push(`${game.file_path}: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 

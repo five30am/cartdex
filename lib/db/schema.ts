@@ -34,6 +34,7 @@ export const games = sqliteTable("games", {
   hash_sha1: text("hash_sha1"),
   file_path: text("file_path").notNull(),
   file_size: integer("file_size"),
+  hashed: integer("hashed", { mode: "boolean" }).notNull().default(false),
   verified: integer("verified", { mode: "boolean" }).notNull().default(false),
   scraped_at: text("scraped_at"),
   created_at: text("created_at")

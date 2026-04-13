@@ -31,6 +31,7 @@ export function ensureSchema() {
       hash_sha1 TEXT,
       file_path TEXT NOT NULL,
       file_size INTEGER,
+      hashed INTEGER NOT NULL DEFAULT 0,
       verified INTEGER NOT NULL DEFAULT 0,
       scraped_at TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -76,4 +77,11 @@ export function ensureSchema() {
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
+
+  // Add hashed column to existing games tables
+  try {
+    sqlite.exec(`ALTER TABLE games ADD COLUMN hashed INTEGER NOT NULL DEFAULT 0`);
+  } catch {
+    // Column already exists — ignore
+  }
 }

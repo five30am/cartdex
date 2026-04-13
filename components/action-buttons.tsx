@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 
 interface ScanStatus {
   state: "idle" | "running" | "done" | "error";
+  phase?: "discovering" | "hashing";
   progress?: { current: number; total: number };
-  result?: { scanned: number; added: number; skipped: number; errors: string[] };
+  result?: { discovered: number; newFiles: number; hashed: number; skipped: number; errors: string[] };
   error?: string;
 }
 
@@ -115,7 +116,7 @@ export function ActionButtons() {
       {scanStatus.state === "running" && progress && (
         <div className="flex flex-col items-end gap-1">
           <p className="text-xs text-blue-400">
-            Scanning: {progress.current.toLocaleString()} / {progress.total.toLocaleString()} files
+            {scanStatus.phase === "hashing" ? "Hashing" : "Discovering"}: {progress.current.toLocaleString()} / {progress.total.toLocaleString()} files
           </p>
           <div className="w-48 h-1.5 bg-neutral-800 rounded-full overflow-hidden">
             <div
@@ -128,7 +129,7 @@ export function ActionButtons() {
 
       {scanStatus.state === "done" && scanStatus.result && (
         <p className="text-xs text-green-400">
-          Scan done — {scanStatus.result.added} added, {scanStatus.result.skipped} skipped
+          Scan done — {scanStatus.result.newFiles} new, {scanStatus.result.hashed} hashed, {scanStatus.result.skipped} skipped
         </p>
       )}
       {scanStatus.state === "error" && (
