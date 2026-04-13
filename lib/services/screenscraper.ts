@@ -113,16 +113,16 @@ function parseGameData(data: any): ScreenScraperGame {
 }
 
 async function fetchFromScreenScraper(params: URLSearchParams): Promise<ScreenScraperGame | null> {
-  const devId = await getSetting("screenscraper_dev_id");
-  const devPassword = await getSetting("screenscraper_dev_password");
+  const username = await getSetting("screenscraper_username");
+  const password = await getSetting("screenscraper_password");
 
-  if (!devId || !devPassword) {
-    console.warn("[screenscraper] screenscraper_dev_id / screenscraper_dev_password not set — skipping");
+  if (!username || !password) {
+    console.warn("[screenscraper] screenscraper_username / screenscraper_password not set — skipping");
     return null;
   }
 
-  params.set("devid", devId);
-  params.set("devpassword", devPassword);
+  params.set("ssid", username);
+  params.set("sspassword", password);
   params.set("softname", "romvault");
   params.set("output", "json");
 

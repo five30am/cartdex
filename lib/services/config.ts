@@ -4,8 +4,8 @@ import { eq } from "drizzle-orm";
 
 // Mapping from settings key → env var fallback
 const ENV_FALLBACKS: Record<string, string> = {
-  screenscraper_dev_id: "SCREENSCRAPER_DEV_ID",
-  screenscraper_dev_password: "SCREENSCRAPER_DEV_PASSWORD",
+  screenscraper_username: "SCREENSCRAPER_USERNAME",
+  screenscraper_password: "SCREENSCRAPER_PASSWORD",
   twitch_client_id: "TWITCH_CLIENT_ID",
   twitch_client_secret: "TWITCH_CLIENT_SECRET",
   rom_path: "ROM_ROOT",
@@ -56,7 +56,7 @@ export function getSettingSync(key: string): string | null {
  */
 export function hasAnySettingsConfigured(): boolean {
   const keys = [
-    "screenscraper_dev_id",
+    "screenscraper_username",
     "twitch_client_id",
     "rom_path",
   ];

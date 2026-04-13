@@ -8,17 +8,17 @@ interface ServiceStatus {
 }
 
 async function testScreenScraper(): Promise<ServiceStatus> {
-  const devId = await getSetting("screenscraper_dev_id");
-  const devPassword = await getSetting("screenscraper_dev_password");
+  const username = await getSetting("screenscraper_username");
+  const password = await getSetting("screenscraper_password");
 
-  if (!devId || !devPassword) {
+  if (!username || !password) {
     return { configured: false, ok: null, error: null };
   }
 
   try {
     const params = new URLSearchParams({
-      devid: devId,
-      devpassword: devPassword,
+      ssid: username,
+      sspassword: password,
       softname: "romvault",
       output: "json",
     });

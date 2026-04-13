@@ -5,14 +5,14 @@ import { eq } from "drizzle-orm";
 
 // Keys that should be masked in GET responses
 const SENSITIVE_KEYS = new Set([
-  "screenscraper_dev_password",
+  "screenscraper_password",
   "twitch_client_secret",
 ]);
 
 // All valid setting keys
 const VALID_KEYS = new Set([
-  "screenscraper_dev_id",
-  "screenscraper_dev_password",
+  "screenscraper_username",
+  "screenscraper_password",
   "twitch_client_id",
   "twitch_client_secret",
   "rom_path",
