@@ -82,22 +82,15 @@ function SystemCard({
   return (
     <Link href={`/systems/${system.slug}`}>
       <Card className="bg-neutral-900 border-neutral-800 hover:border-neutral-600 transition-colors cursor-pointer group overflow-hidden h-full">
-        {system.sample_art && (
-          <div className="relative h-28 w-full bg-neutral-800">
-            <Image
-              src={system.sample_art}
-              alt={`${system.name} box art sample`}
-              fill
-              className="object-contain p-2"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            />
-          </div>
-        )}
-        {!system.sample_art && (
-          <div className="h-28 w-full bg-neutral-800/50 flex items-center justify-center">
-            <span className="text-3xl opacity-20">🎮</span>
-          </div>
-        )}
+        <div className="relative h-36 w-full bg-neutral-800/50">
+          <Image
+            src={`/images/systems/${system.slug}.png`}
+            alt={system.name}
+            fill
+            className="object-contain p-3"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+          />
+        </div>
         <CardHeader className="pb-2 pt-3">
           <div className="flex items-center justify-between gap-2">
             <CardTitle className="text-base font-medium text-neutral-100 group-hover:text-white transition-colors">
