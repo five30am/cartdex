@@ -16,6 +16,35 @@ export interface IngestResult {
   errors: string[];
 }
 
+export interface JobStatus {
+  state: "idle" | "running" | "done" | "error";
+  progress?: { current: number; total: number };
+  result?: IngestResult;
+  error?: string;
+  startedAt?: string;
+  finishedAt?: string;
+}
+
+// Global job state — single-user app, one scan at a time
+let scanJob: JobStatus = { state: "idle" };
+
+export function getScanStatus(): JobStatus {
+  return { ...scanJob };
+}
+
+export function startScanInBackground(romRoot: string): void {
+  if (scanJob.state === "running") return;
+  scanJob = { state: "running", startedAt: new Date().toISOString() };
+  // Fire and forget — runs outside the request lifecycle
+  ingestDirectory(romRoot)
+    .then((result) => {
+      scanJob = { state: "done", result, startedAt: scanJob.startedAt, finishedAt: new Date().toISOString() };
+    })
+    .catch((err) => {
+      scanJob = { state: "error", error: err instanceof Error ? err.message : String(err), startedAt: scanJob.startedAt, finishedAt: new Date().toISOString() };
+    });
+}
+
 function slugify(str: string): string {
   return str
     .toLowerCase()
@@ -30,18 +59,32 @@ function titleFromFilename(filename: string): string {
   return name.replace(/[_\.]+/g, " ").trim();
 }
 
-function computeHashes(filePath: string): {
+async function computeHashes(filePath: string): Promise<{
   crc32: string;
   md5: string;
   sha1: string;
-} {
-  const data = fs.readFileSync(filePath);
+}> {
+  return new Promise((resolve, reject) => {
+    const md5 = crypto.createHash("md5");
+    const sha1 = crypto.createHash("sha1");
+    let crc32Val = Buffer.alloc(0);
 
-  const crc32Hash = crc32(data).toString("hex").padStart(8, "0");
-  const md5Hash = crypto.createHash("md5").update(data).digest("hex");
-  const sha1Hash = crypto.createHash("sha1").update(data).digest("hex");
-
-  return { crc32: crc32Hash, md5: md5Hash, sha1: sha1Hash };
+    const stream = fs.createReadStream(filePath);
+    stream.on("data", (chunk: Buffer | string) => {
+      const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      md5.update(buf);
+      sha1.update(buf);
+      crc32Val = crc32(buf, crc32Val);
+    });
+    stream.on("end", () => {
+      resolve({
+        crc32: crc32Val.toString("hex").padStart(8, "0"),
+        md5: md5.digest("hex"),
+        sha1: sha1.digest("hex"),
+      });
+    });
+    stream.on("error", reject);
+  });
 }
 
 function walkDirectory(dir: string): string[] {
@@ -88,7 +131,13 @@ export async function ingestDirectory(romRoot: string): Promise<IngestResult> {
   const files = walkDirectory(romRoot);
   result.scanned = files.length;
 
-  for (const filePath of files) {
+  // Update global progress
+  scanJob.progress = { current: 0, total: files.length };
+
+  for (let i = 0; i < files.length; i++) {
+    const filePath = files[i];
+    scanJob.progress = { current: i + 1, total: files.length };
+
     const ext = path.extname(filePath).toLowerCase();
     if (!knownExtensions.has(ext)) {
       result.skipped++;
@@ -119,7 +168,7 @@ export async function ingestDirectory(romRoot: string): Promise<IngestResult> {
       const title = titleFromFilename(filename);
       const slug = slugify(title);
 
-      const hashes = computeHashes(filePath);
+      const hashes = await computeHashes(filePath);
 
       db.insert(games)
         .values({
