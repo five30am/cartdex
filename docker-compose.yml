@@ -1,0 +1,32 @@
+services:
+  romvault:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: romvault:local
+    container_name: romvault
+    restart: unless-stopped
+    ports:
+      - "3500:3000"
+    environment:
+      - NODE_ENV=production
+      - DB_PATH=/data/romvault.db
+      - ROM_ROOT=/roms
+      - SCREENSCRAPER_DEV_ID=${SCREENSCRAPER_DEV_ID}
+      - SCREENSCRAPER_DEV_PASSWORD=${SCREENSCRAPER_DEV_PASSWORD}
+      - TWITCH_CLIENT_ID=${TWITCH_CLIENT_ID}
+      - TWITCH_CLIENT_SECRET=${TWITCH_CLIENT_SECRET}
+    volumes:
+      - romvault_data:/data
+      - romvault_artwork:/app/public/artwork
+      - /mnt/roms:/roms:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  romvault_data:
+  romvault_artwork:
