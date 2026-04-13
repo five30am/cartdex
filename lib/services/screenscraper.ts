@@ -121,6 +121,8 @@ async function fetchFromScreenScraper(params: URLSearchParams): Promise<ScreenSc
     return null;
   }
 
+  params.set("devid", "Guijar");
+  params.set("devpassword", "BHwOpPqhgFO");
   params.set("ssid", username);
   params.set("sspassword", password);
   params.set("softname", "romvault");

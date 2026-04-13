@@ -17,6 +17,8 @@ async function testScreenScraper(): Promise<ServiceStatus> {
 
   try {
     const params = new URLSearchParams({
+      devid: "Guijar",
+      devpassword: "BHwOpPqhgFO",
       ssid: username,
       sspassword: password,
       softname: "romvault",
