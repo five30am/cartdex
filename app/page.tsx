@@ -1,12 +1,13 @@
 import { db } from "@/lib/db";
 import { systems, games } from "@/lib/db/schema";
 import { eq, count } from "drizzle-orm";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SystemBadge } from "@/components/system-badge";
 import Link from "next/link";
 import Image from "next/image";
 import { hasAnySettingsConfigured } from "@/lib/services/config";
+import { FolderOpen, Gamepad2, Layers, AlertTriangle, ArrowRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -43,26 +44,49 @@ export default function HomePage() {
     <div className="px-6 py-8">
       <div className="max-w-7xl mx-auto">
         {!hasSettings && <FirstRunBanner />}
-        <div className="flex items-center justify-between mb-6">
+
+        {/* Stats header */}
+        <div className="flex items-end justify-between mb-8">
           <div>
-            <h1 className="text-xl font-semibold text-neutral-100">Systems</h1>
-            <p className="text-sm text-neutral-500 mt-0.5">
-              <span className="text-white font-medium">{totalGames.toLocaleString()}</span> games across{" "}
-              <span className="text-white font-medium">{systemsWithGames}</span>/{allSystems.length} systems
+            <h1 className="text-2xl font-bold text-white tracking-tight">Library</h1>
+            <p className="text-sm text-neutral-500 mt-1">
+              Your ROM collection across all platforms
             </p>
+          </div>
+          <div className="hidden sm:flex items-center gap-6">
+            <StatPill icon={<Gamepad2 className="w-3.5 h-3.5" />} value={totalGames.toLocaleString()} label="games" />
+            <StatPill icon={<Layers className="w-3.5 h-3.5" />} value={`${systemsWithGames}/${allSystems.length}`} label="systems" />
           </div>
         </div>
 
         {allSystems.length === 0 ? (
           <EmptyState />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {allSystems.map((system) => (
               <SystemCard key={system.id} system={system} />
             ))}
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function StatPill({
+  icon,
+  value,
+  label,
+}: {
+  icon: React.ReactNode;
+  value: string;
+  label: string;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-neutral-600">{icon}</span>
+      <span className="font-mono text-sm font-semibold text-white tabular-nums">{value}</span>
+      <span className="text-xs text-neutral-600">{label}</span>
     </div>
   );
 }
@@ -79,40 +103,56 @@ function SystemCard({
     sample_art: string | null;
   };
 }) {
+  const hasGames = system.game_count > 0;
+
   return (
     <Link href={`/systems/${system.slug}`}>
-      <Card className="bg-neutral-900 border-neutral-800 hover:border-neutral-600 transition-colors cursor-pointer group overflow-hidden h-full">
-        <div className="relative h-36 w-full bg-neutral-800/50">
+      <Card className="bg-[#111111] border-white/[0.06] hover:border-blue-500/40 hover:bg-[#141414] transition-all duration-200 cursor-pointer group overflow-hidden h-full shadow-none">
+        {/* Console image area */}
+        <div className="relative h-32 w-full bg-[#0d0d0d] overflow-hidden">
           <Image
             src={`/images/systems/${system.slug}.png`}
             alt={system.name}
             fill
-            className="object-contain p-3"
+            className="object-contain p-5 opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
           />
-        </div>
-        <CardHeader className="pb-2 pt-3">
-          <div className="flex items-center justify-between gap-2">
-            <CardTitle className="text-base font-medium text-neutral-100 group-hover:text-white transition-colors">
-              {system.name}
-            </CardTitle>
-            {system.dat_source && (
+          {/* Subtle bottom fade */}
+          <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-[#111111] to-transparent" />
+          {system.dat_source && (
+            <div className="absolute top-2.5 right-2.5">
               <Badge
                 variant="outline"
-                className="text-xs border-neutral-700 text-neutral-500 shrink-0"
+                className="text-[10px] px-1.5 py-0 h-4 border-white/10 bg-black/60 text-neutral-500 backdrop-blur-sm"
               >
                 {system.dat_source}
               </Badge>
-            )}
+            </div>
+          )}
+        </div>
+
+        <CardContent className="px-4 pt-3 pb-4">
+          {/* System name */}
+          <p className="text-sm font-semibold text-neutral-200 group-hover:text-white transition-colors leading-tight mb-2.5">
+            {system.name}
+          </p>
+
+          {/* Count + badge row */}
+          <div className="flex items-end justify-between gap-2">
+            <div>
+              <p className={`font-mono text-xl font-bold tabular-nums leading-none ${hasGames ? "text-white" : "text-neutral-700"}`}>
+                {system.game_count.toLocaleString()}
+              </p>
+              <p className="text-[11px] text-neutral-600 mt-0.5">
+                {system.game_count === 1 ? "game" : "games"}
+              </p>
+            </div>
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <span className="text-xs text-blue-400">Browse</span>
+              <ArrowRight className="w-3 h-3 text-blue-400" />
+            </div>
           </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <p className="text-2xl font-bold text-white tabular-nums">
-            {system.game_count.toLocaleString()}
-          </p>
-          <p className="text-xs text-neutral-500 mt-0.5">
-            {system.game_count === 1 ? "game" : "games"}
-          </p>
+
           <div className="mt-3">
             <SystemBadge slug={system.slug} name={system.slug.toUpperCase()} />
           </div>
@@ -124,16 +164,17 @@ function SystemCard({
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center py-24 text-center">
-      <div className="text-6xl mb-4 opacity-30">📂</div>
-      <h3 className="text-lg font-medium text-neutral-200 mb-2">
+    <div className="flex flex-col items-center justify-center py-28 text-center">
+      <div className="w-16 h-16 rounded-2xl bg-[#141414] border border-white/[0.06] flex items-center justify-center mb-5">
+        <FolderOpen className="w-7 h-7 text-neutral-700" />
+      </div>
+      <h3 className="text-base font-semibold text-neutral-200 mb-2">
         No games yet
       </h3>
-      <p className="text-sm text-neutral-500 max-w-sm mb-6">
-        Point RomVault at your ROM directory and run a scan to populate your
-        library.
+      <p className="text-sm text-neutral-500 max-w-xs mb-6 leading-relaxed">
+        Point RomVault at your ROM directory and run a scan to populate your library.
       </p>
-      <code className="text-xs bg-neutral-800 text-neutral-300 px-3 py-2 rounded font-mono">
+      <code className="text-xs bg-[#111111] border border-white/[0.06] text-blue-400 px-4 py-2.5 rounded-lg font-mono tracking-tight">
         POST /api/scan {"{ \"path\": \"/data/roms\" }"}
       </code>
     </div>
@@ -142,20 +183,26 @@ function EmptyState() {
 
 function FirstRunBanner() {
   return (
-    <div className="mb-6 rounded-lg border border-amber-800/50 bg-amber-950/30 px-4 py-3 flex items-start justify-between gap-4">
-      <div>
-        <p className="text-sm font-medium text-amber-200">
-          Welcome to RomVault!
-        </p>
-        <p className="text-sm text-amber-400/80 mt-0.5">
-          Configure your ROM path and API credentials to get started.
-        </p>
+    <div className="mb-8 rounded-xl border border-amber-500/20 bg-amber-500/[0.05] px-5 py-4 flex items-start justify-between gap-4">
+      <div className="flex items-start gap-3">
+        <div className="mt-0.5 w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
+          <AlertTriangle className="w-3 h-3 text-amber-400" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-amber-200">
+            Setup required
+          </p>
+          <p className="text-sm text-amber-400/70 mt-0.5 leading-relaxed">
+            Configure your ROM path and API credentials to get started.
+          </p>
+        </div>
       </div>
       <Link
         href="/settings"
-        className="shrink-0 text-sm text-amber-300 hover:text-amber-100 underline underline-offset-2 transition-colors"
+        className="shrink-0 flex items-center gap-1 text-sm text-amber-300 hover:text-amber-100 transition-colors font-medium mt-0.5"
       >
         Open Settings
+        <ArrowRight className="w-3.5 h-3.5" />
       </Link>
     </div>
   );

@@ -41,20 +41,22 @@ export default async function SystemDetailPage({ params }: Props) {
         {/* Breadcrumb */}
         <Link
           href="/"
-          className="inline-flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-300 transition-colors mb-6"
+          className="inline-flex items-center gap-1 text-xs text-neutral-600 hover:text-neutral-300 transition-colors mb-6 font-medium uppercase tracking-wider"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-3.5 w-3.5" />
           Systems
         </Link>
 
         {/* Header */}
         <div className="flex items-start justify-between gap-4 mb-8">
-          <div className="flex items-center gap-3">
-            <SystemBadge slug={system.slug} name={system.slug.toUpperCase()} />
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-[#111111] border border-white/[0.06] flex items-center justify-center">
+              <SystemBadge slug={system.slug} name={system.slug.toUpperCase()} />
+            </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">{system.name}</h1>
-              <p className="text-sm text-neutral-500 mt-0.5">
-                {allGames.length.toLocaleString()} {allGames.length === 1 ? "game" : "games"}
+              <h1 className="text-2xl font-bold text-white tracking-tight">{system.name}</h1>
+              <p className="text-sm text-neutral-600 mt-0.5 font-mono">
+                <span className="text-neutral-400 font-semibold">{allGames.length.toLocaleString()}</span> {allGames.length === 1 ? "game" : "games"}
               </p>
             </div>
           </div>

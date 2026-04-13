@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { SystemBadge } from "@/components/system-badge";
+import { Gamepad2 } from "lucide-react";
 
 interface GameCardProps {
   id: number;
@@ -23,7 +24,7 @@ export function GameCard({
 }: GameCardProps) {
   return (
     <Link href={`/games/${id}`} className="group block">
-      <div className="relative aspect-[3/4] w-full bg-neutral-900 rounded-lg overflow-hidden border border-neutral-800 group-hover:border-neutral-600 transition-colors">
+      <div className="relative aspect-[3/4] w-full bg-[#111111] rounded-lg overflow-hidden border border-white/[0.06] group-hover:border-blue-500/30 transition-all duration-200 shadow-none">
         {box_art_path ? (
           <Image
             src={box_art_path}
@@ -33,21 +34,23 @@ export function GameCard({
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 16vw"
           />
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center">
-            <div className="text-3xl mb-2 opacity-30">🎮</div>
-            <p className="text-xs text-neutral-600 leading-tight font-medium line-clamp-3">
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center bg-[#0d0d0d]">
+            <Gamepad2 className="w-8 h-8 text-neutral-800 mb-2" />
+            <p className="text-[11px] text-neutral-700 leading-tight font-medium line-clamp-3">
               {title}
             </p>
           </div>
         )}
+        {/* Hover overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
       </div>
       <div className="mt-2 px-0.5">
-        <p className="text-xs font-medium text-neutral-200 group-hover:text-white transition-colors truncate leading-tight">
+        <p className="text-xs font-medium text-neutral-400 group-hover:text-neutral-100 transition-colors truncate leading-tight">
           {title}
         </p>
-        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
           {year && (
-            <span className="text-xs text-neutral-500">{year}</span>
+            <span className="text-[11px] text-neutral-700 font-mono">{year}</span>
           )}
           {showSystem && system_slug && system_name && (
             <SystemBadge slug={system_slug} name={system_name} />

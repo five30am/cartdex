@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { FolderOpen, Wifi, Key, CheckCircle2, XCircle, Minus, Loader2, Save, Zap } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ServiceStatus {
   configured: boolean;
@@ -34,16 +36,16 @@ const FIELDS: FieldDef[] = [
   },
   {
     key: "screenscraper_username",
-    label: "ScreenScraper Username",
+    label: "Username",
     type: "text",
     placeholder: "your_username",
     description: "Your screenscraper.fr account username",
   },
   {
     key: "screenscraper_password",
-    label: "ScreenScraper Password",
+    label: "Password",
     type: "password",
-    description: "Stored as-is in local DB only",
+    description: "Stored locally only — never transmitted to third parties",
   },
   {
     key: "twitch_client_id",
@@ -56,38 +58,38 @@ const FIELDS: FieldDef[] = [
     key: "twitch_client_secret",
     label: "Twitch Client Secret",
     type: "password",
-    description: "Stored as-is in local DB only",
+    description: "Stored locally only — never transmitted to third parties",
   },
 ];
 
-function StatusBadge({ status }: { status: ServiceStatus }) {
+function ConnectionBadge({ status }: { status: ServiceStatus }) {
   if (!status.configured) {
     return (
-      <span className="text-xs text-neutral-500 flex items-center gap-1">
-        <span className="w-2 h-2 rounded-full bg-neutral-600 inline-block" />
+      <span className="inline-flex items-center gap-1.5 text-xs text-neutral-600">
+        <Minus className="w-3 h-3" />
         Not configured
       </span>
     );
   }
   if (status.ok === null) {
     return (
-      <span className="text-xs text-neutral-400 flex items-center gap-1">
-        <span className="w-2 h-2 rounded-full bg-neutral-500 inline-block" />
+      <span className="inline-flex items-center gap-1.5 text-xs text-neutral-500">
+        <Loader2 className="w-3 h-3 animate-spin" />
         Testing...
       </span>
     );
   }
   if (status.ok) {
     return (
-      <span className="text-xs text-green-400 flex items-center gap-1">
-        <span className="w-2 h-2 rounded-full bg-green-400 inline-block" />
+      <span className="inline-flex items-center gap-1.5 text-xs text-green-400">
+        <CheckCircle2 className="w-3 h-3" />
         Connected
       </span>
     );
   }
   return (
-    <span className="text-xs text-red-400 flex items-center gap-1" title={status.error ?? undefined}>
-      <span className="w-2 h-2 rounded-full bg-red-400 inline-block" />
+    <span className="inline-flex items-center gap-1.5 text-xs text-red-400" title={status.error ?? undefined}>
+      <XCircle className="w-3 h-3" />
       {status.error ?? "Failed"}
     </span>
   );
@@ -118,12 +120,10 @@ export function SettingsForm() {
     setSaveStatus("idle");
     setSaveError(null);
 
-    // Only send non-empty values and non-masked values
     const payload: Record<string, string> = {};
     for (const field of FIELDS) {
       const val = values[field.key];
       if (!val) continue;
-      // Don't send back a masked value (****xxxx) — it means it wasn't changed
       if (val.startsWith("****") && val.length <= 8) continue;
       payload[field.key] = val;
     }
@@ -137,7 +137,6 @@ export function SettingsForm() {
       const data = await res.json();
       if (data.ok) {
         setSaveStatus("saved");
-        // Refresh displayed values (they'll be masked appropriately)
         const refreshed = await fetch("/api/settings").then((r) => r.json());
         setValues(refreshed);
         setTimeout(() => setSaveStatus("idle"), 3000);
@@ -160,7 +159,7 @@ export function SettingsForm() {
       const data = await fetch("/api/settings/test").then((r) => r.json());
       setTestResults(data);
     } catch {
-      // ignore — leave results null
+      // ignore
     } finally {
       setTesting(false);
     }
@@ -170,111 +169,147 @@ export function SettingsForm() {
     return (
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-16 bg-neutral-800/50 rounded-lg animate-pulse" />
+          <div key={i} className="h-[140px] bg-[#111111] border border-white/[0.05] rounded-xl animate-pulse" />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <form onSubmit={handleSave} className="space-y-6">
-        {/* ROM Config */}
-        <Card className="bg-neutral-900 border-neutral-800">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-neutral-200">
-              ROM Library
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <FieldRow
-              field={FIELDS[0]}
-              value={values["rom_path"] ?? ""}
-              onChange={(v) => setValues((prev) => ({ ...prev, rom_path: v }))}
-            />
-          </CardContent>
-        </Card>
+    <div className="space-y-4">
+      <form onSubmit={handleSave} className="space-y-4">
+        {/* ROM Library */}
+        <SettingsCard
+          icon={<FolderOpen className="w-4 h-4" />}
+          title="ROM Library"
+          subtitle="Where your ROM files live on disk"
+        >
+          <FieldRow
+            field={FIELDS[0]}
+            value={values["rom_path"] ?? ""}
+            onChange={(v) => setValues((prev) => ({ ...prev, rom_path: v }))}
+          />
+        </SettingsCard>
 
         {/* ScreenScraper */}
-        <Card className="bg-neutral-900 border-neutral-800">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-neutral-200">
-                ScreenScraper
-              </CardTitle>
-              {testResults && (
-                <StatusBadge status={testResults.screenscraper} />
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {FIELDS.slice(1, 3).map((field) => (
-              <FieldRow
-                key={field.key}
-                field={field}
-                value={values[field.key] ?? ""}
-                onChange={(v) =>
-                  setValues((prev) => ({ ...prev, [field.key]: v }))
-                }
-              />
-            ))}
-          </CardContent>
-        </Card>
+        <SettingsCard
+          icon={<Wifi className="w-4 h-4" />}
+          title="ScreenScraper"
+          subtitle="Box art and metadata from screenscraper.fr"
+          badge={testResults ? <ConnectionBadge status={testResults.screenscraper} /> : null}
+        >
+          {FIELDS.slice(1, 3).map((field) => (
+            <FieldRow
+              key={field.key}
+              field={field}
+              value={values[field.key] ?? ""}
+              onChange={(v) =>
+                setValues((prev) => ({ ...prev, [field.key]: v }))
+              }
+            />
+          ))}
+        </SettingsCard>
 
         {/* IGDB */}
-        <Card className="bg-neutral-900 border-neutral-800">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-neutral-200">
-                IGDB / Twitch
-              </CardTitle>
-              {testResults && (
-                <StatusBadge status={testResults.igdb} />
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {FIELDS.slice(3).map((field) => (
-              <FieldRow
-                key={field.key}
-                field={field}
-                value={values[field.key] ?? ""}
-                onChange={(v) =>
-                  setValues((prev) => ({ ...prev, [field.key]: v }))
-                }
-              />
-            ))}
-          </CardContent>
-        </Card>
+        <SettingsCard
+          icon={<Key className="w-4 h-4" />}
+          title="IGDB / Twitch"
+          subtitle="Game metadata via IGDB API (requires Twitch dev account)"
+          badge={testResults ? <ConnectionBadge status={testResults.igdb} /> : null}
+        >
+          {FIELDS.slice(3).map((field) => (
+            <FieldRow
+              key={field.key}
+              field={field}
+              value={values[field.key] ?? ""}
+              onChange={(v) =>
+                setValues((prev) => ({ ...prev, [field.key]: v }))
+              }
+            />
+          ))}
+        </SettingsCard>
 
-        {/* Actions */}
+        {/* Action row */}
         <div className="flex items-center gap-3 pt-2">
           <Button
             type="submit"
             disabled={saving}
-            className="bg-white text-neutral-950 hover:bg-neutral-200"
+            className="bg-blue-600 hover:bg-blue-500 text-white gap-2 h-9 px-4 text-sm font-medium shadow-none"
           >
+            {saving ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Save className="w-3.5 h-3.5" />
+            )}
             {saving ? "Saving..." : "Save Settings"}
           </Button>
+
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             onClick={handleTest}
             disabled={testing || saving}
-            className="border-neutral-700 text-neutral-300 hover:text-white hover:border-neutral-500"
+            className="h-9 px-4 text-sm gap-2 text-neutral-400 border border-white/[0.06] hover:text-white hover:bg-white/[0.06] hover:border-white/10"
           >
+            {testing ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Zap className="w-3.5 h-3.5" />
+            )}
             {testing ? "Testing..." : "Test Connections"}
           </Button>
 
           {saveStatus === "saved" && (
-            <span className="text-sm text-green-400">Settings saved</span>
+            <span className="flex items-center gap-1.5 text-sm text-green-400">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Saved
+            </span>
           )}
           {saveStatus === "error" && (
-            <span className="text-sm text-red-400">{saveError}</span>
+            <span className="flex items-center gap-1.5 text-sm text-red-400">
+              <XCircle className="w-3.5 h-3.5" />
+              {saveError}
+            </span>
           )}
         </div>
       </form>
     </div>
+  );
+}
+
+function SettingsCard({
+  icon,
+  title,
+  subtitle,
+  badge,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  badge?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card className="bg-[#111111] border-white/[0.06] shadow-none rounded-xl overflow-hidden">
+      <CardHeader className="px-5 pt-4 pb-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="text-neutral-500">{icon}</div>
+            <div>
+              <p className="text-sm font-semibold text-neutral-200">{title}</p>
+              <p className="text-xs text-neutral-600 mt-0.5">{subtitle}</p>
+            </div>
+          </div>
+          {badge && <div>{badge}</div>}
+        </div>
+      </CardHeader>
+      <CardContent className="px-5 pt-4 pb-5 space-y-4">
+        <div className="border-t border-white/[0.04] pt-4 space-y-4">
+          {children}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -289,7 +324,7 @@ function FieldRow({
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-sm text-neutral-300 font-medium">
+      <label className="text-xs font-medium text-neutral-400 uppercase tracking-wider">
         {field.label}
       </label>
       <Input
@@ -297,12 +332,16 @@ function FieldRow({
         value={value}
         placeholder={field.placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="bg-neutral-800 border-neutral-700 text-neutral-100 placeholder:text-neutral-600"
+        className={cn(
+          "bg-[#0d0d0d] border-white/[0.08] text-neutral-100 placeholder:text-neutral-700",
+          "focus-visible:border-blue-500/50 focus-visible:ring-0 focus-visible:ring-offset-0",
+          "h-9 text-sm font-mono"
+        )}
         autoComplete="off"
         data-1p-ignore
       />
       {field.description && (
-        <p className="text-xs text-neutral-600">{field.description}</p>
+        <p className="text-xs text-neutral-700 leading-relaxed">{field.description}</p>
       )}
     </div>
   );

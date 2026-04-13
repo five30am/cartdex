@@ -90,4 +90,10 @@ export function ensureSchema() {
   if (zipCleanup.changes > 0) {
     console.log(`  Cleaned up ${zipCleanup.changes} incorrectly ingested .zip files`);
   }
+
+  // Reset scraped_at for games that were scraped but got no box art (artwork permission bug)
+  const artReset = sqlite.prepare(`UPDATE games SET scraped_at = NULL WHERE scraped_at IS NOT NULL AND box_art_path IS NULL`).run();
+  if (artReset.changes > 0) {
+    console.log(`  Reset ${artReset.changes} games for re-scrape (missing box art)`);
+  }
 }

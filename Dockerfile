@@ -33,12 +33,13 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy built app
-COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Data directory for SQLite DB (mount as volume in production)
+# Data directory for SQLite DB + artwork (mount as volumes in production)
 RUN mkdir -p /data && chown nextjs:nodejs /data
+RUN mkdir -p /app/public/artwork && chown nextjs:nodejs /app/public/artwork
 
 USER nextjs
 

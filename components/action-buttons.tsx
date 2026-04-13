@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { ScanLine, Download, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ScanStatus {
   state: "idle" | "running" | "done" | "error";
@@ -114,76 +116,147 @@ export function ActionButtons() {
   const scanProgress = scanStatus.progress;
   const scrapeProgress = scrapeStatus.progress;
 
+  const scanPct = scanProgress && scanProgress.total > 0
+    ? Math.round((scanProgress.current / scanProgress.total) * 100)
+    : 0;
+  const scrapePct = scrapeProgress && scrapeProgress.total > 0
+    ? Math.round((scrapeProgress.current / scrapeProgress.total) * 100)
+    : 0;
+
   return (
     <div className="flex flex-col gap-2 items-end">
+      {/* Buttons row */}
       <div className="flex gap-2">
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={handleScan}
           disabled={isbusy}
-          className="border-neutral-700 text-neutral-300 hover:text-white hover:border-neutral-500"
+          className={cn(
+            "h-8 px-3 text-xs font-medium gap-1.5 transition-all",
+            scanStatus.state === "running"
+              ? "text-blue-400 bg-blue-500/10 border border-blue-500/20"
+              : scanStatus.state === "done"
+              ? "text-green-400 bg-green-500/10 border border-green-500/20"
+              : scanStatus.state === "error"
+              ? "text-red-400 bg-red-500/10 border border-red-500/20"
+              : "text-neutral-400 border border-white/[0.06] hover:text-white hover:bg-white/[0.06] hover:border-white/10"
+          )}
         >
-          {scanStatus.state === "running" ? "Scanning..." : "Scan ROMs"}
+          {scanStatus.state === "running" ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : scanStatus.state === "done" ? (
+            <CheckCircle2 className="w-3.5 h-3.5" />
+          ) : scanStatus.state === "error" ? (
+            <XCircle className="w-3.5 h-3.5" />
+          ) : (
+            <ScanLine className="w-3.5 h-3.5" />
+          )}
+          {scanStatus.state === "running"
+            ? scanStatus.phase === "hashing" ? "Hashing..." : "Scanning..."
+            : scanStatus.state === "done"
+            ? "Scan done"
+            : scanStatus.state === "error"
+            ? "Scan failed"
+            : "Scan ROMs"}
         </Button>
+
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={handleScrape}
           disabled={isbusy}
-          className="border-neutral-700 text-neutral-300 hover:text-white hover:border-neutral-500"
+          className={cn(
+            "h-8 px-3 text-xs font-medium gap-1.5 transition-all",
+            scrapeStatus.state === "running"
+              ? "text-violet-400 bg-violet-500/10 border border-violet-500/20"
+              : scrapeStatus.state === "done"
+              ? "text-green-400 bg-green-500/10 border border-green-500/20"
+              : scrapeStatus.state === "error"
+              ? "text-red-400 bg-red-500/10 border border-red-500/20"
+              : "text-neutral-400 border border-white/[0.06] hover:text-white hover:bg-white/[0.06] hover:border-white/10"
+          )}
         >
-          {scrapeStatus.state === "running" ? "Scraping..." : "Scrape Metadata"}
+          {scrapeStatus.state === "running" ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : scrapeStatus.state === "done" ? (
+            <CheckCircle2 className="w-3.5 h-3.5" />
+          ) : scrapeStatus.state === "error" ? (
+            <XCircle className="w-3.5 h-3.5" />
+          ) : (
+            <Download className="w-3.5 h-3.5" />
+          )}
+          {scrapeStatus.state === "running"
+            ? "Scraping..."
+            : scrapeStatus.state === "done"
+            ? "Scrape done"
+            : scrapeStatus.state === "error"
+            ? "Scrape failed"
+            : "Scrape Metadata"}
         </Button>
       </div>
 
+      {/* Scan progress bar */}
       {scanStatus.state === "running" && scanProgress && (
-        <div className="flex flex-col items-end gap-1">
-          <p className="text-xs text-blue-400">
-            {scanStatus.phase === "hashing" ? "Hashing" : "Discovering"}: {scanProgress.current.toLocaleString()} / {scanProgress.total.toLocaleString()} files
-          </p>
-          <div className="w-48 h-1.5 bg-neutral-800 rounded-full overflow-hidden">
+        <div className="flex flex-col items-end gap-1 w-52">
+          <div className="flex items-center justify-between w-full">
+            <p className="text-[11px] text-blue-400/80 font-mono">
+              {scanStatus.phase === "hashing" ? "hashing" : "discovering"}
+            </p>
+            <p className="text-[11px] text-neutral-500 font-mono tabular-nums">
+              {scanProgress.current.toLocaleString()} / {scanProgress.total.toLocaleString()}
+            </p>
+          </div>
+          <div className="w-full h-1 bg-white/[0.06] rounded-full overflow-hidden">
             <div
-              className="h-full bg-blue-500 transition-all duration-500"
-              style={{ width: `${scanProgress.total > 0 ? (scanProgress.current / scanProgress.total) * 100 : 0}%` }}
+              className="h-full bg-blue-500 rounded-full transition-all duration-500 ease-out shadow-[0_0_8px_rgba(59,130,246,0.6)]"
+              style={{ width: `${scanPct}%` }}
             />
           </div>
+          <p className="text-[10px] text-neutral-600 font-mono">{scanPct}%</p>
         </div>
       )}
 
+      {/* Scrape progress bar */}
       {scrapeStatus.state === "running" && scrapeProgress && (
-        <div className="flex flex-col items-end gap-1">
-          <p className="text-xs text-purple-400">
-            Scraping: {scrapeProgress.current.toLocaleString()} / {scrapeProgress.total.toLocaleString()} games
-          </p>
-          <div className="w-48 h-1.5 bg-neutral-800 rounded-full overflow-hidden">
+        <div className="flex flex-col items-end gap-1 w-52">
+          <div className="flex items-center justify-between w-full">
+            <p className="text-[11px] text-violet-400/80 font-mono">
+              scraping metadata
+            </p>
+            <p className="text-[11px] text-neutral-500 font-mono tabular-nums">
+              {scrapeProgress.current.toLocaleString()} / {scrapeProgress.total.toLocaleString()}
+            </p>
+          </div>
+          <div className="w-full h-1 bg-white/[0.06] rounded-full overflow-hidden">
             <div
-              className="h-full bg-purple-500 transition-all duration-500"
-              style={{ width: `${scrapeProgress.total > 0 ? (scrapeProgress.current / scrapeProgress.total) * 100 : 0}%` }}
+              className="h-full bg-violet-500 rounded-full transition-all duration-500 ease-out shadow-[0_0_8px_rgba(139,92,246,0.6)]"
+              style={{ width: `${scrapePct}%` }}
             />
           </div>
+          <p className="text-[10px] text-neutral-600 font-mono">{scrapePct}%</p>
         </div>
       )}
 
+      {/* Result summaries */}
       {scanStatus.state === "done" && scanStatus.result && (
-        <p className="text-xs text-green-400">
-          Scan done — {scanStatus.result.newFiles} new, {scanStatus.result.hashed} hashed, {scanStatus.result.skipped} skipped
+        <p className="text-[11px] text-neutral-500 font-mono">
+          <span className="text-green-400">{scanStatus.result.newFiles}</span> new &middot; <span className="text-neutral-400">{scanStatus.result.hashed}</span> hashed &middot; <span className="text-neutral-600">{scanStatus.result.skipped}</span> skipped
         </p>
       )}
       {scanStatus.state === "error" && (
-        <p className="text-xs text-red-400">
-          Scan failed: {scanStatus.error ?? "unknown error"}
+        <p className="text-[11px] text-red-400/80 font-mono">
+          {scanStatus.error ?? "unknown error"}
         </p>
       )}
-
       {scrapeStatus.state === "done" && scrapeStatus.result && (
-        <p className="text-xs text-green-400">
-          Scrape done — {scrapeStatus.result.updated} updated of {scrapeStatus.result.processed} games
+        <p className="text-[11px] text-neutral-500 font-mono">
+          <span className="text-green-400">{scrapeStatus.result.updated}</span> updated of <span className="text-neutral-400">{scrapeStatus.result.processed}</span> games
         </p>
       )}
       {scrapeStatus.state === "error" && (
-        <p className="text-xs text-red-400">
-          Scrape failed: {scrapeStatus.error ?? "unknown error"}
+        <p className="text-[11px] text-red-400/80 font-mono">
+          {scrapeStatus.error ?? "unknown error"}
         </p>
       )}
     </div>
