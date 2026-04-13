@@ -1,3 +1,5 @@
+import { getSetting } from "./config";
+
 export interface IGDBGame {
   franchises: string[];
   summary: string | null;
@@ -13,11 +15,11 @@ interface TokenCache {
 let tokenCache: TokenCache | null = null;
 
 async function getAccessToken(): Promise<string | null> {
-  const clientId = process.env.TWITCH_CLIENT_ID;
-  const clientSecret = process.env.TWITCH_CLIENT_SECRET;
+  const clientId = await getSetting("twitch_client_id");
+  const clientSecret = await getSetting("twitch_client_secret");
 
   if (!clientId || !clientSecret) {
-    console.warn("[igdb] TWITCH_CLIENT_ID / TWITCH_CLIENT_SECRET not set — skipping");
+    console.warn("[igdb] twitch_client_id / twitch_client_secret not set — skipping");
     return null;
   }
 
@@ -89,7 +91,7 @@ export async function searchIGDB(gameTitle: string): Promise<IGDBGame | null> {
   const token = await getAccessToken();
   if (!token) return null;
 
-  const clientId = process.env.TWITCH_CLIENT_ID!;
+  const clientId = (await getSetting("twitch_client_id"))!;
 
   await rateLimit();
 

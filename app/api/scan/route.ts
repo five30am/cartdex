@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ingestDirectory } from "@/lib/services/ingest";
+import { getSetting } from "@/lib/services/config";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
     const romRoot =
-      body.path ?? process.env.ROM_ROOT ?? "/data/roms";
+      body.path ?? (await getSetting("rom_path")) ?? "/roms";
 
     if (!romRoot) {
       return NextResponse.json(

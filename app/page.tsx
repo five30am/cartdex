@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { SystemBadge } from "@/components/system-badge";
 import Link from "next/link";
 import Image from "next/image";
+import { hasAnySettingsConfigured } from "@/lib/services/config";
 
 export const dynamic = "force-dynamic";
 
@@ -36,10 +37,12 @@ export default function HomePage() {
   const allSystems = getSystemsWithCounts();
   const totalGames = allSystems.reduce((sum, s) => sum + s.game_count, 0);
   const systemsWithGames = allSystems.filter((s) => s.game_count > 0).length;
+  const hasSettings = hasAnySettingsConfigured();
 
   return (
     <div className="px-6 py-8">
       <div className="max-w-7xl mx-auto">
+        {!hasSettings && <FirstRunBanner />}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-xl font-semibold text-neutral-100">Systems</h1>
@@ -140,6 +143,27 @@ function EmptyState() {
       <code className="text-xs bg-neutral-800 text-neutral-300 px-3 py-2 rounded font-mono">
         POST /api/scan {"{ \"path\": \"/data/roms\" }"}
       </code>
+    </div>
+  );
+}
+
+function FirstRunBanner() {
+  return (
+    <div className="mb-6 rounded-lg border border-amber-800/50 bg-amber-950/30 px-4 py-3 flex items-start justify-between gap-4">
+      <div>
+        <p className="text-sm font-medium text-amber-200">
+          Welcome to RomVault!
+        </p>
+        <p className="text-sm text-amber-400/80 mt-0.5">
+          Configure your ROM path and API credentials to get started.
+        </p>
+      </div>
+      <Link
+        href="/settings"
+        className="shrink-0 text-sm text-amber-300 hover:text-amber-100 underline underline-offset-2 transition-colors"
+      >
+        Open Settings
+      </Link>
     </div>
   );
 }

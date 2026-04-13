@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ActionButtons } from "@/components/action-buttons";
+import { Settings } from "lucide-react";
 
 export function Nav() {
   return (
@@ -18,7 +19,16 @@ export function Nav() {
             <NavLink href="/collections">Collections</NavLink>
           </nav>
         </div>
-        <ActionButtons />
+        <div className="flex items-center gap-2">
+          <ActionButtons />
+          <Link
+            href="/settings"
+            className="p-1.5 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-md transition-colors"
+            title="Settings"
+          >
+            <Settings className="w-4 h-4" />
+          </Link>
+        </div>
       </div>
     </header>
   );

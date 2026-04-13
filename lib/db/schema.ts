@@ -95,3 +95,11 @@ export const export_profiles = sqliteTable("export_profiles", {
     .notNull()
     .default(sql`'{}'`),
 });
+
+export const settings = sqliteTable("settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updated_at: text("updated_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});

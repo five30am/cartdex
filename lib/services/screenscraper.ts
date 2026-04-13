@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { getSetting } from "./config";
 
 export interface ScreenScraperGame {
   title: string | null;
@@ -112,11 +113,11 @@ function parseGameData(data: any): ScreenScraperGame {
 }
 
 async function fetchFromScreenScraper(params: URLSearchParams): Promise<ScreenScraperGame | null> {
-  const devId = process.env.SCREENSCRAPER_DEV_ID;
-  const devPassword = process.env.SCREENSCRAPER_DEV_PASSWORD;
+  const devId = await getSetting("screenscraper_dev_id");
+  const devPassword = await getSetting("screenscraper_dev_password");
 
   if (!devId || !devPassword) {
-    console.warn("[screenscraper] SCREENSCRAPER_DEV_ID / SCREENSCRAPER_DEV_PASSWORD not set — skipping");
+    console.warn("[screenscraper] screenscraper_dev_id / screenscraper_dev_password not set — skipping");
     return null;
   }
 
