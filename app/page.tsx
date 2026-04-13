@@ -4,6 +4,8 @@ import { eq, count } from "drizzle-orm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import Image from "next/image";
+import { ActionButtons } from "@/components/action-buttons";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +33,16 @@ function getSystemsWithCounts() {
         .where(eq(games.system_id, system.id))
         .get()?.count ?? 0;
 
-    return { ...system, game_count: gameCount };
+    // Grab the first box art available for this system as a preview
+    const sampleArt =
+      db
+        .select({ box_art_path: games.box_art_path })
+        .from(games)
+        .where(eq(games.system_id, system.id))
+        .all()
+        .find((g) => g.box_art_path != null)?.box_art_path ?? null;
+
+    return { ...system, game_count: gameCount, sample_art: sampleArt };
   });
 }
 
@@ -73,9 +84,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-neutral-200">Systems</h2>
-            <span className="text-xs text-neutral-500">
-              POST /api/scan to ingest ROMs
-            </span>
+            <ActionButtons />
           </div>
 
           {allSystems.length === 0 ? (
@@ -102,22 +111,36 @@ function SystemCard({
     slug: string;
     game_count: number;
     dat_source: string | null;
+    sample_art: string | null;
   };
 }) {
   const icon = SYSTEM_ICON[system.slug] ?? "🎮";
 
   return (
     <Link href={`/api/systems/${system.slug}`}>
-      <Card className="bg-neutral-900 border-neutral-800 hover:border-neutral-600 transition-colors cursor-pointer group">
+      <Card className="bg-neutral-900 border-neutral-800 hover:border-neutral-600 transition-colors cursor-pointer group overflow-hidden">
+        {system.sample_art && (
+          <div className="relative h-28 w-full bg-neutral-800">
+            <Image
+              src={system.sample_art}
+              alt={`${system.name} box art sample`}
+              fill
+              className="object-contain p-2"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            />
+          </div>
+        )}
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-2">
-            <span className="text-2xl" role="img" aria-label={system.name}>
-              {icon}
-            </span>
+            {!system.sample_art && (
+              <span className="text-2xl" role="img" aria-label={system.name}>
+                {icon}
+              </span>
+            )}
             {system.dat_source && (
               <Badge
                 variant="outline"
-                className="text-xs border-neutral-700 text-neutral-400"
+                className="text-xs border-neutral-700 text-neutral-400 ml-auto"
               >
                 {system.dat_source}
               </Badge>

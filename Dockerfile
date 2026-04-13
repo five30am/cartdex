@@ -51,4 +51,10 @@ ENV HOSTNAME="0.0.0.0"
 ENV DB_PATH=/data/romvault.db
 ENV ROM_ROOT=/roms
 
+# Metadata scraping credentials — set via docker-compose environment or -e flags
+# SCREENSCRAPER_DEV_ID=
+# SCREENSCRAPER_DEV_PASSWORD=
+# TWITCH_CLIENT_ID=
+# TWITCH_CLIENT_SECRET=
+
 CMD ["node", "server.js"]
