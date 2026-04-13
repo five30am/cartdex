@@ -16,6 +16,33 @@ export interface ScrapeResult {
   errors: string[];
 }
 
+export interface ScrapeJobStatus {
+  state: "idle" | "running" | "done" | "error";
+  progress?: { current: number; total: number };
+  result?: ScrapeResult;
+  error?: string;
+  startedAt?: string;
+  finishedAt?: string;
+}
+
+let scrapeJob: ScrapeJobStatus = { state: "idle" };
+
+export function getScrapeStatus(): ScrapeJobStatus {
+  return { ...scrapeJob };
+}
+
+export function startScrapeInBackground(): void {
+  if (scrapeJob.state === "running") return;
+  scrapeJob = { state: "running", startedAt: new Date().toISOString() };
+  scrapeAllUnscraped()
+    .then((result) => {
+      scrapeJob = { state: "done", result, startedAt: scrapeJob.startedAt, finishedAt: new Date().toISOString() };
+    })
+    .catch((err) => {
+      scrapeJob = { state: "error", error: err instanceof Error ? err.message : String(err), startedAt: scrapeJob.startedAt, finishedAt: new Date().toISOString() };
+    });
+}
+
 function slugify(str: string): string {
   return str
     .toLowerCase()
@@ -164,8 +191,11 @@ export async function scrapeAllUnscraped(): Promise<ScrapeResult> {
     .where(isNull(games.scraped_at))
     .all();
 
+  scrapeJob.progress = { current: 0, total: unscraped.length };
+
   for (const game of unscraped) {
     result.processed++;
+    scrapeJob.progress = { current: result.processed, total: unscraped.length };
 
     const systemSlug = systemSlugById.get(game.system_id);
     if (!systemSlug) {

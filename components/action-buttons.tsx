@@ -11,30 +11,30 @@ interface ScanStatus {
   error?: string;
 }
 
-interface ActionResult {
-  ok?: boolean;
+interface ScrapeStatus {
+  state: "idle" | "running" | "done" | "error";
+  progress?: { current: number; total: number };
+  result?: { processed: number; updated: number; skipped: number; errors: string[] };
   error?: string;
-  processed?: number;
-  updated?: number;
 }
 
 export function ActionButtons() {
   const [scanStatus, setScanStatus] = useState<ScanStatus>({ state: "idle" });
-  const [scrapeState, setScrapeState] = useState<"idle" | "loading" | "done" | "error">("idle");
-  const [scrapeResult, setScrapeResult] = useState<ActionResult | null>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [scrapeStatus, setScrapeStatus] = useState<ScrapeStatus>({ state: "idle" });
+  const scanPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const scrapePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Poll scan status while running
   useEffect(() => {
-    if (scanStatus.state === "running" && !pollRef.current) {
-      pollRef.current = setInterval(async () => {
+    if (scanStatus.state === "running" && !scanPollRef.current) {
+      scanPollRef.current = setInterval(async () => {
         try {
           const res = await fetch("/api/scan");
           const data: ScanStatus = await res.json();
           setScanStatus(data);
           if (data.state !== "running") {
-            if (pollRef.current) clearInterval(pollRef.current);
-            pollRef.current = null;
+            if (scanPollRef.current) clearInterval(scanPollRef.current);
+            scanPollRef.current = null;
             if (data.state === "done") {
               setTimeout(() => window.location.reload(), 1000);
             }
@@ -45,12 +45,40 @@ export function ActionButtons() {
       }, 2000);
     }
     return () => {
-      if (pollRef.current) {
-        clearInterval(pollRef.current);
-        pollRef.current = null;
+      if (scanPollRef.current) {
+        clearInterval(scanPollRef.current);
+        scanPollRef.current = null;
       }
     };
   }, [scanStatus.state]);
+
+  // Poll scrape status while running
+  useEffect(() => {
+    if (scrapeStatus.state === "running" && !scrapePollRef.current) {
+      scrapePollRef.current = setInterval(async () => {
+        try {
+          const res = await fetch("/api/scrape");
+          const data: ScrapeStatus = await res.json();
+          setScrapeStatus(data);
+          if (data.state !== "running") {
+            if (scrapePollRef.current) clearInterval(scrapePollRef.current);
+            scrapePollRef.current = null;
+            if (data.state === "done") {
+              setTimeout(() => window.location.reload(), 1500);
+            }
+          }
+        } catch {
+          // ignore poll errors
+        }
+      }, 2000);
+    }
+    return () => {
+      if (scrapePollRef.current) {
+        clearInterval(scrapePollRef.current);
+        scrapePollRef.current = null;
+      }
+    };
+  }, [scrapeStatus.state]);
 
   async function handleScan() {
     setScanStatus({ state: "running" });
@@ -64,31 +92,27 @@ export function ActionButtons() {
       if (!data.ok) {
         setScanStatus({ state: "error", error: data.error });
       }
-      // Polling will pick up the actual status
     } catch {
       setScanStatus({ state: "error", error: "Failed to start scan" });
     }
   }
 
   async function handleScrape() {
-    setScrapeState("loading");
-    setScrapeResult(null);
+    setScrapeStatus({ state: "running" });
     try {
       const res = await fetch("/api/scrape", { method: "POST" });
       const data = await res.json();
-      setScrapeResult(data);
-      setScrapeState(data.ok ? "done" : "error");
-      if (data.ok) {
-        setTimeout(() => window.location.reload(), 1500);
+      if (!data.ok) {
+        setScrapeStatus({ state: "error", error: data.error });
       }
     } catch {
-      setScrapeResult({ error: "Request failed" });
-      setScrapeState("error");
+      setScrapeStatus({ state: "error", error: "Failed to start scrape" });
     }
   }
 
-  const isbusy = scanStatus.state === "running" || scrapeState === "loading";
-  const progress = scanStatus.progress;
+  const isbusy = scanStatus.state === "running" || scrapeStatus.state === "running";
+  const scanProgress = scanStatus.progress;
+  const scrapeProgress = scrapeStatus.progress;
 
   return (
     <div className="flex flex-col gap-2 items-end">
@@ -109,19 +133,33 @@ export function ActionButtons() {
           disabled={isbusy}
           className="border-neutral-700 text-neutral-300 hover:text-white hover:border-neutral-500"
         >
-          {scrapeState === "loading" ? "Scraping..." : "Scrape Metadata"}
+          {scrapeStatus.state === "running" ? "Scraping..." : "Scrape Metadata"}
         </Button>
       </div>
 
-      {scanStatus.state === "running" && progress && (
+      {scanStatus.state === "running" && scanProgress && (
         <div className="flex flex-col items-end gap-1">
           <p className="text-xs text-blue-400">
-            {scanStatus.phase === "hashing" ? "Hashing" : "Discovering"}: {progress.current.toLocaleString()} / {progress.total.toLocaleString()} files
+            {scanStatus.phase === "hashing" ? "Hashing" : "Discovering"}: {scanProgress.current.toLocaleString()} / {scanProgress.total.toLocaleString()} files
           </p>
           <div className="w-48 h-1.5 bg-neutral-800 rounded-full overflow-hidden">
             <div
               className="h-full bg-blue-500 transition-all duration-500"
-              style={{ width: `${progress.total > 0 ? (progress.current / progress.total) * 100 : 0}%` }}
+              style={{ width: `${scanProgress.total > 0 ? (scanProgress.current / scanProgress.total) * 100 : 0}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {scrapeStatus.state === "running" && scrapeProgress && (
+        <div className="flex flex-col items-end gap-1">
+          <p className="text-xs text-purple-400">
+            Scraping: {scrapeProgress.current.toLocaleString()} / {scrapeProgress.total.toLocaleString()} games
+          </p>
+          <div className="w-48 h-1.5 bg-neutral-800 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-purple-500 transition-all duration-500"
+              style={{ width: `${scrapeProgress.total > 0 ? (scrapeProgress.current / scrapeProgress.total) * 100 : 0}%` }}
             />
           </div>
         </div>
@@ -138,14 +176,14 @@ export function ActionButtons() {
         </p>
       )}
 
-      {scrapeState === "done" && scrapeResult?.ok && (
+      {scrapeStatus.state === "done" && scrapeStatus.result && (
         <p className="text-xs text-green-400">
-          Scrape done — {scrapeResult.updated} updated of {scrapeResult.processed} games
+          Scrape done — {scrapeStatus.result.updated} updated of {scrapeStatus.result.processed} games
         </p>
       )}
-      {scrapeState === "error" && (
+      {scrapeStatus.state === "error" && (
         <p className="text-xs text-red-400">
-          Scrape failed: {scrapeResult?.error ?? "unknown error"}
+          Scrape failed: {scrapeStatus.error ?? "unknown error"}
         </p>
       )}
     </div>
