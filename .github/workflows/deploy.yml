@@ -35,3 +35,32 @@ jobs:
           tags: |
             ghcr.io/five30am/romvault:latest
             ghcr.io/five30am/romvault:${{ steps.sha.outputs.short }}
+
+      - name: Redeploy stack via Portainer
+        env:
+          PORTAINER_URL: ${{ secrets.PORTAINER_URL }}
+          PORTAINER_API_KEY: ${{ secrets.PORTAINER_API_KEY }}
+        run: |
+          STACK_FILE=$(curl -sk \
+            -H "X-API-Key: ${PORTAINER_API_KEY}" \
+            "${PORTAINER_URL}/api/stacks/42/file" \
+            | python3 -c "import sys,json; print(json.load(sys.stdin)['StackFileContent'])")
+
+          PAYLOAD=$(python3 -c "
+          import json, sys
+          content = sys.stdin.read()
+          print(json.dumps({'stackFileContent': content, 'env': [], 'prune': False, 'pullImage': True}))
+          " <<< "$STACK_FILE")
+
+          HTTP_STATUS=$(curl -sk -o /dev/null -w "%{http_code}" \
+            -X PUT \
+            -H "X-API-Key: ${PORTAINER_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" \
+            "${PORTAINER_URL}/api/stacks/42?endpointId=3")
+
+          echo "Portainer redeploy response: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "Portainer redeploy failed with HTTP $HTTP_STATUS"
+            exit 1
+          fi
