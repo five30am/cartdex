@@ -66,18 +66,19 @@ async function computeHashes(filePath: string): Promise<{
   return new Promise((resolve, reject) => {
     const md5 = crypto.createHash("md5");
     const sha1 = crypto.createHash("sha1");
-    let crc32Val = Buffer.alloc(0);
+    // null seed avoids buffer-crc32 bounds error when reading 4 bytes from an empty Buffer
+    let crc32Val: Buffer | null = null;
 
     const stream = fs.createReadStream(filePath);
     stream.on("data", (chunk: Buffer | string) => {
       const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
       md5.update(buf);
       sha1.update(buf);
-      crc32Val = crc32(buf, crc32Val);
+      crc32Val = crc32(buf, crc32Val ?? undefined);
     });
     stream.on("end", () => {
       resolve({
-        crc32: crc32Val.toString("hex").padStart(8, "0"),
+        crc32: (crc32Val ?? Buffer.alloc(4)).toString("hex").padStart(8, "0"),
         md5: md5.digest("hex"),
         sha1: sha1.digest("hex"),
       });

@@ -84,4 +84,10 @@ export function ensureSchema() {
   } catch {
     // Column already exists — ignore
   }
+
+  // Clean up games incorrectly ingested from .zip files (matched as NES due to extension collision)
+  const zipCleanup = sqlite.prepare(`DELETE FROM games WHERE file_path LIKE '%.zip'`).run();
+  if (zipCleanup.changes > 0) {
+    console.log(`  Cleaned up ${zipCleanup.changes} incorrectly ingested .zip files`);
+  }
 }

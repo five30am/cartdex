@@ -6,43 +6,43 @@ const SYSTEMS = [
   {
     name: "Nintendo Entertainment System",
     slug: "nes",
-    extensions: [".nes", ".zip"],
+    extensions: [".nes"],
     dat_source: "No-Intro",
   },
   {
     name: "Super Nintendo",
     slug: "snes",
-    extensions: [".sfc", ".smc", ".zip"],
+    extensions: [".sfc", ".smc"],
     dat_source: "No-Intro",
   },
   {
     name: "Nintendo 64",
     slug: "n64",
-    extensions: [".z64", ".n64", ".zip"],
+    extensions: [".z64", ".n64"],
     dat_source: "No-Intro",
   },
   {
     name: "Game Boy",
     slug: "gb",
-    extensions: [".gb", ".zip"],
+    extensions: [".gb"],
     dat_source: "No-Intro",
   },
   {
     name: "Game Boy Color",
     slug: "gbc",
-    extensions: [".gbc", ".gb", ".zip"],
+    extensions: [".gbc"],
     dat_source: "No-Intro",
   },
   {
     name: "Game Boy Advance",
     slug: "gba",
-    extensions: [".gba", ".zip"],
+    extensions: [".gba"],
     dat_source: "No-Intro",
   },
   {
     name: "Sega Genesis",
     slug: "genesis",
-    extensions: [".gen", ".md", ".zip"],
+    extensions: [".gen", ".md"],
     dat_source: "No-Intro",
   },
   {
@@ -89,7 +89,12 @@ export function seed() {
       db.insert(systems).values(system).run();
       console.log(`  + ${system.name}`);
     } else {
-      console.log(`  ~ ${system.name} (already exists)`);
+      // Update extensions in case they changed
+      db.update(systems)
+        .set({ extensions: system.extensions })
+        .where(eq(systems.slug, system.slug))
+        .run();
+      console.log(`  ~ ${system.name} (updated)`);
     }
   }
 
