@@ -96,4 +96,10 @@ export function ensureSchema() {
   if (artReset.changes > 0) {
     console.log(`  Reset ${artReset.changes} games for re-scrape (missing box art)`);
   }
+
+  // Migrate old /artwork/ paths to /api/artwork/ (standalone mode can't serve dynamic public files)
+  const artPathFix = sqlite.prepare(`UPDATE games SET box_art_path = '/api' || box_art_path WHERE box_art_path LIKE '/artwork/%'`).run();
+  if (artPathFix.changes > 0) {
+    console.log(`  Migrated ${artPathFix.changes} artwork paths to /api/artwork/`);
+  }
 }

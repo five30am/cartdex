@@ -204,7 +204,7 @@ export async function downloadBoxArt(
     const buffer = Buffer.from(await res.arrayBuffer());
     fs.writeFileSync(filePath, buffer);
 
-    return `/artwork/${systemSlug}/${gameSlug}.jpg`;
+    return `/api/artwork/${systemSlug}/${gameSlug}.jpg`;
   } catch (err) {
     console.warn("[screenscraper] box art download error:", err instanceof Error ? err.message : String(err));
     return null;
