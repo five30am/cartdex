@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DeleteModal } from "@/components/delete-modal";
@@ -40,6 +40,7 @@ interface DuplicateGroup {
   recommended_keep_id: number;
   recommended_source: "screenscraper" | "filename";
   recommended_reason: string;
+  enrichment_pending: boolean;
 }
 
 interface ApiResponse {
@@ -131,6 +132,7 @@ export function DuplicateBrowser() {
   const [bulkMenuOpen, setBulkMenuOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [collectionModalOpen, setCollectionModalOpen] = useState(false);
+  const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -148,7 +150,42 @@ export function DuplicateBrowser() {
     }
   }, [page, search]);
 
+  // Silent background refetch — does not set loading state, used for enrichment polling
+  const silentRefetch = useCallback(async () => {
+    try {
+      const params = new URLSearchParams({ page: String(page), limit: "50" });
+      if (search) params.set("q", search);
+      const res = await fetch(`/api/duplicates?${params}`);
+      if (!res.ok) return;
+      setData(await res.json());
+    } catch {
+      // swallow — polling is best-effort
+    }
+  }, [page, search]);
+
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Polling effect: while any visible group has enrichment_pending, refetch every 10s
+  useEffect(() => {
+    if (pollTimerRef.current) {
+      clearTimeout(pollTimerRef.current);
+      pollTimerRef.current = null;
+    }
+
+    const anyPending = data?.groups.some((g) => g.enrichment_pending) ?? false;
+    if (!anyPending || loading) return;
+
+    pollTimerRef.current = setTimeout(() => {
+      silentRefetch();
+    }, 10_000);
+
+    return () => {
+      if (pollTimerRef.current) {
+        clearTimeout(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
+    };
+  }, [data, loading, silentRefetch]);
 
   function toggleSelect(id: number) {
     setSelected((prev) => {
@@ -269,10 +306,18 @@ export function DuplicateBrowser() {
 
       {/* Stats row */}
       {data && !loading && (
-        <p className="text-xs text-neutral-600">
-          {data.total_groups} duplicate group{data.total_groups === 1 ? "" : "s"} &middot;{" "}
-          {data.total_duplicates} duplicate{data.total_duplicates === 1 ? "" : "s"} that can be removed
-        </p>
+        <div className="flex items-center gap-3 flex-wrap">
+          <p className="text-xs text-neutral-600">
+            {data.total_groups} duplicate group{data.total_groups === 1 ? "" : "s"} &middot;{" "}
+            {data.total_duplicates} duplicate{data.total_duplicates === 1 ? "" : "s"} that can be removed
+          </p>
+          {data.groups.some((g) => g.enrichment_pending) && (
+            <span className="flex items-center gap-1.5 text-xs text-neutral-500">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Enriching metadata&hellip;
+            </span>
+          )}
+        </div>
       )}
 
       {/* Content */}
