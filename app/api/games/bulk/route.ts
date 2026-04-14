@@ -75,6 +75,7 @@ export async function POST(req: NextRequest) {
         }
       }
     } else if (action === "trash") {
+      let alreadyGone = 0;
       for (const id of ids) {
         try {
           const game = db.select().from(games).where(eq(games.id, id)).get();
@@ -82,8 +83,25 @@ export async function POST(req: NextRequest) {
             errors.push({ id, message: "Game not found" });
             continue;
           }
+          // Graceful missing-file handling: auto-hide rather than error
           if (!fs.existsSync(game.file_path)) {
-            errors.push({ id, message: `File not found on disk: ${game.file_path}` });
+            db.insert(file_operations)
+              .values({
+                game_id: id,
+                operation: "auto_hidden_missing",
+                actor: "user",
+                timestamp: now,
+                file_path_before: game.file_path,
+                hash_sha1: game.hash_sha1,
+                notes: "file not found on disk when trash was requested",
+              })
+              .run();
+            db.update(games)
+              .set({ hidden: true, hidden_at: now, hidden_reason: "missing-on-disk" })
+              .where(eq(games.id, id))
+              .run();
+            alreadyGone++;
+            processed++;
             continue;
           }
 
@@ -136,6 +154,10 @@ export async function POST(req: NextRequest) {
         } catch (err) {
           errors.push({ id, message: err instanceof Error ? err.message : String(err) });
         }
+      }
+      // Surface already_gone count so the UI can display a quiet success message
+      if (alreadyGone > 0) {
+        return NextResponse.json({ processed, errors, already_gone: alreadyGone });
       }
     } else {
       return NextResponse.json({ error: "Invalid action" }, { status: 400 });

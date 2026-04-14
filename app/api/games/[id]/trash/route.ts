@@ -26,8 +26,32 @@ export async function POST(
     if (!game) {
       return NextResponse.json({ error: "Game not found" }, { status: 404 });
     }
+
+    // Graceful missing-file handling: if the file was deleted externally, mark it
+    // hidden with reason='missing-on-disk' instead of returning an error.
     if (!fs.existsSync(game.file_path)) {
-      return NextResponse.json({ error: "File not found on disk" }, { status: 404 });
+      const now = new Date().toISOString();
+      db.insert(file_operations)
+        .values({
+          game_id: gameId,
+          operation: "auto_hidden_missing",
+          actor: "user",
+          timestamp: now,
+          file_path_before: game.file_path,
+          hash_sha1: game.hash_sha1,
+          notes: "file not found on disk when trash was requested",
+        })
+        .run();
+      db.update(games)
+        .set({ hidden: true, hidden_at: now, hidden_reason: "missing-on-disk" })
+        .where(eq(games.id, gameId))
+        .run();
+      return NextResponse.json({
+        ok: true,
+        moved: 0,
+        already_gone: 1,
+        note: "File was already removed from disk and has been cleaned from the library.",
+      });
     }
 
     // Look up system slug for the trash path

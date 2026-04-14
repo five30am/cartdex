@@ -7,19 +7,20 @@ import * as crc32Module from "buffer-crc32";
 const crc32 = (crc32Module as any).default ?? crc32Module;
 import { db } from "@/lib/db";
 import { systems, games, file_operations } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, or, isNull, ne } from "drizzle-orm";
 
 export interface IngestResult {
   discovered: number;
   newFiles: number;
   hashed: number;
   skipped: number;
+  reconciled: number;
   errors: string[];
 }
 
 export interface JobStatus {
   state: "idle" | "running" | "done" | "error";
-  phase?: "discovering" | "hashing";
+  phase?: "discovering" | "hashing" | "reconciling";
   progress?: { current: number; total: number };
   result?: IngestResult;
   error?: string;
@@ -103,8 +104,76 @@ function walkDirectory(dir: string): string[] {
   return results;
 }
 
+/**
+ * Reconcile phase: iterate ALL game rows (including hashed ones) and check whether
+ * each file still exists on disk. Rows that are already hidden for 'trashed' or
+ * 'missing-on-disk' reasons are skipped (idempotent). Any other row whose file is
+ * absent gets hidden with hidden_reason='missing-on-disk' and an audit entry.
+ *
+ * Missing-on-disk rows still participate in the Phase 1 hash-first rename-detection
+ * mechanic because they remain in the DB — only the hidden flag changes.
+ *
+ * Returns the count of rows newly marked missing.
+ */
+export async function reconcileMissingFiles(
+  onProgress?: (current: number, total: number) => void
+): Promise<number> {
+  // Fetch all game rows that are NOT already hidden for the two skip reasons
+  const candidates = db
+    .select({ id: games.id, file_path: games.file_path, hash_sha1: games.hash_sha1 })
+    .from(games)
+    .where(
+      or(
+        eq(games.hidden, false),
+        // hidden=true but for a reason other than trashed/missing-on-disk (edge case)
+        and(
+          eq(games.hidden, true),
+          isNull(games.hidden_reason)
+        ),
+        and(
+          eq(games.hidden, true),
+          ne(games.hidden_reason, "trashed"),
+          ne(games.hidden_reason, "missing-on-disk")
+        )
+      )
+    )
+    .all();
+
+  const total = candidates.length;
+  let reconciled = 0;
+
+  for (let i = 0; i < candidates.length; i++) {
+    const row = candidates[i];
+    onProgress?.(i + 1, total);
+
+    if (fs.existsSync(row.file_path)) continue;
+
+    const now = new Date().toISOString();
+    db.insert(file_operations)
+      .values({
+        game_id: row.id,
+        operation: "auto_hidden_missing",
+        actor: "scanner",
+        timestamp: now,
+        file_path_before: row.file_path,
+        hash_sha1: row.hash_sha1,
+        notes: "file not found on disk during reconciliation pass",
+      })
+      .run();
+
+    db.update(games)
+      .set({ hidden: true, hidden_at: now, hidden_reason: "missing-on-disk" })
+      .where(eq(games.id, row.id))
+      .run();
+
+    reconciled++;
+  }
+
+  return reconciled;
+}
+
 export async function ingestDirectory(romRoot: string): Promise<IngestResult> {
-  const result: IngestResult = { discovered: 0, newFiles: 0, hashed: 0, skipped: 0, errors: [] };
+  const result: IngestResult = { discovered: 0, newFiles: 0, hashed: 0, skipped: 0, reconciled: 0, errors: [] };
 
   // Load all systems and build lookup structures
   const allSystems = db.select().from(systems).all();
@@ -294,17 +363,9 @@ export async function ingestDirectory(romRoot: string): Promise<IngestResult> {
     scanJob.progress = { current: i + 1, total: unhashed.length };
 
     try {
-      // If the file is gone and it was trashed, mark as missing rather than erroring
+      // If the file is gone, skip cleanly — Phase 3 reconcile will handle marking it hidden
       if (!fs.existsSync(game.file_path)) {
-        const row = db.select({ hidden_reason: games.hidden_reason })
-          .from(games)
-          .where(eq(games.id, game.id))
-          .get();
-        if (row?.hidden_reason === "trashed") {
-          result.skipped++;
-          continue;
-        }
-        result.errors.push(`${game.file_path}: file missing (may have been moved or deleted)`);
+        result.skipped++;
         continue;
       }
 
@@ -325,6 +386,16 @@ export async function ingestDirectory(romRoot: string): Promise<IngestResult> {
       result.errors.push(`${game.file_path}: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
+
+  // --- Phase 3: Reconcile ---
+  // Walk ALL game rows (hashed and unhashed) and mark any whose file is missing
+  // on disk as hidden with reason='missing-on-disk'. Skips rows already trashed
+  // or already marked missing. This catches files deleted externally via CLI.
+  scanJob.phase = "reconciling";
+
+  result.reconciled = await reconcileMissingFiles((current, total) => {
+    scanJob.progress = { current, total };
+  });
 
   return result;
 }

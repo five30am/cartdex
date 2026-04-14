@@ -30,6 +30,7 @@ export function DeleteModal({ open, onClose, games, onHideSuccess, onTrashSucces
   const [step, setStep] = useState<Step>("choose");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
 
   const label = games.length === 1 ? "1 file" : `${games.length} files`;
 
@@ -37,6 +38,7 @@ export function DeleteModal({ open, onClose, games, onHideSuccess, onTrashSucces
     if (loading) return;
     setStep("choose");
     setError("");
+    setInfo("");
     onClose();
   }
 
@@ -83,6 +85,17 @@ export function DeleteModal({ open, onClose, games, onHideSuccess, onTrashSucces
       }
       if (data.errors?.length > 0) {
         setError(`${data.processed} moved, ${data.errors.length} failed: ${data.errors[0]?.message}`);
+        return;
+      }
+      // Surface a quiet message when some files were already gone from disk
+      const alreadyGone: number = data.already_gone ?? 0;
+      if (alreadyGone > 0 && data.processed === alreadyGone) {
+        // All files were already missing — still a success, just note it
+        setInfo(`${alreadyGone} file${alreadyGone === 1 ? " was" : "s were"} already removed from disk and ${alreadyGone === 1 ? "has" : "have"} been cleaned from the library.`);
+        setTimeout(() => {
+          onTrashSuccess?.(games.map((g) => g.id));
+          handleClose();
+        }, 2500);
         return;
       }
       onTrashSuccess?.(games.map((g) => g.id));
@@ -201,12 +214,13 @@ export function DeleteModal({ open, onClose, games, onHideSuccess, onTrashSucces
             </div>
 
             {error && <p className="text-xs text-red-400">{error}</p>}
+            {info && <p className="text-xs text-blue-400">{info}</p>}
 
             <div className="flex justify-end gap-2">
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => { setStep("choose"); setError(""); }}
+                onClick={() => { setStep("choose"); setError(""); setInfo(""); }}
                 disabled={loading}
                 className="text-neutral-400 hover:text-neutral-200"
               >
