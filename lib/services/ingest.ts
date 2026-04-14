@@ -6,7 +6,7 @@ import * as crc32Module from "buffer-crc32";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const crc32 = (crc32Module as any).default ?? crc32Module;
 import { db } from "@/lib/db";
-import { systems, games } from "@/lib/db/schema";
+import { systems, games, file_operations } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 
 export interface IngestResult {
@@ -129,10 +129,23 @@ export async function ingestDirectory(romRoot: string): Promise<IngestResult> {
   result.discovered = files.length;
   scanJob.progress = { current: 0, total: files.length };
 
-  // Build a set of known file paths from the DB for fast lookup
+  // Build a set of known file paths from the DB for fast lookup.
+  // Include hidden rows — their paths are still "known" so we don't re-insert them.
   const knownPaths = new Set(
     db.select({ file_path: games.file_path }).from(games).all().map((r) => r.file_path)
   );
+
+  // Pre-build a hash→game index for hidden rows.
+  // Used for hash-first matching when a hidden file has been moved externally.
+  type HiddenRow = { id: number; file_path: string; hash_sha1: string | null };
+  const hiddenByHash = new Map<string, HiddenRow>();
+  db.select({ id: games.id, file_path: games.file_path, hash_sha1: games.hash_sha1 })
+    .from(games)
+    .where(eq(games.hidden, true))
+    .all()
+    .forEach((r) => {
+      if (r.hash_sha1) hiddenByHash.set(r.hash_sha1, r);
+    });
 
   for (let i = 0; i < files.length; i++) {
     const filePath = files[i];
@@ -150,7 +163,7 @@ export async function ingestDirectory(romRoot: string): Promise<IngestResult> {
       continue;
     }
 
-    // Already tracked — skip entirely
+    // Already tracked by path — skip entirely
     if (knownPaths.has(filePath)) {
       result.skipped++;
       continue;
@@ -161,6 +174,44 @@ export async function ingestDirectory(romRoot: string): Promise<IngestResult> {
       const filename = path.basename(filePath);
       const title = titleFromFilename(filename);
       const slug = slugify(title);
+
+      // Hash-first matching: if this file's SHA-1 matches a hidden row, the
+      // file was moved externally — update its path and preserve the hidden flag.
+      // We must hash the file first to check (Phase 2 hasn't run yet).
+      let resolvedAsHidden = false;
+      try {
+        const hashes = await computeHashes(filePath);
+        const hiddenMatch = hiddenByHash.get(hashes.sha1);
+        if (hiddenMatch && hiddenMatch.file_path !== filePath) {
+          // File was moved; update path, keep hidden flag, write audit record
+          const now = new Date().toISOString();
+          db.insert(file_operations)
+            .values({
+              game_id: hiddenMatch.id,
+              operation: "path_updated",
+              actor: "scanner",
+              timestamp: now,
+              file_path_before: hiddenMatch.file_path,
+              file_path_after: filePath,
+              hash_sha1: hashes.sha1,
+              notes: "file moved externally; hidden flag preserved",
+            })
+            .run();
+          db.update(games)
+            .set({ file_path: filePath, hash_sha1: hashes.sha1, hashed: true })
+            .where(eq(games.id, hiddenMatch.id))
+            .run();
+          // Update knownPaths so future iterations in this scan see the new path
+          knownPaths.delete(hiddenMatch.file_path);
+          knownPaths.add(filePath);
+          resolvedAsHidden = true;
+          result.skipped++;
+        }
+      } catch {
+        // Hash failed — fall through to normal insert; the file will be hashed in Phase 2
+      }
+
+      if (resolvedAsHidden) continue;
 
       db.insert(games)
         .values({
@@ -197,6 +248,20 @@ export async function ingestDirectory(romRoot: string): Promise<IngestResult> {
     scanJob.progress = { current: i + 1, total: unhashed.length };
 
     try {
+      // If the file is gone and it was trashed, mark as missing rather than erroring
+      if (!fs.existsSync(game.file_path)) {
+        const row = db.select({ hidden_reason: games.hidden_reason })
+          .from(games)
+          .where(eq(games.id, game.id))
+          .get();
+        if (row?.hidden_reason === "trashed") {
+          result.skipped++;
+          continue;
+        }
+        result.errors.push(`${game.file_path}: file missing (may have been moved or deleted)`);
+        continue;
+      }
+
       const hashes = await computeHashes(game.file_path);
 
       db.update(games)

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ActionButtons } from "@/components/action-buttons";
-import { Settings, Database } from "lucide-react";
+import { Settings, Database, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function Nav() {
@@ -28,6 +28,8 @@ export function Nav() {
             <NavLink href="/series" active={pathname.startsWith("/series")}>Series</NavLink>
             <NavLink href="/games" active={pathname.startsWith("/games")}>All Games</NavLink>
             <NavLink href="/collections" active={pathname.startsWith("/collections")}>Collections</NavLink>
+            <NavLink href="/duplicates" active={pathname.startsWith("/duplicates")}>Duplicates</NavLink>
+            <NavLink href="/trash" active={pathname.startsWith("/trash")}>Trash</NavLink>
           </nav>
         </div>
 
@@ -35,6 +37,18 @@ export function Nav() {
         <div className="flex items-center gap-3">
           <ActionButtons />
           <div className="w-px h-5 bg-white/10" />
+          <Link
+            href="/audit"
+            className={cn(
+              "p-1.5 rounded-md transition-colors",
+              pathname.startsWith("/audit")
+                ? "text-white bg-white/10"
+                : "text-neutral-500 hover:text-white hover:bg-white/8"
+            )}
+            title="Audit Log"
+          >
+            <ClipboardList className="w-4 h-4" />
+          </Link>
           <Link
             href="/settings"
             className={cn(
