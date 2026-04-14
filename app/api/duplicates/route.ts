@@ -43,13 +43,13 @@ export async function GET(req: NextRequest) {
       groups = groups.filter(
         (g) =>
           g.canonical_title.includes(q) ||
-          g.keep.title.toLowerCase().includes(q) ||
-          g.duplicates.some((d) => d.title.toLowerCase().includes(q))
+          g.all_files.some((f) => f.title.toLowerCase().includes(q))
       );
     }
 
     const total_groups = groups.length;
-    const total_duplicates = groups.reduce((sum, g) => sum + g.duplicates.length, 0);
+    // total_duplicates = all files minus one keep per group
+    const total_duplicates = groups.reduce((sum, g) => sum + g.all_files.length - 1, 0);
     const pages = Math.max(1, Math.ceil(total_groups / limit));
     const offset = (page - 1) * limit;
     const paginated = groups.slice(offset, offset + limit);

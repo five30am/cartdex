@@ -32,8 +32,8 @@ interface DuplicateGroup {
   system_id: number;
   system_name: string;
   system_slug: string;
-  keep: DuplicateEntry;
-  duplicates: DuplicateEntry[];
+  all_files: DuplicateEntry[];
+  recommended_keep_id: number;
 }
 
 interface ApiResponse {
@@ -154,8 +154,11 @@ export function DuplicateBrowser() {
 
   function selectAll() {
     if (!data) return;
-    const allDupIds = data.groups.flatMap((g) => g.duplicates.map((d) => d.id));
-    setSelected(new Set(allDupIds));
+    // Select all files except the recommended keep in each group
+    const ids = data.groups.flatMap((g) =>
+      g.all_files.filter((f) => f.id !== g.recommended_keep_id).map((f) => f.id)
+    );
+    setSelected(new Set(ids));
   }
 
   function clearSelection() {
@@ -171,9 +174,9 @@ export function DuplicateBrowser() {
 
   const selectedGames = data
     ? data.groups
-        .flatMap((g) => g.duplicates)
-        .filter((d) => selected.has(d.id))
-        .map((d) => ({ id: d.id, title: d.title }))
+        .flatMap((g) => g.all_files)
+        .filter((f) => selected.has(f.id))
+        .map((f) => ({ id: f.id, title: f.title }))
     : [];
 
   function handleRemoveSuccess(ids: number[]) {
@@ -305,77 +308,57 @@ export function DuplicateBrowser() {
                   </span>
                 </div>
                 <span className="text-xs text-neutral-600 shrink-0 ml-2">
-                  {group.duplicates.length + 1} copies
+                  {group.all_files.length} copies
                 </span>
               </div>
 
               <div className="p-3 space-y-2">
-                {/* KEEP row */}
-                <div className="border-l-2 border-green-600 bg-green-950/20 rounded-r-md px-3 py-2.5">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[10px] font-bold text-green-500 uppercase tracking-wider">
-                      Keep
-                    </span>
-                    <span className="text-sm text-neutral-200 truncate flex-1 min-w-0">
-                      {group.keep.title}
-                    </span>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <RegionBadge region={group.keep.region} />
-                      <span className="text-xs text-neutral-600 font-mono">
-                        {formatBytes(group.keep.file_size)}
-                      </span>
-                      <HashBadge hashed={group.keep.hashed} />
-                    </div>
-                  </div>
-                  <div className="mt-1.5 space-y-0.5">
-                    <p className="text-[11px] text-neutral-600 font-mono truncate" title={toUnraidPath(group.keep.file_path)}>
-                      {toUnraidPath(group.keep.file_path)}
-                    </p>
-                    <p className="text-[11px] text-neutral-700">
-                      Created {formatFileDate(group.keep.file_created_at)}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Duplicate rows */}
-                {group.duplicates.map((dup) => (
-                  <label
-                    key={dup.id}
-                    className={cn(
-                      "flex flex-col gap-1.5 px-3 py-2 rounded-md cursor-pointer transition-colors",
-                      selected.has(dup.id)
-                        ? "bg-blue-950/30 border border-blue-800/40"
-                        : "hover:bg-neutral-900 border border-transparent"
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        checked={selected.has(dup.id)}
-                        onChange={() => toggleSelect(dup.id)}
-                        className="w-3.5 h-3.5 rounded border-neutral-600 accent-blue-500 shrink-0"
-                      />
-                      <span className="text-sm text-neutral-300 truncate flex-1 min-w-0">
-                        {dup.title}
-                      </span>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <RegionBadge region={dup.region} />
-                        <span className="text-xs text-neutral-600 font-mono">
-                          {formatBytes(dup.file_size)}
+                {group.all_files.map((file) => {
+                  const isRecommended = file.id === group.recommended_keep_id;
+                  return (
+                    <label
+                      key={file.id}
+                      className={cn(
+                        "flex flex-col gap-1.5 px-3 py-2 rounded-md cursor-pointer transition-colors",
+                        selected.has(file.id)
+                          ? "bg-blue-950/30 border border-blue-800/40"
+                          : "hover:bg-neutral-900 border border-transparent"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={selected.has(file.id)}
+                          onChange={() => toggleSelect(file.id)}
+                          className="w-3.5 h-3.5 rounded border-neutral-600 accent-blue-500 shrink-0"
+                        />
+                        <span className="text-sm text-neutral-300 truncate flex-1 min-w-0">
+                          {file.title}
                         </span>
-                        <HashBadge hashed={dup.hashed} />
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {isRecommended && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border bg-green-950/40 text-green-500 border-green-800/40">
+                              recommended
+                            </span>
+                          )}
+                          <RegionBadge region={file.region} />
+                          <span className="text-xs text-neutral-600 font-mono">
+                            {formatBytes(file.file_size)}
+                          </span>
+                          <HashBadge hashed={file.hashed} />
+                        </div>
                       </div>
-                    </div>
-                    <div className="pl-6 space-y-0.5">
-                      <p className="text-[11px] text-neutral-600 font-mono truncate" title={toUnraidPath(dup.file_path)}>
-                        {toUnraidPath(dup.file_path)}
-                      </p>
-                      <p className="text-[11px] text-neutral-700">
-                        Created {formatFileDate(dup.file_created_at)}
-                      </p>
-                    </div>
-                  </label>
-                ))}
+                      <div className="pl-6 space-y-0.5">
+                        <p className="text-[11px] text-neutral-600 font-mono truncate" title={toUnraidPath(file.file_path)}>
+                          {toUnraidPath(file.file_path)}
+                        </p>
+                        <p className="text-[11px] text-neutral-700">
+                          Created {formatFileDate(file.file_created_at)}
+                        </p>
+                      </div>
+                    </label>
+                  );
+                })}
               </div>
             </div>
           ))}

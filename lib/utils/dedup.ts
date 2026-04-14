@@ -113,8 +113,10 @@ export interface DuplicateGroup {
   system_id: number;
   system_name: string;
   system_slug: string;
-  keep: DuplicateEntry;
-  duplicates: DuplicateEntry[];
+  /** All files in the group — no pre-split into keep/duplicates. */
+  all_files: DuplicateEntry[];
+  /** ID of the file the region algorithm would have recommended keeping. */
+  recommended_keep_id: number;
 }
 
 /**
@@ -158,15 +160,16 @@ export function buildDuplicateGroups(rows: GameRow[]): DuplicateGroup[] {
       return a.title.localeCompare(b.title);
     });
 
-    const [keep, ...duplicates] = entries;
+    // First entry after sort is the algorithm's recommended keep
+    const recommended_keep_id = entries[0].id;
 
     groups.push({
       canonical_title: canonical,
       system_id: bucket[0].system_id,
       system_name: bucket[0].system_name,
       system_slug: bucket[0].system_slug,
-      keep,
-      duplicates,
+      all_files: entries,
+      recommended_keep_id,
     });
   }
 
