@@ -40,6 +40,8 @@ export const games = sqliteTable("games", {
   hidden_at: text("hidden_at"),
   hidden_reason: text("hidden_reason"),
   scraped_at: text("scraped_at"),
+  /** Filesystem creation/birth time (ctime) captured at ingest. ISO-8601 string. */
+  file_created_at: text("file_created_at"),
   created_at: text("created_at")
     .notNull()
     .default(sql`(datetime('now'))`),

@@ -21,6 +21,7 @@ interface DuplicateEntry {
   title: string;
   file_path: string;
   file_size: number | null;
+  file_created_at: string | null;
   region: string;
   hash_sha1: string | null;
   hashed: boolean;
@@ -48,6 +49,27 @@ function formatBytes(bytes: number | null): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+/**
+ * Translate container-internal path to the Unraid host path Aaron sees in Finder/SMB.
+ * Container: /roms/<platform>/... → Unraid: /mnt/user/data/media/roms/<platform>/...
+ */
+function toUnraidPath(containerPath: string): string {
+  if (containerPath.startsWith("/roms/")) {
+    return "/mnt/user/data/media/roms/" + containerPath.slice("/roms/".length);
+  }
+  return containerPath;
+}
+
+function formatFileDate(isoString: string | null): string {
+  if (!isoString) return "—";
+  try {
+    const d = new Date(isoString);
+    return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+  } catch {
+    return "—";
+  }
 }
 
 function RegionBadge({ region }: { region: string }) {
@@ -273,15 +295,18 @@ export function DuplicateBrowser() {
             >
               {/* Group header */}
               <div className="flex items-center justify-between px-4 py-2.5 bg-neutral-900/60 border-b border-neutral-800">
-                <span className="text-sm font-medium text-neutral-200 capitalize">
-                  {group.canonical_title}
-                </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-neutral-500 font-mono">{group.system_name}</span>
-                  <span className="text-xs text-neutral-600">
-                    &middot; {group.duplicates.length + 1} copies
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-xs font-semibold text-blue-400 shrink-0 uppercase tracking-wide">
+                    {group.system_name}
+                  </span>
+                  <span className="text-neutral-600 shrink-0">&middot;</span>
+                  <span className="text-sm font-medium text-neutral-200 capitalize truncate">
+                    {group.canonical_title}
                   </span>
                 </div>
+                <span className="text-xs text-neutral-600 shrink-0 ml-2">
+                  {group.duplicates.length + 1} copies
+                </span>
               </div>
 
               <div className="p-3 space-y-2">
@@ -302,6 +327,14 @@ export function DuplicateBrowser() {
                       <HashBadge hashed={group.keep.hashed} />
                     </div>
                   </div>
+                  <div className="mt-1.5 space-y-0.5">
+                    <p className="text-[11px] text-neutral-600 font-mono truncate" title={toUnraidPath(group.keep.file_path)}>
+                      {toUnraidPath(group.keep.file_path)}
+                    </p>
+                    <p className="text-[11px] text-neutral-700">
+                      Created {formatFileDate(group.keep.file_created_at)}
+                    </p>
+                  </div>
                 </div>
 
                 {/* Duplicate rows */}
@@ -309,27 +342,37 @@ export function DuplicateBrowser() {
                   <label
                     key={dup.id}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-colors",
+                      "flex flex-col gap-1.5 px-3 py-2 rounded-md cursor-pointer transition-colors",
                       selected.has(dup.id)
                         ? "bg-blue-950/30 border border-blue-800/40"
                         : "hover:bg-neutral-900 border border-transparent"
                     )}
                   >
-                    <input
-                      type="checkbox"
-                      checked={selected.has(dup.id)}
-                      onChange={() => toggleSelect(dup.id)}
-                      className="w-3.5 h-3.5 rounded border-neutral-600 accent-blue-500 shrink-0"
-                    />
-                    <span className="text-sm text-neutral-300 truncate flex-1 min-w-0">
-                      {dup.title}
-                    </span>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <RegionBadge region={dup.region} />
-                      <span className="text-xs text-neutral-600 font-mono">
-                        {formatBytes(dup.file_size)}
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={selected.has(dup.id)}
+                        onChange={() => toggleSelect(dup.id)}
+                        className="w-3.5 h-3.5 rounded border-neutral-600 accent-blue-500 shrink-0"
+                      />
+                      <span className="text-sm text-neutral-300 truncate flex-1 min-w-0">
+                        {dup.title}
                       </span>
-                      <HashBadge hashed={dup.hashed} />
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <RegionBadge region={dup.region} />
+                        <span className="text-xs text-neutral-600 font-mono">
+                          {formatBytes(dup.file_size)}
+                        </span>
+                        <HashBadge hashed={dup.hashed} />
+                      </div>
+                    </div>
+                    <div className="pl-6 space-y-0.5">
+                      <p className="text-[11px] text-neutral-600 font-mono truncate" title={toUnraidPath(dup.file_path)}>
+                        {toUnraidPath(dup.file_path)}
+                      </p>
+                      <p className="text-[11px] text-neutral-700">
+                        Created {formatFileDate(dup.file_created_at)}
+                      </p>
                     </div>
                   </label>
                 ))}

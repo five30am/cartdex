@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
         title: games.title,
         file_path: games.file_path,
         file_size: games.file_size,
+        file_created_at: games.file_created_at,
         hash_sha1: games.hash_sha1,
         hashed: games.hashed,
         system_id: games.system_id,

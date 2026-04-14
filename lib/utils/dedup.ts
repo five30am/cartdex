@@ -89,6 +89,7 @@ export interface GameRow {
   title: string;
   file_path: string;
   file_size: number | null;
+  file_created_at: string | null;
   hash_sha1: string | null;
   hashed: boolean;
   system_id: number;
@@ -101,6 +102,7 @@ export interface DuplicateEntry {
   title: string;
   file_path: string;
   file_size: number | null;
+  file_created_at: string | null;
   region: RegionLabel;
   hash_sha1: string | null;
   hashed: boolean;
@@ -143,6 +145,7 @@ export function buildDuplicateGroups(rows: GameRow[]): DuplicateGroup[] {
       title: r.title,
       file_path: r.file_path,
       file_size: r.file_size,
+      file_created_at: r.file_created_at,
       region: detectRegion(r.title),
       hash_sha1: r.hash_sha1,
       hashed: r.hashed,
