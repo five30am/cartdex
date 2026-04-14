@@ -135,6 +135,30 @@ export function ensureSchema() {
     // Column already exists — ignore
   }
 
+  // v1.2.1: scraper-backed region metadata for metadata-first dedup scoring
+  const scraperCols: Array<[string, string]> = [
+    ["scraper_region", "TEXT"],
+    ["scraper_languages", "TEXT"],
+    ["scraper_is_primary_release", "INTEGER"],
+    ["scraper_source", "TEXT"],
+    ["scraper_fetched_at", "TEXT"],
+  ];
+  for (const [col, type] of scraperCols) {
+    try {
+      sqlite.exec(`ALTER TABLE games ADD COLUMN ${col} ${type}`);
+      console.log(`  Added ${col} column to games`);
+    } catch {
+      // Column already exists — ignore
+    }
+  }
+
+  // Seed preferred_region setting if not present
+  const existingRegion = sqlite.prepare(`SELECT key FROM settings WHERE key = 'preferred_region'`).get();
+  if (!existingRegion) {
+    sqlite.prepare(`INSERT INTO settings (key, value) VALUES ('preferred_region', 'USA')`).run();
+    console.log("  Seeded preferred_region = USA");
+  }
+
   // v1.1: fix psx/arcade slug mismatch — reassign games whose file_path starts with the arcade
   // directory to the arcade system (if arcade system is now registered).
   const arcadeSystem = sqlite.prepare(`SELECT id FROM systems WHERE slug = 'arcade'`).get() as { id: number } | undefined;

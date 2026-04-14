@@ -6,6 +6,9 @@ import { eq } from "drizzle-orm";
 const ENV_FALLBACKS: Record<string, string> = {
   screenscraper_username: "SCREENSCRAPER_USERNAME",
   screenscraper_password: "SCREENSCRAPER_PASSWORD",
+  // Dev credentials — set via Portainer stack env vars
+  screenscraper_dev_id: "SCREENSCRAPER_DEV_ID",
+  screenscraper_dev_password: "SCREENSCRAPER_DEV_PASSWORD",
   twitch_client_id: "TWITCH_CLIENT_ID",
   twitch_client_secret: "TWITCH_CLIENT_SECRET",
   rom_path: "ROM_ROOT",

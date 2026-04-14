@@ -45,6 +45,12 @@ export const games = sqliteTable("games", {
   created_at: text("created_at")
     .notNull()
     .default(sql`(datetime('now'))`),
+  // v1.2.1 — scraper-backed region metadata for dedup scoring
+  scraper_region: text("scraper_region"),
+  scraper_languages: text("scraper_languages", { mode: "json" }).$type<string[]>(),
+  scraper_is_primary_release: integer("scraper_is_primary_release", { mode: "boolean" }),
+  scraper_source: text("scraper_source").$type<"screenscraper" | "igdb" | null>(),
+  scraper_fetched_at: text("scraper_fetched_at"),
 });
 
 export const franchises = sqliteTable("franchises", {

@@ -25,6 +25,10 @@ interface DuplicateEntry {
   region: string;
   hash_sha1: string | null;
   hashed: boolean;
+  scraper_region: string | null;
+  scraper_languages: string[];
+  scraper_is_primary_release: boolean;
+  scraper_source: "screenscraper" | "igdb" | null;
 }
 
 interface DuplicateGroup {
@@ -34,6 +38,8 @@ interface DuplicateGroup {
   system_slug: string;
   all_files: DuplicateEntry[];
   recommended_keep_id: number;
+  recommended_source: "screenscraper" | "filename";
+  recommended_reason: string;
 }
 
 interface ApiResponse {
@@ -337,8 +343,11 @@ export function DuplicateBrowser() {
                         </span>
                         <div className="flex items-center gap-1.5 shrink-0">
                           {isRecommended && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border bg-green-950/40 text-green-500 border-green-800/40">
-                              recommended
+                            <span
+                              className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border bg-green-950/40 text-green-500 border-green-800/40 cursor-help"
+                              title={group.recommended_reason}
+                            >
+                              {group.recommended_source === "screenscraper" ? "recommended \u2605" : "recommended"}
                             </span>
                           )}
                           <RegionBadge region={file.region} />
