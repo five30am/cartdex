@@ -37,7 +37,8 @@ function getSystemsWithCounts() {
 export default function HomePage() {
   const allSystems = getSystemsWithCounts();
   const totalGames = allSystems.reduce((sum, s) => sum + s.game_count, 0);
-  const systemsWithGames = allSystems.filter((s) => s.game_count > 0).length;
+  // Only show systems that have at least one non-hidden game on the landing page
+  const activeSystems = allSystems.filter((s) => s.game_count > 0);
   const hasSettings = hasAnySettingsConfigured();
 
   return (
@@ -55,15 +56,15 @@ export default function HomePage() {
           </div>
           <div className="hidden sm:flex items-center gap-6">
             <StatPill icon={<Gamepad2 className="w-3.5 h-3.5" />} value={totalGames.toLocaleString()} label="games" />
-            <StatPill icon={<Layers className="w-3.5 h-3.5" />} value={`${systemsWithGames}/${allSystems.length}`} label="systems" />
+            <StatPill icon={<Layers className="w-3.5 h-3.5" />} value={`${activeSystems.length}/${allSystems.length}`} label="systems" />
           </div>
         </div>
 
-        {allSystems.length === 0 ? (
+        {activeSystems.length === 0 ? (
           <EmptyState />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {allSystems.map((system) => (
+            {activeSystems.map((system) => (
               <SystemCard key={system.id} system={system} />
             ))}
           </div>
