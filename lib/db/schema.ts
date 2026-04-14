@@ -36,6 +36,9 @@ export const games = sqliteTable("games", {
   file_size: integer("file_size"),
   hashed: integer("hashed", { mode: "boolean" }).notNull().default(false),
   verified: integer("verified", { mode: "boolean" }).notNull().default(false),
+  hidden: integer("hidden", { mode: "boolean" }).notNull().default(false),
+  hidden_at: text("hidden_at"),
+  hidden_reason: text("hidden_reason"),
   scraped_at: text("scraped_at"),
   created_at: text("created_at")
     .notNull()
@@ -103,4 +106,18 @@ export const settings = sqliteTable("settings", {
   updated_at: text("updated_at")
     .notNull()
     .default(sql`(datetime('now'))`),
+});
+
+export const file_operations = sqliteTable("file_operations", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  game_id: integer("game_id"),
+  operation: text("operation").notNull(),
+  actor: text("actor").notNull().default("user"),
+  timestamp: text("timestamp")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+  file_path_before: text("file_path_before"),
+  file_path_after: text("file_path_after"),
+  hash_sha1: text("hash_sha1"),
+  notes: text("notes"),
 });

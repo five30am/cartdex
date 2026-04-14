@@ -85,6 +85,30 @@ export function ensureSchema() {
     // Column already exists — ignore
   }
 
+  // Add hidden/trash columns to games table (v1 dedup feature)
+  try { sqlite.exec(`ALTER TABLE games ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0`); } catch { /* already exists */ }
+  try { sqlite.exec(`ALTER TABLE games ADD COLUMN hidden_at TEXT`); } catch { /* already exists */ }
+  try { sqlite.exec(`ALTER TABLE games ADD COLUMN hidden_reason TEXT`); } catch { /* already exists */ }
+
+  // Audit log table + indexes (v1 dedup feature)
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS file_operations (
+      id               INTEGER PRIMARY KEY AUTOINCREMENT,
+      game_id          INTEGER,
+      operation        TEXT NOT NULL,
+      actor            TEXT NOT NULL DEFAULT 'user',
+      timestamp        TEXT NOT NULL DEFAULT (datetime('now')),
+      file_path_before TEXT,
+      file_path_after  TEXT,
+      hash_sha1        TEXT,
+      notes            TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_file_ops_game_id   ON file_operations(game_id);
+    CREATE INDEX IF NOT EXISTS idx_file_ops_operation ON file_operations(operation);
+    CREATE INDEX IF NOT EXISTS idx_games_hidden        ON games(hidden);
+    CREATE INDEX IF NOT EXISTS idx_games_hash_sha1     ON games(hash_sha1);
+  `);
+
   // Clean up games incorrectly ingested from .zip files (matched as NES due to extension collision)
   const zipCleanup = sqlite.prepare(`DELETE FROM games WHERE file_path LIKE '%.zip'`).run();
   if (zipCleanup.changes > 0) {
