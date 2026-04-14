@@ -34,6 +34,10 @@ export default async function SystemDetailPage({ params, searchParams }: Props) 
       genre: games.genre,
       box_art_path: games.box_art_path,
       verified: games.verified,
+      user_rating: games.user_rating,
+      favorite: games.favorite,
+      publisher: games.publisher,
+      created_at: games.created_at,
     })
     .from(games)
     .where(whereClause)

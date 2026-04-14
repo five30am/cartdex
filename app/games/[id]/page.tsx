@@ -8,6 +8,8 @@ import { ChevronLeft, CheckCircle2, FileText, EyeOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { SystemBadge } from "@/components/system-badge";
 import { AddToCollectionButton } from "./add-to-collection-button";
+import { FavoriteButton } from "@/components/favorite-button";
+import { StarRating } from "@/components/star-rating";
 
 export const dynamic = "force-dynamic";
 
@@ -127,6 +129,12 @@ export default async function GameDetailPage({ params }: Props) {
               {game.genre && (
                 <MetaItem label="Genre" value={game.genre} />
               )}
+              {game.publisher && (
+                <MetaItem label="Publisher" value={game.publisher} />
+              )}
+              {game.series && (
+                <MetaItem label="Series" value={game.series} />
+              )}
             </div>
 
             {/* Description */}
@@ -169,8 +177,14 @@ export default async function GameDetailPage({ params }: Props) {
               </div>
             </div>
 
-            {/* Add to Collection */}
+            {/* Rating */}
             <div className="mt-6">
+              <StarRating gameId={gameId} initialRating={game.user_rating ?? null} />
+            </div>
+
+            {/* Actions */}
+            <div className="mt-4 flex items-center gap-3 flex-wrap">
+              <FavoriteButton gameId={gameId} initialFavorite={game.favorite ?? false} />
               <AddToCollectionButton gameId={gameId} />
             </div>
           </div>

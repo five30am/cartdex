@@ -7,6 +7,7 @@ interface Game {
   box_art_path?: string | null;
   system_slug?: string;
   system_name?: string;
+  user_rating?: number | null;
 }
 
 interface GameGridProps {
@@ -34,7 +35,13 @@ export function GameGrid({
       {games.map((game) => (
         <GameCard
           key={game.id}
-          {...game}
+          id={game.id}
+          title={game.title}
+          year={game.year}
+          box_art_path={game.box_art_path}
+          system_slug={game.system_slug}
+          system_name={game.system_name}
+          user_rating={game.user_rating}
           showSystem={showSystem}
         />
       ))}

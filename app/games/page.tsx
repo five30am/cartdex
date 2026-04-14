@@ -26,6 +26,8 @@ export default async function AllGamesPage({ searchParams }: Props) {
       system_id: games.system_id,
       system_name: systems.name,
       system_slug: systems.slug,
+      user_rating: games.user_rating,
+      publisher: games.publisher,
     })
     .from(games)
     .innerJoin(systems, eq(games.system_id, systems.id))

@@ -159,6 +159,41 @@ export function ensureSchema() {
     console.log("  Seeded preferred_region = USA");
   }
 
+  // v1.3: user library features — favorites, ratings, publisher, series
+  const v13GameCols: Array<[string, string]> = [
+    ["favorite", "INTEGER NOT NULL DEFAULT 0"],
+    ["user_rating", "INTEGER"],
+    ["publisher", "TEXT"],
+    ["series", "TEXT"],
+  ];
+  for (const [col, type] of v13GameCols) {
+    try {
+      sqlite.exec(`ALTER TABLE games ADD COLUMN ${col} ${type}`);
+      console.log(`  Added ${col} column to games`);
+    } catch {
+      // Column already exists — ignore
+    }
+  }
+
+  // v1.3: kind column on systems (console | handheld)
+  try {
+    sqlite.exec(`ALTER TABLE systems ADD COLUMN kind TEXT NOT NULL DEFAULT 'console'`);
+    console.log("  Added kind column to systems");
+  } catch {
+    // Column already exists — ignore
+  }
+
+  // One-time migration: set correct kind for known handheld systems
+  const handhelds = ["gb", "gbc", "gba", "psp"];
+  for (const slug of handhelds) {
+    sqlite.prepare(`UPDATE systems SET kind = 'handheld' WHERE slug = ? AND kind != 'handheld'`).run(slug);
+  }
+  // Ensure consoles are explicitly set
+  const consoles = ["nes", "snes", "n64", "genesis", "mastersystem", "arcade", "psx"];
+  for (const slug of consoles) {
+    sqlite.prepare(`UPDATE systems SET kind = 'console' WHERE slug = ? AND kind != 'console'`).run(slug);
+  }
+
   // v1.1: fix psx/arcade slug mismatch — reassign games whose file_path starts with the arcade
   // directory to the arcade system (if arcade system is now registered).
   const arcadeSystem = sqlite.prepare(`SELECT id FROM systems WHERE slug = 'arcade'`).get() as { id: number } | undefined;

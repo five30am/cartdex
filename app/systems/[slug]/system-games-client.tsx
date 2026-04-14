@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { SearchBar } from "@/components/search-bar";
 import { GameGrid } from "@/components/game-grid";
 import { SelectableGameGrid } from "@/components/selectable-game-grid";
@@ -24,6 +25,10 @@ interface Game {
   box_art_path?: string | null;
   genre?: string | null;
   verified: boolean;
+  user_rating?: number | null;
+  favorite?: boolean | null;
+  publisher?: string | null;
+  created_at: string;
 }
 
 interface Props {
@@ -31,14 +36,31 @@ interface Props {
   systemSlug: string;
 }
 
-type SortOption = "title" | "year" | "year_desc" | "recent";
+type SortOption = "title" | "title_desc" | "year" | "year_desc" | "publisher" | "rating_desc" | "recent";
 
-export function SystemGamesClient({ games }: Props) {
+export function SystemGamesClient({ games, systemSlug }: Props) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const initialSort = (searchParams.get("sort") as SortOption) || "title";
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<SortOption>("title");
+  const [sort, setSort] = useState<SortOption>(initialSort);
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [showCollectionModal, setShowCollectionModal] = useState(false);
+
+  function handleSortChange(value: string | null) {
+    const newSort = (value || "title") as SortOption;
+    setSort(newSort);
+    const params = new URLSearchParams(searchParams.toString());
+    if (newSort === "title") {
+      params.delete("sort");
+    } else {
+      params.set("sort", newSort);
+    }
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }
 
   const filtered = useMemo(() => {
     let result = [...games];
@@ -50,6 +72,8 @@ export function SystemGamesClient({ games }: Props) {
 
     result.sort((a, b) => {
       switch (sort) {
+        case "title_desc":
+          return b.title.localeCompare(a.title);
         case "year":
           if (a.year && b.year) return a.year.localeCompare(b.year);
           if (a.year) return -1;
@@ -60,6 +84,18 @@ export function SystemGamesClient({ games }: Props) {
           if (b.year) return -1;
           if (a.year) return 1;
           return a.title.localeCompare(b.title);
+        case "publisher":
+          if (a.publisher && b.publisher) return a.publisher.localeCompare(b.publisher) || a.title.localeCompare(b.title);
+          if (a.publisher) return -1;
+          if (b.publisher) return 1;
+          return a.title.localeCompare(b.title);
+        case "rating_desc":
+          if (a.user_rating != null && b.user_rating != null) return b.user_rating - a.user_rating || a.title.localeCompare(b.title);
+          if (a.user_rating != null) return -1;
+          if (b.user_rating != null) return 1;
+          return a.title.localeCompare(b.title);
+        case "recent":
+          return b.created_at.localeCompare(a.created_at);
         case "title":
         default:
           return a.title.localeCompare(b.title);
@@ -112,14 +148,18 @@ export function SystemGamesClient({ games }: Props) {
           placeholder="Search games..."
           className="flex-1 max-w-sm"
         />
-        <Select value={sort} onValueChange={(v) => setSort((v ?? "title") as SortOption)}>
-          <SelectTrigger className="w-[160px] bg-neutral-900 border-neutral-700 text-neutral-200">
+        <Select value={sort} onValueChange={handleSortChange}>
+          <SelectTrigger className="w-[180px] bg-neutral-900 border-neutral-700 text-neutral-200">
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-neutral-900 border-neutral-700">
-            <SelectItem value="title" className="text-neutral-200 focus:bg-neutral-800">Title (A–Z)</SelectItem>
-            <SelectItem value="year" className="text-neutral-200 focus:bg-neutral-800">Year (oldest)</SelectItem>
-            <SelectItem value="year_desc" className="text-neutral-200 focus:bg-neutral-800">Year (newest)</SelectItem>
+            <SelectItem value="title" className="text-neutral-200 focus:bg-neutral-800">Name (A–Z)</SelectItem>
+            <SelectItem value="title_desc" className="text-neutral-200 focus:bg-neutral-800">Name (Z–A)</SelectItem>
+            <SelectItem value="year_desc" className="text-neutral-200 focus:bg-neutral-800">Release date (newest)</SelectItem>
+            <SelectItem value="year" className="text-neutral-200 focus:bg-neutral-800">Release date (oldest)</SelectItem>
+            <SelectItem value="publisher" className="text-neutral-200 focus:bg-neutral-800">Publisher (A–Z)</SelectItem>
+            <SelectItem value="rating_desc" className="text-neutral-200 focus:bg-neutral-800">Highest rated</SelectItem>
+            <SelectItem value="recent" className="text-neutral-200 focus:bg-neutral-800">Recently added</SelectItem>
           </SelectContent>
         </Select>
 

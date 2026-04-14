@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { SystemBadge } from "@/components/system-badge";
-import { Gamepad2 } from "lucide-react";
+import { Gamepad2, Star } from "lucide-react";
 
 interface GameCardProps {
   id: number;
@@ -11,6 +11,7 @@ interface GameCardProps {
   system_slug?: string;
   system_name?: string;
   showSystem?: boolean;
+  user_rating?: number | null;
 }
 
 export function GameCard({
@@ -21,6 +22,7 @@ export function GameCard({
   system_slug,
   system_name,
   showSystem = false,
+  user_rating,
 }: GameCardProps) {
   return (
     <Link href={`/games/${id}`} className="group block">
@@ -51,6 +53,12 @@ export function GameCard({
         <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
           {year && (
             <span className="text-[11px] text-neutral-700 font-mono">{year}</span>
+          )}
+          {user_rating != null && (
+            <span className="inline-flex items-center gap-0.5">
+              <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+              <span className="text-[11px] text-amber-500 font-mono">{user_rating}</span>
+            </span>
           )}
           {showSystem && system_slug && system_name && (
             <SystemBadge slug={system_slug} name={system_name} />

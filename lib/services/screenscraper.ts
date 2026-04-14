@@ -13,6 +13,9 @@ export interface ScreenScraperGame {
   region: string | null;
   languages: string[];
   is_primary_release: boolean;
+  // v1.3 — publisher and series
+  publisher: string | null;
+  series: string | null;
 }
 
 // ScreenScraper system ID mapping by our slug
@@ -66,7 +69,7 @@ function pickByLanguage(
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function parseGameData(data: any): ScreenScraperGame {
   const jeu = data?.response?.jeu;
-  if (!jeu) return { title: null, description: null, year: null, genre: null, famille: null, box_art_url: null, region: null, languages: [], is_primary_release: false };
+  if (!jeu) return { title: null, description: null, year: null, genre: null, famille: null, box_art_url: null, region: null, languages: [], is_primary_release: false, publisher: null, series: null };
 
   // Title — noms array
   const noms: AnyRecord[] = Array.isArray(jeu.noms) ? jeu.noms : jeu.noms ? [jeu.noms] : [];
@@ -131,7 +134,19 @@ function parseGameData(data: any): ScreenScraperGame {
   const is_primary_release =
     jeu.topjeu === 1 || region === "us" || region === "wor";
 
-  return { title, description, year, genre, famille, box_art_url, region, languages, is_primary_release };
+  // Publisher — editeur field
+  const editeurRaw = jeu.editeur;
+  const publisher: string | null =
+    editeurRaw && typeof editeurRaw === "object"
+      ? ((editeurRaw as AnyRecord)["text"] as string) ?? null
+      : typeof editeurRaw === "string"
+      ? editeurRaw
+      : null;
+
+  // Series — famille field (same as franchise; named "series" in our schema)
+  const series: string | null = famille;
+
+  return { title, description, year, genre, famille, box_art_url, region, languages, is_primary_release, publisher, series };
 }
 
 // One-time startup warning flag

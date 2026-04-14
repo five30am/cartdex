@@ -131,11 +131,13 @@ export async function scrapeGame(
         if (artPath) updates.box_art_path = artPath;
       }
 
-      // Step 5 — Franchise from famille
+      // Step 5 — Franchise from famille + persist publisher/series
       if (ssResult.famille) {
         const franchiseId = upsertFranchise(ssResult.famille);
         linkGameFranchise(game.id, franchiseId);
       }
+      if (ssResult.publisher) updates.publisher = ssResult.publisher;
+      if (ssResult.series) updates.series = ssResult.series;
     }
 
     // Step 6 — IGDB by title

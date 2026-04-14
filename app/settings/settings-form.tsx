@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { FolderOpen, Wifi, Key, CheckCircle2, XCircle, Minus, Loader2, Save, Zap } from "lucide-react";
+import { FolderOpen, Wifi, Key, CheckCircle2, XCircle, Minus, Loader2, Save, Zap, RefreshCw, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ServiceStatus {
@@ -95,6 +95,14 @@ function ConnectionBadge({ status }: { status: ServiceStatus }) {
   );
 }
 
+interface BackfillStatus {
+  state: "idle" | "running" | "done" | "error";
+  progress?: { current: number; total: number };
+  updated: number;
+  skipped: number;
+  errors: number;
+}
+
 export function SettingsForm() {
   const [values, setValues] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -103,6 +111,8 @@ export function SettingsForm() {
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved" | "error">("idle");
   const [saveError, setSaveError] = useState<string | null>(null);
   const [testResults, setTestResults] = useState<TestResults | null>(null);
+  const [backfill, setBackfill] = useState<BackfillStatus>({ state: "idle", updated: 0, skipped: 0, errors: 0 });
+  const [backfillPolling, setBackfillPolling] = useState(false);
 
   useEffect(() => {
     fetch("/api/settings")
@@ -163,6 +173,33 @@ export function SettingsForm() {
     } finally {
       setTesting(false);
     }
+  }
+
+  async function startBackfill() {
+    if (backfill.state === "running") return;
+    setBackfillPolling(true);
+    try {
+      await fetch("/api/backfill/publisher-series", { method: "POST" });
+      pollBackfill();
+    } catch {
+      setBackfillPolling(false);
+    }
+  }
+
+  function pollBackfill() {
+    const interval = setInterval(async () => {
+      try {
+        const data: BackfillStatus = await fetch("/api/backfill/publisher-series").then((r) => r.json());
+        setBackfill(data);
+        if (data.state === "done" || data.state === "error") {
+          clearInterval(interval);
+          setBackfillPolling(false);
+        }
+      } catch {
+        clearInterval(interval);
+        setBackfillPolling(false);
+      }
+    }, 2000);
   }
 
   if (loading) {
@@ -227,6 +264,54 @@ export function SettingsForm() {
               }
             />
           ))}
+        </SettingsCard>
+
+        {/* Backfill Publisher + Series */}
+        <SettingsCard
+          icon={<Building2 className="w-4 h-4" />}
+          title="Publisher + Series Backfill"
+          subtitle="Re-fetch publisher and series data for previously scraped games"
+        >
+          <div className="space-y-3">
+            <p className="text-xs text-neutral-600 leading-relaxed">
+              Runs in the background at 1 request/second against ScreenScraper.
+              Only targets games that have been scraped but are missing publisher or series data.
+            </p>
+            <div className="flex items-center gap-3 flex-wrap">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={startBackfill}
+                disabled={backfill.state === "running" || backfillPolling}
+                className="h-9 px-4 text-sm gap-2 text-neutral-400 border border-white/[0.06] hover:text-white hover:bg-white/[0.06] hover:border-white/10"
+              >
+                {backfill.state === "running" || backfillPolling ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-3.5 h-3.5" />
+                )}
+                {backfill.state === "running" ? "Backfilling..." : "Run Backfill"}
+              </Button>
+              {backfill.state === "running" && backfill.progress && (
+                <span className="text-xs text-neutral-500 font-mono">
+                  {backfill.progress.current} / {backfill.progress.total}
+                </span>
+              )}
+              {backfill.state === "done" && (
+                <span className="flex items-center gap-1.5 text-xs text-green-400">
+                  <CheckCircle2 className="w-3 h-3" />
+                  Done — {backfill.updated} updated, {backfill.skipped} skipped
+                  {backfill.errors > 0 && `, ${backfill.errors} errors`}
+                </span>
+              )}
+              {backfill.state === "error" && (
+                <span className="flex items-center gap-1.5 text-xs text-red-400">
+                  <XCircle className="w-3 h-3" />
+                  Backfill failed
+                </span>
+              )}
+            </div>
+          </div>
         </SettingsCard>
 
         {/* Action row */}

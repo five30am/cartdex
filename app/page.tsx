@@ -7,12 +7,12 @@ import { SystemBadge } from "@/components/system-badge";
 import Link from "next/link";
 import Image from "next/image";
 import { hasAnySettingsConfigured } from "@/lib/services/config";
-import { FolderOpen, Gamepad2, Layers, AlertTriangle, ArrowRight } from "lucide-react";
+import { FolderOpen, Gamepad2, Layers, AlertTriangle, ArrowRight, Monitor } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 function getSystemsWithCounts() {
-  const allSystems = db.select().from(systems).all();
+  const allSystems = db.select().from(systems).all() as (typeof systems.$inferSelect)[];
 
   return allSystems.map((system) => {
     const gameCount =
@@ -34,12 +34,17 @@ function getSystemsWithCounts() {
   });
 }
 
+type SystemWithCount = ReturnType<typeof getSystemsWithCounts>[number];
+
 export default function HomePage() {
   const allSystems = getSystemsWithCounts();
   const totalGames = allSystems.reduce((sum, s) => sum + s.game_count, 0);
   // Only show systems that have at least one non-hidden game on the landing page
   const activeSystems = allSystems.filter((s) => s.game_count > 0);
   const hasSettings = hasAnySettingsConfigured();
+
+  const consoles = activeSystems.filter((s) => s.kind !== "handheld");
+  const handhelds = activeSystems.filter((s) => s.kind === "handheld");
 
   return (
     <div className="px-6 py-8">
@@ -63,12 +68,57 @@ export default function HomePage() {
         {activeSystems.length === 0 ? (
           <EmptyState />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {activeSystems.map((system) => (
-              <SystemCard key={system.id} system={system} />
-            ))}
+          <div className="space-y-10">
+            {consoles.length > 0 && (
+              <SystemGroup
+                label="Consoles"
+                href="/kind/console"
+                icon={<Monitor className="w-4 h-4" />}
+                systems={consoles}
+              />
+            )}
+            {handhelds.length > 0 && (
+              <SystemGroup
+                label="Handhelds"
+                href="/kind/handheld"
+                icon={<Gamepad2 className="w-4 h-4" />}
+                systems={handhelds}
+              />
+            )}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function SystemGroup({
+  label,
+  href,
+  icon,
+  systems,
+}: {
+  label: string;
+  href: string;
+  icon: React.ReactNode;
+  systems: SystemWithCount[];
+}) {
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-neutral-600">{icon}</span>
+        <Link
+          href={href}
+          className="text-sm font-semibold text-neutral-400 hover:text-neutral-200 transition-colors uppercase tracking-wider"
+        >
+          {label}
+        </Link>
+        <span className="text-xs text-neutral-700 font-mono ml-1">{systems.length}</span>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        {systems.map((system) => (
+          <SystemCard key={system.id} system={system} />
+        ))}
       </div>
     </div>
   );
@@ -95,14 +145,7 @@ function StatPill({
 function SystemCard({
   system,
 }: {
-  system: {
-    id: number;
-    name: string;
-    slug: string;
-    game_count: number;
-    dat_source: string | null;
-    sample_art: string | null;
-  };
+  system: SystemWithCount;
 }) {
   const hasGames = system.game_count > 0;
 

@@ -16,6 +16,7 @@ export const systems = sqliteTable("systems", {
     .notNull()
     .default(sql`'[]'`),
   dat_source: text("dat_source"),
+  kind: text("kind").$type<"console" | "handheld">().notNull().default("console"),
 });
 
 export const games = sqliteTable("games", {
@@ -51,6 +52,11 @@ export const games = sqliteTable("games", {
   scraper_is_primary_release: integer("scraper_is_primary_release", { mode: "boolean" }),
   scraper_source: text("scraper_source").$type<"screenscraper" | "igdb" | null>(),
   scraper_fetched_at: text("scraper_fetched_at"),
+  // v1.3 — user library features
+  favorite: integer("favorite", { mode: "boolean" }).notNull().default(false),
+  user_rating: integer("user_rating"),
+  publisher: text("publisher"),
+  series: text("series"),
 });
 
 export const franchises = sqliteTable("franchises", {

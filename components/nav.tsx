@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ActionButtons } from "@/components/action-buttons";
-import { Settings, Database, ClipboardList } from "lucide-react";
+import { Settings, Database, ClipboardList, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function Nav() {
@@ -25,8 +25,15 @@ export function Nav() {
 
           <nav className="flex items-center">
             <NavLink href="/" active={pathname === "/"}>Systems</NavLink>
-            <NavLink href="/series" active={pathname.startsWith("/series")}>Series</NavLink>
             <NavLink href="/games" active={pathname.startsWith("/games")}>All Games</NavLink>
+            <NavLink href="/favorites" active={pathname.startsWith("/favorites")}>
+              <span className="flex items-center gap-1">
+                <Heart className={cn("w-3 h-3", pathname.startsWith("/favorites") ? "fill-pink-400 text-pink-400" : "")} />
+                Favorites
+              </span>
+            </NavLink>
+            <NavLink href="/publishers" active={pathname.startsWith("/publishers")}>Publishers</NavLink>
+            <NavLink href="/series" active={pathname.startsWith("/series")}>Series</NavLink>
             <NavLink href="/collections" active={pathname.startsWith("/collections")}>Collections</NavLink>
             <NavLink href="/duplicates" active={pathname.startsWith("/duplicates")}>Duplicates</NavLink>
             <NavLink href="/trash" active={pathname.startsWith("/trash")}>Trash</NavLink>

@@ -28,6 +28,8 @@ interface Game {
   system_id: number;
   system_name: string;
   system_slug: string;
+  user_rating?: number | null;
+  publisher?: string | null;
 }
 
 interface SystemOption {
@@ -42,7 +44,7 @@ interface Props {
   genres: string[];
 }
 
-type SortOption = "title" | "year" | "year_desc" | "system" | "recent";
+type SortOption = "title" | "title_desc" | "year" | "year_desc" | "system" | "publisher" | "rating_desc" | "recent";
 
 const PAGE_SIZE = 60;
 
@@ -72,6 +74,8 @@ export function AllGamesClient({ games, systems, genres }: Props) {
 
     result.sort((a, b) => {
       switch (sort) {
+        case "title_desc":
+          return b.title.localeCompare(a.title);
         case "year":
           if (a.year && b.year) return a.year.localeCompare(b.year);
           if (a.year) return -1;
@@ -84,6 +88,16 @@ export function AllGamesClient({ games, systems, genres }: Props) {
           return a.title.localeCompare(b.title);
         case "system":
           return a.system_name.localeCompare(b.system_name) || a.title.localeCompare(b.title);
+        case "publisher":
+          if (a.publisher && b.publisher) return a.publisher.localeCompare(b.publisher) || a.title.localeCompare(b.title);
+          if (a.publisher) return -1;
+          if (b.publisher) return 1;
+          return a.title.localeCompare(b.title);
+        case "rating_desc":
+          if (a.user_rating != null && b.user_rating != null) return b.user_rating - a.user_rating || a.title.localeCompare(b.title);
+          if (a.user_rating != null) return -1;
+          if (b.user_rating != null) return 1;
+          return a.title.localeCompare(b.title);
         case "recent":
           return b.created_at.localeCompare(a.created_at);
         case "title":
@@ -191,10 +205,13 @@ export function AllGamesClient({ games, systems, genres }: Props) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-neutral-900 border-neutral-700">
-            <SelectItem value="title" className="text-neutral-200 focus:bg-neutral-800">Title (A–Z)</SelectItem>
-            <SelectItem value="year" className="text-neutral-200 focus:bg-neutral-800">Year (oldest)</SelectItem>
-            <SelectItem value="year_desc" className="text-neutral-200 focus:bg-neutral-800">Year (newest)</SelectItem>
+            <SelectItem value="title" className="text-neutral-200 focus:bg-neutral-800">Name (A–Z)</SelectItem>
+            <SelectItem value="title_desc" className="text-neutral-200 focus:bg-neutral-800">Name (Z–A)</SelectItem>
+            <SelectItem value="year_desc" className="text-neutral-200 focus:bg-neutral-800">Release date (newest)</SelectItem>
+            <SelectItem value="year" className="text-neutral-200 focus:bg-neutral-800">Release date (oldest)</SelectItem>
+            <SelectItem value="publisher" className="text-neutral-200 focus:bg-neutral-800">Publisher (A–Z)</SelectItem>
             <SelectItem value="system" className="text-neutral-200 focus:bg-neutral-800">System</SelectItem>
+            <SelectItem value="rating_desc" className="text-neutral-200 focus:bg-neutral-800">Highest rated</SelectItem>
             <SelectItem value="recent" className="text-neutral-200 focus:bg-neutral-800">Recently added</SelectItem>
           </SelectContent>
         </Select>
@@ -267,6 +284,7 @@ export function AllGamesClient({ games, systems, genres }: Props) {
               box_art_path={game.box_art_path}
               system_slug={game.system_slug}
               system_name={game.system_name}
+              user_rating={game.user_rating}
               showSystem
             />
           ))}

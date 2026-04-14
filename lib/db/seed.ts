@@ -8,54 +8,63 @@ const SYSTEMS = [
     slug: "nes",
     extensions: [".nes"],
     dat_source: "No-Intro",
+    kind: "console" as const,
   },
   {
     name: "Super Nintendo",
     slug: "snes",
     extensions: [".sfc", ".smc"],
     dat_source: "No-Intro",
+    kind: "console" as const,
   },
   {
     name: "Nintendo 64",
     slug: "n64",
     extensions: [".z64", ".n64"],
     dat_source: "No-Intro",
+    kind: "console" as const,
   },
   {
     name: "Game Boy",
     slug: "gb",
     extensions: [".gb"],
     dat_source: "No-Intro",
+    kind: "handheld" as const,
   },
   {
     name: "Game Boy Color",
     slug: "gbc",
     extensions: [".gbc"],
     dat_source: "No-Intro",
+    kind: "handheld" as const,
   },
   {
     name: "Game Boy Advance",
     slug: "gba",
     extensions: [".gba"],
     dat_source: "No-Intro",
+    kind: "handheld" as const,
   },
   {
     name: "Sega Genesis",
     slug: "genesis",
     extensions: [".gen", ".md"],
     dat_source: "No-Intro",
+    kind: "console" as const,
   },
   {
     name: "Sega Master System",
     slug: "mastersystem",
     extensions: [".sms"],
     dat_source: "No-Intro",
+    kind: "console" as const,
   },
   {
     name: "Arcade",
     slug: "arcade",
     extensions: [".zip", ".chd"],
     dat_source: "MAME",
+    kind: "console" as const,
   },
   {
     name: "PlayStation",
@@ -65,12 +74,14 @@ const SYSTEMS = [
     // The ingest is directory-aware so extension alone is no longer the sole discriminator.
     extensions: [".bin", ".cue", ".iso", ".chd", ".m3u"],
     dat_source: "Redump",
+    kind: "console" as const,
   },
   {
     name: "PlayStation Portable",
     slug: "psp",
     extensions: [".iso", ".cso"],
     dat_source: "Redump",
+    kind: "handheld" as const,
   },
 ];
 
@@ -106,9 +117,9 @@ export function seed() {
       db.insert(systems).values(system).run();
       console.log(`  + ${system.name}`);
     } else {
-      // Update extensions in case they changed
+      // Update extensions and kind in case they changed
       db.update(systems)
-        .set({ extensions: system.extensions })
+        .set({ extensions: system.extensions, kind: system.kind })
         .where(eq(systems.slug, system.slug))
         .run();
       console.log(`  ~ ${system.name} (updated)`);
