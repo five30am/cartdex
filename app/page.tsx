@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { systems, games } from "@/lib/db/schema";
-import { eq, count } from "drizzle-orm";
+import { and, eq, count } from "drizzle-orm";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SystemBadge } from "@/components/system-badge";
@@ -19,14 +19,14 @@ function getSystemsWithCounts() {
       db
         .select({ count: count() })
         .from(games)
-        .where(eq(games.system_id, system.id))
+        .where(and(eq(games.system_id, system.id), eq(games.hidden, false)))
         .get()?.count ?? 0;
 
     const sampleArt =
       db
         .select({ box_art_path: games.box_art_path })
         .from(games)
-        .where(eq(games.system_id, system.id))
+        .where(and(eq(games.system_id, system.id), eq(games.hidden, false)))
         .all()
         .find((g) => g.box_art_path != null)?.box_art_path ?? null;
 

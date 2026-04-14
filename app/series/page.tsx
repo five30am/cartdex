@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { franchises, game_franchises, games, systems } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -19,7 +19,7 @@ function getFranchisesWithMeta(): FranchiseWithMeta[] {
   const allFranchises = db.select().from(franchises).all();
 
   return allFranchises.map((franchise) => {
-    // Get all games in this franchise with their system info
+    // Get all non-hidden games in this franchise with their system info
     const franchiseGames = db
       .select({
         id: games.id,
@@ -31,7 +31,7 @@ function getFranchisesWithMeta(): FranchiseWithMeta[] {
       .from(game_franchises)
       .innerJoin(games, eq(game_franchises.game_id, games.id))
       .innerJoin(systems, eq(games.system_id, systems.id))
-      .where(eq(game_franchises.franchise_id, franchise.id))
+      .where(and(eq(game_franchises.franchise_id, franchise.id), eq(games.hidden, false)))
       .all();
 
     // Unique systems

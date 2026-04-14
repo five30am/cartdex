@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { collections, collection_games, games, systems } from "@/lib/db/schema";
-import { eq, sum } from "drizzle-orm";
+import { and, eq, sum } from "drizzle-orm";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -43,7 +43,7 @@ export async function GET(_req: NextRequest, { params }: Props) {
       .from(collection_games)
       .innerJoin(games, eq(collection_games.game_id, games.id))
       .innerJoin(systems, eq(games.system_id, systems.id))
-      .where(eq(collection_games.collection_id, collectionId))
+      .where(and(eq(collection_games.collection_id, collectionId), eq(games.hidden, false)))
       .all();
 
     collectionGames.sort((a, b) =>

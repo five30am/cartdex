@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { franchises, game_franchises, games, systems } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ show_hidden?: string }>;
 }
 
 interface GameWithSystem {
@@ -22,8 +23,10 @@ interface GameWithSystem {
   system_slug: string;
 }
 
-export default async function FranchiseDetailPage({ params }: Props) {
+export default async function FranchiseDetailPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const { show_hidden } = await searchParams;
+  const showHidden = show_hidden === "true";
 
   const franchise = db.select().from(franchises).where(eq(franchises.slug, slug)).get();
   if (!franchise) notFound();
@@ -41,8 +44,21 @@ export default async function FranchiseDetailPage({ params }: Props) {
     .from(game_franchises)
     .innerJoin(games, eq(game_franchises.game_id, games.id))
     .innerJoin(systems, eq(games.system_id, systems.id))
-    .where(eq(game_franchises.franchise_id, franchise.id))
+    .where(
+      showHidden
+        ? eq(game_franchises.franchise_id, franchise.id)
+        : and(eq(game_franchises.franchise_id, franchise.id), eq(games.hidden, false))
+    )
     .all();
+
+  const hiddenCount = showHidden
+    ? 0
+    : db
+        .select({ id: games.id })
+        .from(game_franchises)
+        .innerJoin(games, eq(game_franchises.game_id, games.id))
+        .where(and(eq(game_franchises.franchise_id, franchise.id), eq(games.hidden, true)))
+        .all().length;
 
   // Sort games: by year then title
   franchiseGames.sort((a, b) => {
@@ -86,6 +102,12 @@ export default async function FranchiseDetailPage({ params }: Props) {
           <p className="text-sm text-neutral-500 mt-1">
             {franchiseGames.length} {franchiseGames.length === 1 ? "game" : "games"} across{" "}
             {systemOrder.length} {systemOrder.length === 1 ? "system" : "systems"}
+            {!showHidden && hiddenCount > 0 && (
+              <> &mdash; <Link href={`/series/${slug}?show_hidden=true`} className="text-neutral-500 hover:text-neutral-300 underline underline-offset-2">{hiddenCount} hidden</Link></>
+            )}
+            {showHidden && (
+              <> &mdash; <Link href={`/series/${slug}`} className="text-neutral-500 hover:text-neutral-300 underline underline-offset-2">hide hidden</Link></>
+            )}
           </p>
         </div>
 

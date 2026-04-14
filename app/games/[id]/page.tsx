@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronLeft, CheckCircle2, FileText } from "lucide-react";
+import { ChevronLeft, CheckCircle2, FileText, EyeOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { SystemBadge } from "@/components/system-badge";
 import { AddToCollectionButton } from "./add-to-collection-button";
@@ -62,6 +62,17 @@ export default async function GameDetailPage({ params }: Props) {
           <span>/</span>
           <span className="text-neutral-400 truncate max-w-[200px]">{game.title}</span>
         </div>
+
+        {game.hidden && (
+          <div className="mb-6 flex items-center gap-3 rounded-lg border border-amber-500/20 bg-amber-500/[0.05] px-4 py-3 text-sm text-amber-300">
+            <EyeOff className="h-4 w-4 shrink-0 text-amber-400" />
+            <span>
+              This game is currently hidden
+              {game.hidden_reason ? ` (${game.hidden_reason})` : ""}.
+              It will not appear in library list views.
+            </span>
+          </div>
+        )}
 
         <div className="flex flex-col md:flex-row gap-8">
           {/* Box art */}

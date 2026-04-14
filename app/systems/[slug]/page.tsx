@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { systems, games } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
@@ -11,15 +11,22 @@ export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ show_hidden?: string }>;
 }
 
-export default async function SystemDetailPage({ params }: Props) {
+export default async function SystemDetailPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const { show_hidden } = await searchParams;
+  const showHidden = show_hidden === "true";
 
   const system = db.select().from(systems).where(eq(systems.slug, slug)).get();
   if (!system) notFound();
 
-  const allGames = db
+  const whereClause = showHidden
+    ? eq(games.system_id, system.id)
+    : and(eq(games.system_id, system.id), eq(games.hidden, false));
+
+  const visibleGames = db
     .select({
       id: games.id,
       title: games.title,
@@ -29,11 +36,20 @@ export default async function SystemDetailPage({ params }: Props) {
       verified: games.verified,
     })
     .from(games)
-    .where(eq(games.system_id, system.id))
+    .where(whereClause)
     .all();
 
+  // Count hidden games so the UI can show a toggle hint
+  const hiddenCount = showHidden
+    ? 0
+    : db
+        .select({ id: games.id })
+        .from(games)
+        .where(and(eq(games.system_id, system.id), eq(games.hidden, true)))
+        .all().length;
+
   // Sort by title by default (client will re-sort)
-  allGames.sort((a, b) => a.title.localeCompare(b.title));
+  visibleGames.sort((a, b) => a.title.localeCompare(b.title));
 
   return (
     <div className="px-6 py-8">
@@ -56,14 +72,20 @@ export default async function SystemDetailPage({ params }: Props) {
             <div>
               <h1 className="text-2xl font-bold text-white tracking-tight">{system.name}</h1>
               <p className="text-sm text-neutral-600 mt-0.5 font-mono">
-                <span className="text-neutral-400 font-semibold">{allGames.length.toLocaleString()}</span> {allGames.length === 1 ? "game" : "games"}
+                <span className="text-neutral-400 font-semibold">{visibleGames.length.toLocaleString()}</span> {visibleGames.length === 1 ? "game" : "games"}
+                {!showHidden && hiddenCount > 0 && (
+                  <> &mdash; <Link href={`/systems/${slug}?show_hidden=true`} className="text-neutral-500 hover:text-neutral-300 underline underline-offset-2">{hiddenCount} hidden</Link></>
+                )}
+                {showHidden && (
+                  <> &mdash; <Link href={`/systems/${slug}`} className="text-neutral-500 hover:text-neutral-300 underline underline-offset-2">hide hidden</Link></>
+                )}
               </p>
             </div>
           </div>
         </div>
 
         {/* Client-side search + sort + grid */}
-        <SystemGamesClient games={allGames} systemSlug={system.slug} />
+        <SystemGamesClient games={visibleGames} systemSlug={system.slug} />
       </div>
     </div>
   );

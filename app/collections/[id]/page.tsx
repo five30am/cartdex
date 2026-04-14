@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { collections, collection_games, games, systems, export_profiles } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ show_hidden?: string }>;
 }
 
 function formatBytes(bytes: number | null | undefined): string {
@@ -20,8 +21,10 @@ function formatBytes(bytes: number | null | undefined): string {
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }
 
-export default async function CollectionDetailPage({ params }: Props) {
+export default async function CollectionDetailPage({ params, searchParams }: Props) {
   const { id } = await params;
+  const { show_hidden } = await searchParams;
+  const showHidden = show_hidden === "true";
   const collectionId = parseInt(id, 10);
   if (isNaN(collectionId)) notFound();
 
@@ -48,8 +51,21 @@ export default async function CollectionDetailPage({ params }: Props) {
     .from(collection_games)
     .innerJoin(games, eq(collection_games.game_id, games.id))
     .innerJoin(systems, eq(games.system_id, systems.id))
-    .where(eq(collection_games.collection_id, collectionId))
+    .where(
+      showHidden
+        ? eq(collection_games.collection_id, collectionId)
+        : and(eq(collection_games.collection_id, collectionId), eq(games.hidden, false))
+    )
     .all();
+
+  const hiddenCount = showHidden
+    ? 0
+    : db
+        .select({ id: games.id })
+        .from(collection_games)
+        .innerJoin(games, eq(collection_games.game_id, games.id))
+        .where(and(eq(collection_games.collection_id, collectionId), eq(games.hidden, true)))
+        .all().length;
 
   collectionGames.sort(
     (a, b) => a.system_name.localeCompare(b.system_name) || a.title.localeCompare(b.title)
@@ -70,6 +86,22 @@ export default async function CollectionDetailPage({ params }: Props) {
           Collections
         </Link>
 
+        {!showHidden && hiddenCount > 0 && (
+          <p className="text-sm text-neutral-500 mb-4">
+            {hiddenCount} hidden {hiddenCount === 1 ? "game" : "games"} not shown &mdash;{" "}
+            <Link href={`/collections/${collectionId}?show_hidden=true`} className="text-neutral-400 hover:text-neutral-200 underline underline-offset-2">
+              show all
+            </Link>
+          </p>
+        )}
+        {showHidden && (
+          <p className="text-sm text-neutral-500 mb-4">
+            Showing hidden games &mdash;{" "}
+            <Link href={`/collections/${collectionId}`} className="text-neutral-400 hover:text-neutral-200 underline underline-offset-2">
+              hide hidden
+            </Link>
+          </p>
+        )}
         <CollectionDetailClient
           collection={col}
           initialGames={collectionGames}

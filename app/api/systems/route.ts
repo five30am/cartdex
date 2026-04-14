@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { systems, games } from "@/lib/db/schema";
-import { eq, count } from "drizzle-orm";
+import { and, eq, count } from "drizzle-orm";
 
 export async function GET() {
   try {
@@ -11,7 +11,7 @@ export async function GET() {
       const gameCount = db
         .select({ count: count() })
         .from(games)
-        .where(eq(games.system_id, system.id))
+        .where(and(eq(games.system_id, system.id), eq(games.hidden, false)))
         .get();
 
       return {

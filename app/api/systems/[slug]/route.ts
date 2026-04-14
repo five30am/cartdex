@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { systems, games } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 export async function GET(
   _req: NextRequest,
@@ -20,10 +20,16 @@ export async function GET(
       return NextResponse.json({ error: "System not found" }, { status: 404 });
     }
 
+    const showHidden = _req.nextUrl.searchParams.get("show_hidden") === "true";
+
     const systemGames = db
       .select()
       .from(games)
-      .where(eq(games.system_id, system.id))
+      .where(
+        showHidden
+          ? eq(games.system_id, system.id)
+          : and(eq(games.system_id, system.id), eq(games.hidden, false))
+      )
       .all();
 
     return NextResponse.json({

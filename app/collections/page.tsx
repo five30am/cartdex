@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { collections, collection_games, games, systems } from "@/lib/db/schema";
-import { eq, count, sum } from "drizzle-orm";
+import { and, eq, count, sum } from "drizzle-orm";
 import Link from "next/link";
 import { CollectionsClient } from "./collections-client";
 
@@ -21,23 +21,24 @@ export default async function CollectionsPage() {
     const gameCount = db
       .select({ count: count() })
       .from(collection_games)
-      .where(eq(collection_games.collection_id, col.id))
+      .innerJoin(games, eq(collection_games.game_id, games.id))
+      .where(and(eq(collection_games.collection_id, col.id), eq(games.hidden, false)))
       .get();
 
     const totalSize = db
       .select({ total: sum(games.file_size) })
       .from(collection_games)
       .innerJoin(games, eq(collection_games.game_id, games.id))
-      .where(eq(collection_games.collection_id, col.id))
+      .where(and(eq(collection_games.collection_id, col.id), eq(games.hidden, false)))
       .get();
 
-    // Systems represented in this collection
+    // Systems represented in this collection (non-hidden games only)
     const systemsInCol = db
       .select({ slug: systems.slug, name: systems.name })
       .from(collection_games)
       .innerJoin(games, eq(collection_games.game_id, games.id))
       .innerJoin(systems, eq(games.system_id, systems.id))
-      .where(eq(collection_games.collection_id, col.id))
+      .where(and(eq(collection_games.collection_id, col.id), eq(games.hidden, false)))
       .all();
 
     const uniqueSystems = [

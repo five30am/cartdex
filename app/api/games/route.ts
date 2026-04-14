@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { games, systems } from "@/lib/db/schema";
-import { eq, like, count, asc, desc } from "drizzle-orm";
+import { and, eq, like, count, asc, desc } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   try {
@@ -21,6 +21,8 @@ export async function GET(req: NextRequest) {
       systemId = sys?.id ?? null;
     }
 
+    const showHidden = url.searchParams.get("show_hidden") === "true";
+
     const allGames = db
       .select({
         id: games.id,
@@ -36,6 +38,7 @@ export async function GET(req: NextRequest) {
       })
       .from(games)
       .innerJoin(systems, eq(games.system_id, systems.id))
+      .where(showHidden ? undefined : eq(games.hidden, false))
       .all();
 
     // Filter in JS (sqlite doesn't support complex joins + filters easily with drizzle)

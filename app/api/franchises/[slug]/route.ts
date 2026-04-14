@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { franchises, game_franchises, games, systems } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 export async function GET(
   _req: NextRequest,
@@ -20,7 +20,7 @@ export async function GET(
       return NextResponse.json({ error: "Franchise not found" }, { status: 404 });
     }
 
-    // Get all games in this franchise, joined with their system
+    // Get all non-hidden games in this franchise, joined with their system
     const franchiseGames = db
       .select({
         id: games.id,
@@ -38,7 +38,7 @@ export async function GET(
       .from(game_franchises)
       .innerJoin(games, eq(game_franchises.game_id, games.id))
       .innerJoin(systems, eq(games.system_id, systems.id))
-      .where(eq(game_franchises.franchise_id, franchise.id))
+      .where(and(eq(game_franchises.franchise_id, franchise.id), eq(games.hidden, false)))
       .all();
 
     // Sort by year then title
