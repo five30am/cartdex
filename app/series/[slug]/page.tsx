@@ -46,8 +46,8 @@ export default async function FranchiseDetailPage({ params, searchParams }: Prop
     .innerJoin(systems, eq(games.system_id, systems.id))
     .where(
       showHidden
-        ? eq(game_franchises.franchise_id, franchise.id)
-        : and(eq(game_franchises.franchise_id, franchise.id), eq(games.hidden, false))
+        ? and(eq(game_franchises.franchise_id, franchise.id), eq(systems.enabled, true))
+        : and(eq(game_franchises.franchise_id, franchise.id), eq(games.hidden, false), eq(systems.enabled, true))
     )
     .all();
 

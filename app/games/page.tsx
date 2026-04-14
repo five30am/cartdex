@@ -31,7 +31,11 @@ export default async function AllGamesPage({ searchParams }: Props) {
     })
     .from(games)
     .innerJoin(systems, eq(games.system_id, systems.id))
-    .where(showHidden ? undefined : eq(games.hidden, false))
+    .where(
+      showHidden
+        ? eq(systems.enabled, true)
+        : and(eq(games.hidden, false), eq(systems.enabled, true))
+    )
     .all();
 
   // Sort alphabetically server-side as default
@@ -41,7 +45,8 @@ export default async function AllGamesPage({ searchParams }: Props) {
     ? 0
     : db.select({ id: games.id }).from(games).where(eq(games.hidden, true)).all().length;
 
-  const allSystems = db.select({ id: systems.id, name: systems.name, slug: systems.slug }).from(systems).all();
+  // Only show enabled systems in filter dropdown
+  const allSystems = db.select({ id: systems.id, name: systems.name, slug: systems.slug }).from(systems).where(eq(systems.enabled, true)).all();
   const genres = [...new Set(visibleGames.map((g) => g.genre).filter(Boolean))] as string[];
   genres.sort();
 

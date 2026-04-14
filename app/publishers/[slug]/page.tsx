@@ -22,11 +22,12 @@ function slugify(str: string): string {
 export default async function PublisherDetailPage({ params }: Props) {
   const { slug } = await params;
 
-  // Find the canonical publisher name that matches this slug
+  // Find the canonical publisher name that matches this slug (only from enabled systems)
   const allPublishers = db
     .select({ publisher: games.publisher })
     .from(games)
-    .where(and(eq(games.hidden, false)))
+    .innerJoin(systems, eq(games.system_id, systems.id))
+    .where(and(eq(games.hidden, false), eq(systems.enabled, true)))
     .all()
     .map((r) => r.publisher)
     .filter((p): p is string => p !== null);
@@ -46,7 +47,7 @@ export default async function PublisherDetailPage({ params }: Props) {
     })
     .from(games)
     .innerJoin(systems, eq(games.system_id, systems.id))
-    .where(and(eq(games.publisher, canonicalName), eq(games.hidden, false)))
+    .where(and(eq(games.publisher, canonicalName), eq(games.hidden, false), eq(systems.enabled, true)))
     .all()
     .sort((a, b) => a.title.localeCompare(b.title));
 

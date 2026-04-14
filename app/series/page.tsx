@@ -31,7 +31,7 @@ function getFranchisesWithMeta(): FranchiseWithMeta[] {
       .from(game_franchises)
       .innerJoin(games, eq(game_franchises.game_id, games.id))
       .innerJoin(systems, eq(games.system_id, systems.id))
-      .where(and(eq(game_franchises.franchise_id, franchise.id), eq(games.hidden, false)))
+      .where(and(eq(game_franchises.franchise_id, franchise.id), eq(games.hidden, false), eq(systems.enabled, true)))
       .all();
 
     // Unique systems

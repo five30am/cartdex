@@ -12,7 +12,8 @@ import { FolderOpen, Gamepad2, Layers, AlertTriangle, ArrowRight, Monitor } from
 export const dynamic = "force-dynamic";
 
 function getSystemsWithCounts() {
-  const allSystems = db.select().from(systems).all() as (typeof systems.$inferSelect)[];
+  // Only fetch enabled systems for browse UI
+  const allSystems = db.select().from(systems).where(eq(systems.enabled, true)).all() as (typeof systems.$inferSelect)[];
 
   return allSystems.map((system) => {
     const gameCount =

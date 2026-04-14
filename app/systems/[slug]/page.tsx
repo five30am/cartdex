@@ -3,7 +3,7 @@ import { systems, games } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, EyeOff } from "lucide-react";
 import { SystemBadge } from "@/components/system-badge";
 import { SystemGamesClient } from "./system-games-client";
 
@@ -66,6 +66,19 @@ export default async function SystemDetailPage({ params, searchParams }: Props) 
           <ChevronLeft className="h-3.5 w-3.5" />
           Systems
         </Link>
+
+        {/* Disabled system banner */}
+        {!system.enabled && (
+          <div className="mb-6 rounded-lg border border-neutral-700/50 bg-neutral-900/50 px-4 py-3 flex items-center gap-3">
+            <EyeOff className="w-4 h-4 text-neutral-500 shrink-0" />
+            <p className="text-sm text-neutral-500">
+              This system is disabled — it is hidden from browse views.{" "}
+              <Link href="/settings" className="text-neutral-400 hover:text-neutral-200 underline underline-offset-2 transition-colors">
+                Re-enable in Settings
+              </Link>
+            </p>
+          </div>
+        )}
 
         {/* Header */}
         <div className="flex items-start justify-between gap-4 mb-8">

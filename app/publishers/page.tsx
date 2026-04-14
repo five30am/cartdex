@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { games } from "@/lib/db/schema";
+import { games, systems } from "@/lib/db/schema";
 import { and, eq, isNotNull } from "drizzle-orm";
 import Link from "next/link";
 import { Building2, ArrowRight } from "lucide-react";
@@ -17,7 +17,8 @@ function getPublishers(): { publisher: string; slug: string; count: number }[] {
   const rows = db
     .select({ publisher: games.publisher })
     .from(games)
-    .where(and(isNotNull(games.publisher), eq(games.hidden, false)))
+    .innerJoin(systems, eq(games.system_id, systems.id))
+    .where(and(isNotNull(games.publisher), eq(games.hidden, false), eq(systems.enabled, true)))
     .all();
 
   const counts = new Map<string, number>();

@@ -35,7 +35,8 @@ export default async function KindPage({ params }: Props) {
     .where(
       and(
         eq(games.hidden, false),
-        eq(systems.kind, kind as "console" | "handheld")
+        eq(systems.kind, kind as "console" | "handheld"),
+        eq(systems.enabled, true)
       )
     )
     .all()

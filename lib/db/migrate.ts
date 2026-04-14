@@ -183,6 +183,14 @@ export function ensureSchema() {
     // Column already exists — ignore
   }
 
+  // v1.4: enabled column on systems (soft-disable from browse UI)
+  try {
+    sqlite.exec(`ALTER TABLE systems ADD COLUMN enabled INTEGER NOT NULL DEFAULT 1`);
+    console.log("  Added enabled column to systems");
+  } catch {
+    // Column already exists — ignore
+  }
+
   // One-time migration: set correct kind for known handheld systems
   const handhelds = ["gb", "gbc", "gba", "psp"];
   for (const slug of handhelds) {

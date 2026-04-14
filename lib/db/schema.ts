@@ -17,6 +17,7 @@ export const systems = sqliteTable("systems", {
     .default(sql`'[]'`),
   dat_source: text("dat_source"),
   kind: text("kind").$type<"console" | "handheld">().notNull().default("console"),
+  enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
 });
 
 export const games = sqliteTable("games", {
