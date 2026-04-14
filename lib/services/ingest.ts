@@ -106,10 +106,17 @@ function walkDirectory(dir: string): string[] {
 export async function ingestDirectory(romRoot: string): Promise<IngestResult> {
   const result: IngestResult = { discovered: 0, newFiles: 0, hashed: 0, skipped: 0, errors: [] };
 
-  // Load all systems and build extension → system map
+  // Load all systems and build lookup structures
   const allSystems = db.select().from(systems).all();
   type SystemRow = (typeof allSystems)[number];
 
+  // slug → system (for directory-name matching — highest priority)
+  const slugToSystem = new Map<string, SystemRow>();
+  for (const system of allSystems) {
+    slugToSystem.set(system.slug, system);
+  }
+
+  // extension → system (fallback when directory name doesn't match any slug)
   const extToSystem = new Map<string, SystemRow>();
   for (const system of allSystems) {
     const exts = system.extensions as string[];
@@ -120,6 +127,27 @@ export async function ingestDirectory(romRoot: string): Promise<IngestResult> {
     }
   }
   const knownExtensions = new Set(extToSystem.keys());
+
+  /**
+   * Resolve which system a file belongs to.
+   * Priority: directory slug match > extension match.
+   * A file at /roms/arcade/roms/foo.chd → slug "arcade" wins over ext ".chd" → psx.
+   */
+  function resolveSystem(filePath: string): SystemRow | undefined {
+    // Walk up directories looking for one that matches a known system slug.
+    // Typically files are at <romRoot>/<slug>/roms/<file> or <romRoot>/<slug>/<file>.
+    const relative = path.relative(romRoot, filePath);
+    const parts = relative.split(path.sep);
+    // parts[0] is the immediate child of romRoot — that's the platform folder name
+    if (parts.length > 0) {
+      const dirSlug = parts[0].toLowerCase();
+      const bySlug = slugToSystem.get(dirSlug);
+      if (bySlug) return bySlug;
+    }
+    // Fallback: match by extension
+    const ext = path.extname(filePath).toLowerCase();
+    return extToSystem.get(ext);
+  }
 
   // --- Phase 1: Discover ---
   // Fast filesystem walk. Insert new file paths with hashed=false. No file reads.
@@ -147,17 +175,28 @@ export async function ingestDirectory(romRoot: string): Promise<IngestResult> {
       if (r.hash_sha1) hiddenByHash.set(r.hash_sha1, r);
     });
 
+  // Build a set of ALL known extensions across all systems for quick pre-filtering
+  const allKnownExtensions = new Set<string>();
+  for (const system of allSystems) {
+    const exts = system.extensions as string[];
+    for (const ext of exts) {
+      allKnownExtensions.add(ext);
+    }
+  }
+
   for (let i = 0; i < files.length; i++) {
     const filePath = files[i];
     scanJob.progress = { current: i + 1, total: files.length };
 
+    // Pre-filter: skip files with no known ROM extension (e.g. .txt, .xml, .dat)
     const ext = path.extname(filePath).toLowerCase();
-    if (!knownExtensions.has(ext)) {
+    if (!allKnownExtensions.has(ext)) {
       result.skipped++;
       continue;
     }
 
-    const system = extToSystem.get(ext);
+    // Resolve system — directory slug takes priority over extension
+    const system = resolveSystem(filePath);
     if (!system) {
       result.skipped++;
       continue;
@@ -171,6 +210,12 @@ export async function ingestDirectory(romRoot: string): Promise<IngestResult> {
 
     try {
       const stat = fs.statSync(filePath);
+      // Capture filesystem creation time. Node's stat returns birthtimeMs on most
+      // filesystems; fall back to ctimeMs (metadata change) if birth is unavailable
+      // (birthtime returns Unix epoch 0 on some Linux filesystems).
+      const birthMs = stat.birthtimeMs > 0 ? stat.birthtimeMs : stat.ctimeMs;
+      const fileCreatedAt = new Date(birthMs).toISOString();
+
       const filename = path.basename(filePath);
       const title = titleFromFilename(filename);
       const slug = slugify(title);
@@ -220,6 +265,7 @@ export async function ingestDirectory(romRoot: string): Promise<IngestResult> {
           slug,
           file_path: filePath,
           file_size: stat.size,
+          file_created_at: fileCreatedAt,
           hashed: false,
           verified: false,
         })

@@ -46,8 +46,23 @@ const SYSTEMS = [
     dat_source: "No-Intro",
   },
   {
+    name: "Sega Master System",
+    slug: "mastersystem",
+    extensions: [".sms"],
+    dat_source: "No-Intro",
+  },
+  {
+    name: "Arcade",
+    slug: "arcade",
+    extensions: [".zip", ".chd"],
+    dat_source: "MAME",
+  },
+  {
     name: "PlayStation",
     slug: "psx",
+    // .chd removed — CHD under /roms/arcade/ was being misassigned to psx.
+    // PSX CHDs should live under /roms/psx/; arcade CHDs live under /roms/arcade/.
+    // The ingest is directory-aware so extension alone is no longer the sole discriminator.
     extensions: [".bin", ".cue", ".iso", ".chd", ".m3u"],
     dat_source: "Redump",
   },
@@ -70,6 +85,8 @@ const EMUDECK_PROFILE = {
     gbc: { folder: "gbc" },
     gba: { folder: "gba" },
     genesis: { folder: "genesis" },
+    mastersystem: { folder: "mastersystem" },
+    arcade: { folder: "arcade" },
     psx: { folder: "psx" },
     psp: { folder: "psp" },
   },

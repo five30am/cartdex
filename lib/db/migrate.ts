@@ -126,4 +126,28 @@ export function ensureSchema() {
   if (artPathFix.changes > 0) {
     console.log(`  Migrated ${artPathFix.changes} artwork paths to /api/artwork/`);
   }
+
+  // v1.1: file_created_at — filesystem ctime captured at ingest time
+  try {
+    sqlite.exec(`ALTER TABLE games ADD COLUMN file_created_at TEXT`);
+    console.log("  Added file_created_at column to games");
+  } catch {
+    // Column already exists — ignore
+  }
+
+  // v1.1: fix psx/arcade slug mismatch — reassign games whose file_path starts with the arcade
+  // directory to the arcade system (if arcade system is now registered).
+  const arcadeSystem = sqlite.prepare(`SELECT id FROM systems WHERE slug = 'arcade'`).get() as { id: number } | undefined;
+  if (arcadeSystem) {
+    const psx = sqlite.prepare(`SELECT id FROM systems WHERE slug = 'psx'`).get() as { id: number } | undefined;
+    if (psx) {
+      // Any game assigned to psx whose path contains /arcade/ is actually an arcade ROM
+      const fix = sqlite.prepare(
+        `UPDATE games SET system_id = ? WHERE system_id = ? AND (file_path LIKE '%/arcade/%' OR file_path LIKE '%\\arcade\\%')`
+      ).run(arcadeSystem.id, psx.id);
+      if (fix.changes > 0) {
+        console.log(`  Reassigned ${fix.changes} arcade CHDs from psx → arcade system`);
+      }
+    }
+  }
 }
