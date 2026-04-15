@@ -230,7 +230,7 @@ export const match_results = sqliteTable(
       .notNull(),
     /** Which hash strategy produced the match. */
     matched_by: text("matched_by")
-      .$type<"sha1" | "crc32+size">()
+      .$type<"sha1" | "crc32+size" | "stripped-sha1">()
       .notNull(),
     matched_at: text("matched_at")
       .notNull()
