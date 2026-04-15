@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { SearchBar } from "@/components/search-bar";
 import { GameGrid } from "@/components/game-grid";
+import { GameTable } from "@/components/game-table";
 import { SelectableGameGrid } from "@/components/selectable-game-grid";
 import {
   Select,
@@ -13,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { CheckSquare, FolderPlus, X } from "lucide-react";
+import { CheckSquare, FolderPlus, LayoutGrid, List, X } from "lucide-react";
 import { AddToCollectionModal } from "@/components/add-to-collection-modal";
 import { FacetFilterSidebar, type FacetGroup } from "@/components/facet-filter-sidebar";
 import { toast } from "sonner";
@@ -26,6 +27,11 @@ interface Game {
   box_art_path?: string | null;
   genre?: string | null;
   verified: boolean;
+  hashed?: boolean | null;
+  file_size?: number | null;
+  hash_crc32?: string | null;
+  hash_md5?: string | null;
+  hash_sha1?: string | null;
   user_rating?: number | null;
   favorite?: boolean | null;
   publisher?: string | null;
@@ -122,6 +128,26 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [showCollectionModal, setShowCollectionModal] = useState(false);
+
+  // View mode — "grid" (default) or "table", persisted in localStorage.
+  // Initialise from storage on mount; default to "grid" so SSR and first render match.
+  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+
+  useEffect(() => {
+    const stored = localStorage.getItem("system-view-mode");
+    if (stored === "table" || stored === "grid") {
+      setViewMode(stored);
+    }
+  }, []);
+
+  function handleViewModeChange(mode: "grid" | "table") {
+    setViewMode(mode);
+    localStorage.setItem("system-view-mode", mode);
+    // Exit select mode when switching to table — SelectableGameGrid is grid-only.
+    if (mode === "table") {
+      exitSelectMode();
+    }
+  }
 
   function handleSortChange(value: string | null) {
     const newSort = (value || "title") as SortOption;
@@ -296,7 +322,39 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
             </SelectContent>
           </Select>
 
-          {!selectMode ? (
+          {/* Grid / table view toggle */}
+          <div
+            role="group"
+            aria-label="View mode"
+            className="flex items-center rounded-md border border-border overflow-hidden shrink-0"
+          >
+            <button
+              onClick={() => handleViewModeChange("grid")}
+              aria-label="Grid view"
+              aria-pressed={viewMode === "grid"}
+              className={
+                viewMode === "grid"
+                  ? "flex items-center justify-center px-2.5 py-1.5 bg-accent text-accent-foreground"
+                  : "flex items-center justify-center px-2.5 py-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+              }
+            >
+              <LayoutGrid className="h-4 w-4" aria-hidden="true" />
+            </button>
+            <button
+              onClick={() => handleViewModeChange("table")}
+              aria-label="Table view"
+              aria-pressed={viewMode === "table"}
+              className={
+                viewMode === "table"
+                  ? "flex items-center justify-center px-2.5 py-1.5 bg-accent text-accent-foreground border-l border-border"
+                  : "flex items-center justify-center px-2.5 py-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors border-l border-border"
+              }
+            >
+              <List className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </div>
+
+          {!selectMode && viewMode !== "table" ? (
             <Button
               variant="outline"
               size="sm"
@@ -306,7 +364,7 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
               <CheckSquare className="h-4 w-4 mr-1.5" />
               Select
             </Button>
-          ) : (
+          ) : !selectMode ? null : (
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">
                 {selected.size} selected
@@ -355,6 +413,13 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
             games={filtered}
             selected={selected}
             onToggle={toggleSelect}
+            emptyMessage={
+              search ? `No games matching "${search}"` : "No games in this system"
+            }
+          />
+        ) : viewMode === "table" ? (
+          <GameTable
+            games={filtered}
             emptyMessage={
               search ? `No games matching "${search}"` : "No games in this system"
             }
