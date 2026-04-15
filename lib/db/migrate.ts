@@ -240,6 +240,22 @@ export function ensureSchema() {
     CREATE INDEX IF NOT EXISTS idx_match_results_dat_entry_id      ON match_results(dat_entry_id);
   `);
 
+  // DAT auditing Ticket 3 — stripped hash columns for headered-ROM systems
+  // Additive only — existing rows default to NULL (stripped hashes not yet computed).
+  // Run scripts/rehash-headered.ts to backfill existing library entries.
+  const strippedHashCols: Array<[string, string]> = [
+    ["hash_sha1_stripped", "TEXT"],
+    ["hash_crc32_stripped", "TEXT"],
+  ];
+  for (const [col, type] of strippedHashCols) {
+    try {
+      sqlite.exec(`ALTER TABLE games ADD COLUMN ${col} ${type}`);
+      console.log(`  Added ${col} column to games`);
+    } catch {
+      // Column already exists — ignore
+    }
+  }
+
   // One-time migration: set correct kind for known handheld systems
   const handhelds = ["gb", "gbc", "gba", "psp"];
   for (const slug of handhelds) {

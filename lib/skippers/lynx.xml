@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<!--
+  Atari Lynx (LYX) header skipper definition.
+
+  The LNX format prepends a 64-byte header:
+    Bytes 0-3   : Magic "LYNX"
+    Bytes 4-5   : Page size bank 0 (little-endian)
+    Bytes 6-7   : Page size bank 1 (little-endian)
+    Bytes 8-9   : Version number
+    Bytes 10-41 : Cart name (null-padded ASCII)
+    Bytes 42-73 : Manufacturer name (null-padded ASCII)
+    Byte 74     : Rotation (0=none, 1=left, 2=right)
+    Bytes 75-83 : SPARC data (spare/reserved)
+    Bytes 84-91 : Additional metadata
+
+  Note: The format is 64 bytes in the common "LNX" container but the header
+  occupies the first 64 bytes in all known implementations.
+
+  Source: https://handheld.museum/machines/atari-lynx/
+          No-Intro DAT Header spec for Lynx
+-->
+<skipper>
+  <name>No-Intro Atari Lynx Header Skipper</name>
+  <version>1.0.0</version>
+  <author>No-Intro</author>
+  <comment>Strips the 64-byte LNX header from Atari Lynx ROM files</comment>
+  <rule>
+    <description>LNX header (64 bytes)</description>
+    <!-- Magic bytes: "LYNX" ASCII = 4C 59 4E 58 -->
+    <test offset="0" value="4C594E58" result="true"/>
+    <start method="fixed" offset="64"/>
+  </rule>
+</skipper>

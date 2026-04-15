@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<!--
+  NES/iNES header skipper definition.
+
+  The iNES format (Mapper Oriented NES) prepends a 16-byte header:
+    Bytes 0-3  : Magic "NES\x1a"
+    Byte 4     : Number of 16 KB PRG-ROM pages
+    Byte 5     : Number of 8 KB CHR-ROM pages
+    Byte 6     : Flags 6 (mirroring, battery, trainer, mapper lo nibble)
+    Byte 7     : Flags 7 (VS/Playchoice, NES 2.0 signature, mapper hi nibble)
+    Bytes 8-15 : Varies by format version:
+                 - iNES 1.0: padding (should be zero)
+                 - NES 2.0 : extended header (mapper/submapper/RAM sizes/etc.)
+
+  NES 2.0 detection: bits 2-3 of byte 7 == 0b10 (value & 0x0C == 0x08).
+  Both versions use the same 16-byte header size, so the strip size is identical.
+
+  Source: https://www.nesdev.org/wiki/INES
+          https://www.nesdev.org/wiki/NES_2.0
+-->
+<skipper>
+  <name>No-Intro NES/iNES Header Skipper</name>
+  <version>1.0.0</version>
+  <author>No-Intro</author>
+  <comment>Strips the 16-byte iNES/NES 2.0 header from NES ROM files</comment>
+  <rule>
+    <description>iNES / NES 2.0 header (16 bytes)</description>
+    <!-- Magic bytes: "NES" followed by MS-DOS EOF (0x1A) -->
+    <test offset="0" value="4E45531A" result="true"/>
+    <start method="fixed" offset="16"/>
+  </rule>
+</skipper>

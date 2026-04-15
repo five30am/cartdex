@@ -59,6 +59,11 @@ export const games = sqliteTable("games", {
   user_rating: integer("user_rating"),
   publisher: text("publisher"),
   series: text("series"),
+  // DAT auditing Ticket 3 — stripped hashes for headered-ROM systems
+  // Null means either: system has no known header format, or the rehash script
+  // hasn't run yet.  The match engine falls back to raw hashes when these are null.
+  hash_sha1_stripped: text("hash_sha1_stripped"),
+  hash_crc32_stripped: text("hash_crc32_stripped"),
 });
 
 export const franchises = sqliteTable("franchises", {

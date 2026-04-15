@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<!--
+  FDS (Famicom Disk System) / fwNES header skipper definition.
+
+  The fwNES format prepends a 16-byte header to FDS disk images:
+    Bytes 0-3  : Magic "FDS\x1a"
+    Byte 4     : Number of disk sides
+    Bytes 5-15 : Padding (zero)
+
+  Source: https://www.nesdev.org/wiki/FDS_file_format
+-->
+<skipper>
+  <name>No-Intro FDS/fwNES Header Skipper</name>
+  <version>1.0.0</version>
+  <author>No-Intro</author>
+  <comment>Strips the 16-byte fwNES header from Famicom Disk System images</comment>
+  <rule>
+    <description>fwNES FDS header (16 bytes)</description>
+    <!-- Magic bytes: "FDS" followed by 0x1A -->
+    <test offset="0" value="4644531A" result="true"/>
+    <start method="fixed" offset="16"/>
+  </rule>
+</skipper>

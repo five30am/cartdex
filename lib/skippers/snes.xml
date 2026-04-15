@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<!--
+  SNES/Super Famicom SMC header skipper definition.
+
+  The SMC (Super Magicom) format optionally prepends a 512-byte header to SNES
+  ROM images. The header is NOT always present — it is only valid when:
+
+    1. The file size modulo 1024 equals 512 (i.e. file_size % 1024 == 512).
+    2. The 512-byte region matches the SMC fingerprint.
+
+  The SMC header itself has no reliable magic bytes. Detection relies on:
+    - Size check: (file_size % 1024 == 512)
+    - Byte 8 of header is 0xAA and byte 9 is 0xBB (SMC device marker), OR
+    - Bytes 8-9 are both 0x00 (common in copier dumps without device marker)
+
+  If neither condition is satisfied, assume NO header (raw hash only).
+
+  Source: https://snesdev.org/smc-header
+          No-Intro SNES DAT header specification
+          snes9x / bsnes source: src/cartridge/cartridge.cpp
+-->
+<skipper>
+  <name>No-Intro SNES/Super Famicom SMC Header Skipper</name>
+  <version>1.0.0</version>
+  <author>No-Intro</author>
+  <comment>
+    Strips the optional 512-byte SMC copier header from SNES ROM files.
+    Header is only present if (file_size mod 1024 == 512) AND the SMC
+    fingerprint at bytes 8-9 is {AA BB} or {00 00}.
+    Detection is size-based with fingerprint confirmation — not magic-byte-based.
+  </comment>
+  <!--
+    The size-modulo check is enforced by the skipper engine in code, not here,
+    because XML-based rules cannot express arithmetic conditions. The engine
+    treats this skipper as requiring extra validation before applying the strip.
+  -->
+  <rule>
+    <description>SMC copier header (512 bytes, size-conditional)</description>
+    <!--
+      SMC fingerprint at offset 8: AA BB (most SMC copiers) or 00 00 (bare dump).
+      We match both patterns.
+    -->
+    <test offset="8" value="AABB" result="true"/>
+    <start method="fixed" offset="512"/>
+  </rule>
+  <rule>
+    <description>SMC copier header (512 bytes, bare dump pattern)</description>
+    <test offset="8" value="0000" result="true"/>
+    <start method="fixed" offset="512"/>
+  </rule>
+</skipper>

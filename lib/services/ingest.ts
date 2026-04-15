@@ -8,6 +8,7 @@ const crc32 = (crc32Module as any).default ?? crc32Module;
 import { db } from "@/lib/db";
 import { systems, games, file_operations } from "@/lib/db/schema";
 import { eq, and, or, isNull, ne } from "drizzle-orm";
+import { hasSkipper, computeStrippedHashesIfHeadered } from "@/lib/services/skipper";
 
 export interface IngestResult {
   discovered: number;
@@ -351,7 +352,7 @@ export async function ingestDirectory(romRoot: string): Promise<IngestResult> {
   scanJob.phase = "hashing";
 
   const unhashed = db
-    .select({ id: games.id, file_path: games.file_path })
+    .select({ id: games.id, file_path: games.file_path, system_id: games.system_id })
     .from(games)
     .where(eq(games.hashed, false))
     .all();
@@ -371,11 +372,38 @@ export async function ingestDirectory(romRoot: string): Promise<IngestResult> {
 
       const hashes = await computeHashes(game.file_path);
 
+      // For systems with known copier headers (NES, FDS, SNES, A7800, Lynx),
+      // also compute stripped hashes so the DAT match engine can match against
+      // the headerless ROM data that DAT files hash.
+      // We resolve the system slug from the in-memory map built during Phase 1.
+      const systemSlug = slugToSystem.get(
+        path.relative(romRoot, game.file_path).split(path.sep)[0]?.toLowerCase() ?? ""
+      )?.slug ?? "";
+
+      let strippedSha1: string | null = null;
+      let strippedCrc32: string | null = null;
+
+      if (systemSlug && hasSkipper(systemSlug)) {
+        try {
+          const stripped = await computeStrippedHashesIfHeadered(game.file_path, systemSlug);
+          if (stripped) {
+            strippedSha1 = stripped.sha1;
+            strippedCrc32 = stripped.crc32;
+          }
+          // stripped === null means file had no detectable header — that's fine,
+          // raw hashes are sufficient and stripped cols remain null.
+        } catch {
+          // Non-fatal: stripped hash failure leaves cols null; raw hashes still saved
+        }
+      }
+
       db.update(games)
         .set({
           hash_crc32: hashes.crc32,
           hash_md5: hashes.md5,
           hash_sha1: hashes.sha1,
+          hash_sha1_stripped: strippedSha1,
+          hash_crc32_stripped: strippedCrc32,
           hashed: true,
         })
         .where(eq(games.id, game.id))
