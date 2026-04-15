@@ -65,6 +65,9 @@ export const ApiErrorCode = {
   DAT_FETCH_UNKNOWN_PROVIDER: "DAT_FETCH_UNKNOWN_PROVIDER",
   DAT_FETCH_PROVIDER_ERROR: "DAT_FETCH_PROVIDER_ERROR",
   DAT_FETCH_NETWORK_ERROR: "DAT_FETCH_NETWORK_ERROR",
+
+  // DAT wantlist export (Ticket 7)
+  DAT_WANTLIST_BAD_FORMAT: "DAT_WANTLIST_BAD_FORMAT",
 } as const;
 
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode];
@@ -222,6 +225,13 @@ const API_ERRORS: Record<ApiErrorCode, ApiErrorDef> = {
     status: 502,
     code: ApiErrorCode.DAT_FETCH_NETWORK_ERROR,
     message: "Network error fetching DAT from remote provider",
+  },
+
+  // DAT wantlist export (Ticket 7)
+  [ApiErrorCode.DAT_WANTLIST_BAD_FORMAT]: {
+    status: 400,
+    code: ApiErrorCode.DAT_WANTLIST_BAD_FORMAT,
+    message: "format parameter must be one of: csv, md, fixdat",
   },
 };
 
