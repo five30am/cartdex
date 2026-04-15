@@ -28,6 +28,7 @@ export default async function AllGamesPage({ searchParams }: Props) {
       system_slug: systems.slug,
       user_rating: games.user_rating,
       publisher: games.publisher,
+      scraper_region: games.scraper_region,
     })
     .from(games)
     .innerJoin(systems, eq(games.system_id, systems.id))
@@ -47,8 +48,6 @@ export default async function AllGamesPage({ searchParams }: Props) {
 
   // Only show enabled systems in filter dropdown
   const allSystems = db.select({ id: systems.id, name: systems.name, slug: systems.slug }).from(systems).where(eq(systems.enabled, true)).all();
-  const genres = [...new Set(visibleGames.map((g) => g.genre).filter(Boolean))] as string[];
-  genres.sort();
 
   return (
     <div className="px-6 py-8">
@@ -65,7 +64,7 @@ export default async function AllGamesPage({ searchParams }: Props) {
             )}
           </p>
         </div>
-        <AllGamesClient games={visibleGames} systems={allSystems} genres={genres} />
+        <AllGamesClient games={visibleGames} systems={allSystems} />
       </div>
     </div>
   );

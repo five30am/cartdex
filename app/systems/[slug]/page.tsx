@@ -37,6 +37,7 @@ export default async function SystemDetailPage({ params, searchParams }: Props) 
       user_rating: games.user_rating,
       favorite: games.favorite,
       publisher: games.publisher,
+      scraper_region: games.scraper_region,
       created_at: games.created_at,
     })
     .from(games)
