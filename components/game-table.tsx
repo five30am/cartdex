@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Circle, Hash, Star } from "lucide-react";
+import { CheckCircle2, Circle, Hash, ShieldCheck, Star } from "lucide-react";
 
 interface Game {
   id: number;
@@ -11,6 +11,8 @@ interface Game {
   hashed?: boolean | null;
   verified?: boolean | null;
   user_rating?: number | null;
+  /** True when this game has a matching 'have' row in match_results for a linked DAT */
+  dat_verified?: boolean | null;
 }
 
 interface GameTableProps {
@@ -28,14 +30,16 @@ function formatBytes(bytes: number | null | undefined): string {
   return `${(bytes / 1_073_741_824).toFixed(2)} GB`;
 }
 
-/** Derive a human-readable hash state label from the game's hashed/verified flags. */
+/** Derive a human-readable hash state label from the game's hashed/verified/dat_verified flags. */
 function hashStateLabel(
   hashed: boolean | null | undefined,
-  verified: boolean | null | undefined
-): { label: string; verified: boolean } {
-  if (verified) return { label: "Verified", verified: true };
-  if (hashed) return { label: "Hashed", verified: false };
-  return { label: "Unhashed", verified: false };
+  verified: boolean | null | undefined,
+  dat_verified: boolean | null | undefined
+): { label: string; state: "dat-verified" | "verified" | "hashed" | "unhashed" } {
+  if (dat_verified) return { label: "DAT-verified", state: "dat-verified" };
+  if (verified) return { label: "Verified", state: "verified" };
+  if (hashed) return { label: "Hashed", state: "hashed" };
+  return { label: "Unhashed", state: "unhashed" };
 }
 
 export function GameTable({
@@ -78,7 +82,7 @@ export function GameTable({
         </thead>
         <tbody>
           {games.map((game, i) => {
-            const { label, verified } = hashStateLabel(game.hashed, game.verified);
+            const { label, state } = hashStateLabel(game.hashed, game.verified, game.dat_verified);
             return (
               <tr
                 key={game.id}
@@ -116,23 +120,27 @@ export function GameTable({
                   {formatBytes(game.file_size)}
                 </td>
 
-                {/* Hash state */}
+                {/* Hash state — 4 states: DAT-verified / Verified / Hashed / Unhashed */}
                 <td className="px-4 py-2.5 text-center">
                   <span
                     className={cn(
                       "inline-flex items-center gap-1 text-xs font-medium rounded-full px-2 py-0.5",
-                      verified
+                      state === "dat-verified"
+                        ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                        : state === "verified"
                         ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                        : game.hashed
+                        : state === "hashed"
                         ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
                         : "bg-muted text-muted-foreground"
                     )}
                     title={label}
                     aria-label={`Hash state: ${label}`}
                   >
-                    {verified ? (
+                    {state === "dat-verified" ? (
+                      <ShieldCheck className="w-3 h-3" aria-hidden="true" />
+                    ) : state === "verified" ? (
                       <CheckCircle2 className="w-3 h-3" aria-hidden="true" />
-                    ) : game.hashed ? (
+                    ) : state === "hashed" ? (
                       <Hash className="w-3 h-3" aria-hidden="true" />
                     ) : (
                       <Circle className="w-3 h-3" aria-hidden="true" />

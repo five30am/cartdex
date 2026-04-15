@@ -1,9 +1,10 @@
-import { db } from "@/lib/db";
+import { db, sqlite } from "@/lib/db";
 import { systems, games } from "@/lib/db/schema";
 import { and, eq, count } from "drizzle-orm";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SystemBadge } from "@/components/system-badge";
+import { CompletionPill, type CompletionData } from "@/components/completion-pill";
 import Link from "next/link";
 import Image from "next/image";
 import { hasAnySettingsConfigured } from "@/lib/services/config";
@@ -14,6 +15,49 @@ export const dynamic = "force-dynamic";
 function getSystemsWithCounts() {
   // Only fetch enabled systems for browse UI
   const allSystems = db.select().from(systems).where(eq(systems.enabled, true)).all() as (typeof systems.$inferSelect)[];
+
+  // Pre-fetch DAT completion for all systems in one query — keyed by system_id.
+  // Avoids N+1 round-trips per card. Uses the dat_completion VIEW + dats table.
+  interface CompletionRow {
+    system_id: number;
+    dat_id: number;
+    dat_name: string;
+    total: number;
+    have: number;
+    have_baddump: number;
+    missing: number;
+    nodump: number;
+    completion_pct: number | null;
+  }
+  let completionBySystemId: Map<number, CompletionData> = new Map();
+  try {
+    const completionRows = sqlite.prepare(`
+      SELECT
+        d.system_id,
+        dc.dat_id,
+        dc.dat_name,
+        dc.total,
+        dc.have,
+        dc.have_baddump,
+        dc.missing,
+        dc.nodump,
+        dc.completion_pct
+      FROM dat_completion dc
+      INNER JOIN dats d ON d.id = dc.dat_id
+      WHERE d.system_id IS NOT NULL
+      ORDER BY d.system_id, d.id ASC
+    `).all() as CompletionRow[];
+
+    // One row per system — first DAT wins (lowest id)
+    for (const { system_id, ...rest } of completionRows) {
+      if (!completionBySystemId.has(system_id)) {
+        completionBySystemId.set(system_id, { linked: true, ...rest });
+      }
+    }
+  } catch {
+    // dat_completion view not yet created (fresh DB without migration) — safe to ignore
+    completionBySystemId = new Map();
+  }
 
   return allSystems.map((system) => {
     const gameCount =
@@ -31,7 +75,9 @@ function getSystemsWithCounts() {
         .all()
         .find((g) => g.box_art_path != null)?.box_art_path ?? null;
 
-    return { ...system, game_count: gameCount, sample_art: sampleArt };
+    const completion = completionBySystemId.get(system.id) ?? null;
+
+    return { ...system, game_count: gameCount, sample_art: sampleArt, completion };
   });
 }
 
@@ -198,8 +244,9 @@ function SystemCard({
             </div>
           </div>
 
-          <div className="mt-3">
+          <div className="mt-3 flex items-center gap-2 flex-wrap">
             <SystemBadge slug={system.slug} name={system.slug.toUpperCase()} />
+            <CompletionPill data={system.completion} size="sm" />
           </div>
         </CardContent>
       </Card>

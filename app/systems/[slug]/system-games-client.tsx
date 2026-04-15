@@ -32,11 +32,14 @@ interface Game {
   hash_crc32?: string | null;
   hash_md5?: string | null;
   hash_sha1?: string | null;
+  hash_sha1_stripped?: string | null;
   user_rating?: number | null;
   favorite?: boolean | null;
   publisher?: string | null;
   scraper_region?: string | null;
   created_at: string;
+  /** True when this game has a 'have' match in match_results for the system's linked DAT */
+  dat_verified?: boolean | null;
 }
 
 interface Props {

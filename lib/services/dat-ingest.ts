@@ -15,11 +15,29 @@
 
 import { createHash } from "crypto";
 import { db } from "@/lib/db";
-import { dats, dat_entries } from "@/lib/db/schema";
+import { dats, dat_entries, systems } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { parseLogiqxDat, coerceStatus } from "./dat-parser";
 import { parseClrmaneDat } from "./dat-parser-clrmame";
 import { startMatchJob } from "./dat-match";
+
+// ---------------------------------------------------------------------------
+// Auto-link helper — Ticket 5
+// ---------------------------------------------------------------------------
+
+/**
+ * Find a system whose name matches the DAT header name (case-insensitive,
+ * normalised to strip surrounding whitespace).
+ * Returns the system_id or null if no match.
+ */
+function autoLinkSystem(datName: string): number | null {
+  const needle = datName.trim().toLowerCase();
+  const allSystems = db.select({ id: systems.id, name: systems.name }).from(systems).all();
+  for (const s of allSystems) {
+    if (s.name.trim().toLowerCase() === needle) return s.id;
+  }
+  return null;
+}
 
 export type DatFormat = "logiqx" | "clrmame" | "unknown";
 
@@ -197,6 +215,9 @@ export function ingestDat(buffer: Buffer, fileHash: string): IngestResult {
     }
   }
 
+  // --- Auto-link to system by name (case-insensitive) ---
+  const autoLinkedSystemId = autoLinkSystem(parsedHeader.name);
+
   // --- Persist in a single transaction ---
   const result = db.transaction(() => {
     const inserted = db
@@ -209,6 +230,7 @@ export function ingestDat(buffer: Buffer, fileHash: string): IngestResult {
         source_kind: "upload",
         file_hash: fileHash,
         skipper_ref: parsedHeader.skipper_ref ?? null,
+        system_id: autoLinkedSystemId ?? null,
       })
       .returning({ dat_id: dats.id })
       .get();

@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   ChevronDown,
   Info,
+  Link2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +27,13 @@ interface DatRow {
   imported_at: string;
   entry_count: number;
   skipper_ref: string | null;
+  system_id: number | null;
+}
+
+interface SystemOption {
+  id: number;
+  name: string;
+  slug: string;
 }
 
 interface UploadState {
@@ -103,6 +111,8 @@ export function DatLibraryCard() {
   const [dats, setDats] = useState<DatRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [linkingId, setLinkingId] = useState<number | null>(null);
+  const [systems, setSystems] = useState<SystemOption[]>([]);
   const [upload, setUpload] = useState<UploadState>({
     state: "idle",
     message: null,
@@ -131,9 +141,40 @@ export function DatLibraryCard() {
     }
   }
 
+  async function fetchSystems() {
+    try {
+      const data: SystemOption[] = await fetch("/api/systems").then((r) => r.json());
+      setSystems(Array.isArray(data) ? data : []);
+    } catch {
+      setSystems([]);
+    }
+  }
+
   useEffect(() => {
     fetchDats();
+    fetchSystems();
   }, []);
+
+  async function handleLinkSystem(datId: number, systemId: number | null) {
+    if (linkingId !== null) return;
+    setLinkingId(datId);
+    try {
+      const res = await fetch(`/api/dats/${datId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ system_id: systemId }),
+      });
+      if (res.ok) {
+        setDats((prev) =>
+          prev.map((d) => (d.id === datId ? { ...d, system_id: systemId } : d))
+        );
+      }
+    } catch {
+      // ignore
+    } finally {
+      setLinkingId(null);
+    }
+  }
 
   // Close fetch dropdown when clicking outside
   useEffect(() => {
@@ -530,6 +571,31 @@ export function DatLibraryCard() {
                       )}
                     </div>
                   </div>
+
+                  {/* System link dropdown */}
+                  {systems.length > 0 && (
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <Link2 className="w-3 h-3 text-muted-foreground/40" />
+                      <select
+                        value={dat.system_id ?? ""}
+                        disabled={linkingId === dat.id}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          handleLinkSystem(dat.id, val === "" ? null : parseInt(val, 10));
+                        }}
+                        className="h-6 rounded border border-border bg-background px-1.5 text-[11px] text-muted-foreground hover:text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                        aria-label={`Link ${dat.name} to system`}
+                        title="Link to system"
+                      >
+                        <option value="">— unlinked —</option>
+                        {systems.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
                   {/* Delete */}
                   <Button
