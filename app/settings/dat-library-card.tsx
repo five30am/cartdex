@@ -7,10 +7,13 @@ import {
   Database,
   Trash2,
   Upload,
+  Download,
   Loader2,
   CheckCircle2,
   XCircle,
   AlertTriangle,
+  ChevronDown,
+  Info,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +33,57 @@ interface UploadState {
   message: string | null;
   warnings: string[];
 }
+
+// ---------------------------------------------------------------------------
+// Provider configuration — kept in sync with dat-fetch-providers/index.ts.
+// The UI does not import the server-side provider registry directly (that
+// module uses Node-only APIs). This minimal descriptor is duplicated here.
+// ---------------------------------------------------------------------------
+
+interface ProviderDescriptor {
+  id: string;
+  name: string;
+  license: string;
+  sourceUrl: string;
+}
+
+const FETCH_PROVIDERS: ProviderDescriptor[] = [
+  {
+    id: "libretro-database",
+    name: "libretro-database",
+    license: "MIT",
+    sourceUrl: "https://github.com/libretro/libretro-database",
+  },
+];
+
+interface FetchState {
+  state: "idle" | "fetching" | "done" | "error";
+  message: string | null;
+  warnings: string[];
+}
+
+// Known systems for the libretro-database provider — subset shown in the
+// dropdown. Full list lives in libretro-database.ts on the server.
+const LIBRETRO_SYSTEMS: Array<{ slug: string; label: string }> = [
+  { slug: "nes", label: "NES" },
+  { slug: "snes", label: "SNES" },
+  { slug: "gb", label: "Game Boy" },
+  { slug: "gbc", label: "Game Boy Color" },
+  { slug: "gba", label: "Game Boy Advance" },
+  { slug: "n64", label: "Nintendo 64" },
+  { slug: "nds", label: "Nintendo DS" },
+  { slug: "genesis", label: "Sega Genesis" },
+  { slug: "sms", label: "Sega Master System" },
+  { slug: "gamegear", label: "Game Gear" },
+  { slug: "saturn", label: "Saturn" },
+  { slug: "dreamcast", label: "Dreamcast" },
+  { slug: "ps1", label: "PlayStation" },
+  { slug: "psp", label: "PSP" },
+  { slug: "atari2600", label: "Atari 2600" },
+  { slug: "atari7800", label: "Atari 7800" },
+  { slug: "atarilynx", label: "Atari Lynx" },
+  { slug: "pce", label: "PC Engine / TurboGrafx-16" },
+];
 
 function formatDate(iso: string): string {
   try {
@@ -54,6 +108,15 @@ export function DatLibraryCard() {
     message: null,
     warnings: [],
   });
+  const [fetchState, setFetchState] = useState<FetchState>({
+    state: "idle",
+    message: null,
+    warnings: [],
+  });
+  const [fetchDropdownOpen, setFetchDropdownOpen] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState<ProviderDescriptor>(FETCH_PROVIDERS[0]);
+  const [selectedSystem, setSelectedSystem] = useState<string>("");
+  const fetchDropdownRef = useRef<HTMLDivElement>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -71,6 +134,22 @@ export function DatLibraryCard() {
   useEffect(() => {
     fetchDats();
   }, []);
+
+  // Close fetch dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        fetchDropdownRef.current &&
+        !fetchDropdownRef.current.contains(e.target as Node)
+      ) {
+        setFetchDropdownOpen(false);
+      }
+    }
+    if (fetchDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [fetchDropdownOpen]);
 
   async function handleUpload(file: File) {
     setUpload({ state: "uploading", message: null, warnings: [] });
@@ -109,6 +188,79 @@ export function DatLibraryCard() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
+  async function handleFetch() {
+    if (!selectedSystem) {
+      setFetchState({
+        state: "error",
+        message: "Select a system before fetching",
+        warnings: [],
+      });
+      return;
+    }
+
+    setFetchDropdownOpen(false);
+    setFetchState({ state: "fetching", message: null, warnings: [] });
+
+    try {
+      const res = await fetch("/api/dats/fetch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          providerId: selectedProvider.id,
+          systems: [selectedSystem],
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && Array.isArray(data.results) && data.results.length > 0) {
+        const result = data.results[0] as {
+          status: string;
+          name?: string;
+          entry_count?: number;
+          dat_id?: number;
+          warnings?: string[];
+          error?: string;
+        };
+
+        if (result.status === "ingested") {
+          setFetchState({
+            state: "done",
+            message: `Fetched "${result.name}" — ${(result.entry_count ?? 0).toLocaleString()} entries`,
+            warnings: Array.isArray(result.warnings) ? result.warnings : [],
+          });
+          await fetchDats();
+          setTimeout(() => setFetchState({ state: "idle", message: null, warnings: [] }), 6000);
+        } else if (result.status === "duplicate") {
+          setFetchState({
+            state: "done",
+            message: "Already up to date — this DAT version is already in the library",
+            warnings: [],
+          });
+          setTimeout(() => setFetchState({ state: "idle", message: null, warnings: [] }), 5000);
+        } else {
+          setFetchState({
+            state: "error",
+            message: result.error ?? "Fetch failed",
+            warnings: [],
+          });
+        }
+      } else {
+        setFetchState({
+          state: "error",
+          message: data.error ?? "Fetch failed",
+          warnings: [],
+        });
+      }
+    } catch (err) {
+      setFetchState({
+        state: "error",
+        message: err instanceof Error ? err.message : "Fetch failed",
+        warnings: [],
+      });
+    }
+  }
+
   async function handleDelete(id: number) {
     if (deletingId !== null) return;
     setDeletingId(id);
@@ -140,33 +292,123 @@ export function DatLibraryCard() {
             </div>
           </div>
 
-          {/* Import button */}
-          <div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".dat,.xml,.txt"
-              className="sr-only"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleUpload(file);
-              }}
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={upload.state === "uploading"}
-              onClick={() => fileInputRef.current?.click()}
-              className="h-8 px-3 text-xs gap-1.5 text-muted-foreground border border-border hover:text-foreground hover:bg-accent"
-            >
-              {upload.state === "uploading" ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
-              ) : (
-                <Upload className="w-3 h-3" />
+          {/* Action buttons */}
+          <div className="flex items-center gap-2">
+            {/* Import DAT (manual upload) */}
+            <div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".dat,.xml,.txt"
+                className="sr-only"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleUpload(file);
+                }}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={upload.state === "uploading" || fetchState.state === "fetching"}
+                onClick={() => fileInputRef.current?.click()}
+                className="h-8 px-3 text-xs gap-1.5 text-muted-foreground border border-border hover:text-foreground hover:bg-accent"
+              >
+                {upload.state === "uploading" ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Upload className="w-3 h-3" />
+                )}
+                {upload.state === "uploading" ? "Importing…" : "Import DAT"}
+              </Button>
+            </div>
+
+            {/* Fetch from provider — permissive sources only */}
+            <div className="relative" ref={fetchDropdownRef}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={fetchState.state === "fetching" || upload.state === "uploading"}
+                onClick={() => setFetchDropdownOpen((prev) => !prev)}
+                className="h-8 px-3 text-xs gap-1.5 text-muted-foreground border border-border hover:text-foreground hover:bg-accent"
+              >
+                {fetchState.state === "fetching" ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Download className="w-3 h-3" />
+                )}
+                {fetchState.state === "fetching" ? "Fetching…" : "Fetch from…"}
+                <ChevronDown className="w-3 h-3 opacity-60" />
+              </Button>
+
+              {fetchDropdownOpen && (
+                <div className="absolute right-0 top-full mt-1 z-50 w-72 rounded-xl border border-border bg-card shadow-lg p-3 space-y-3">
+                  {/* Licensing disclaimer */}
+                  <div className="flex items-start gap-2 rounded-lg bg-blue-500/10 border border-blue-500/20 px-3 py-2">
+                    <Info className="w-3 h-3 text-blue-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-blue-300/80 leading-relaxed">
+                      <span className="font-medium text-blue-300">libretro-database</span> is
+                      MIT-licensed. DAT contents are redistributed per that license.{" "}
+                      <a
+                        href="https://github.com/libretro/libretro-database"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline underline-offset-2 hover:text-blue-200"
+                      >
+                        Source
+                      </a>
+                    </p>
+                  </div>
+
+                  {/* Provider selector — single provider in v1 */}
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground font-medium">Provider</label>
+                    <select
+                      value={selectedProvider.id}
+                      onChange={(e) => {
+                        const p = FETCH_PROVIDERS.find((p) => p.id === e.target.value);
+                        if (p) setSelectedProvider(p);
+                      }}
+                      className="w-full h-7 rounded-md border border-border bg-background px-2 text-xs text-foreground"
+                    >
+                      {FETCH_PROVIDERS.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} ({p.license})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* System selector */}
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground font-medium">System</label>
+                    <select
+                      value={selectedSystem}
+                      onChange={(e) => setSelectedSystem(e.target.value)}
+                      className="w-full h-7 rounded-md border border-border bg-background px-2 text-xs text-foreground"
+                    >
+                      <option value="">— select a system —</option>
+                      {LIBRETRO_SYSTEMS.map((s) => (
+                        <option key={s.slug} value={s.slug}>
+                          {s.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={!selectedSystem}
+                    onClick={handleFetch}
+                    className="w-full h-7 text-xs"
+                  >
+                    Fetch DAT
+                  </Button>
+                </div>
               )}
-              {upload.state === "uploading" ? "Importing…" : "Import DAT"}
-            </Button>
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -202,6 +444,38 @@ export function DatLibraryCard() {
             <div className="flex items-center gap-1.5 text-xs text-red-400">
               <XCircle className="w-3 h-3 flex-shrink-0" />
               <span>{upload.message}</span>
+            </div>
+          )}
+
+          {/* Fetch status */}
+          {fetchState.state === "done" && (
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5 text-xs text-green-400">
+                <CheckCircle2 className="w-3 h-3 flex-shrink-0" />
+                <span>{fetchState.message}</span>
+              </div>
+              {fetchState.warnings.length > 0 && (
+                <div className="pl-4 space-y-0.5">
+                  {fetchState.warnings.slice(0, 5).map((w, i) => (
+                    <div key={i} className="flex items-start gap-1.5 text-xs text-yellow-400/80">
+                      <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                      <span className="font-mono break-all">{w}</span>
+                    </div>
+                  ))}
+                  {fetchState.warnings.length > 5 && (
+                    <p className="text-xs text-muted-foreground pl-4.5">
+                      +{fetchState.warnings.length - 5} more warnings
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {fetchState.state === "error" && (
+            <div className="flex items-center gap-1.5 text-xs text-red-400">
+              <XCircle className="w-3 h-3 flex-shrink-0" />
+              <span>{fetchState.message}</span>
             </div>
           )}
 

@@ -60,6 +60,11 @@ export const ApiErrorCode = {
 
   // DAT match engine (Ticket 4)
   DAT_MATCH_BUSY: "DAT_MATCH_BUSY",
+
+  // DAT auto-fetch (Ticket 8)
+  DAT_FETCH_UNKNOWN_PROVIDER: "DAT_FETCH_UNKNOWN_PROVIDER",
+  DAT_FETCH_PROVIDER_ERROR: "DAT_FETCH_PROVIDER_ERROR",
+  DAT_FETCH_NETWORK_ERROR: "DAT_FETCH_NETWORK_ERROR",
 } as const;
 
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode];
@@ -200,6 +205,23 @@ const API_ERRORS: Record<ApiErrorCode, ApiErrorDef> = {
     status: 409,
     code: ApiErrorCode.DAT_MATCH_BUSY,
     message: "A match pass is already running — wait for it to complete before starting another",
+  },
+
+  // DAT auto-fetch (Ticket 8)
+  [ApiErrorCode.DAT_FETCH_UNKNOWN_PROVIDER]: {
+    status: 400,
+    code: ApiErrorCode.DAT_FETCH_UNKNOWN_PROVIDER,
+    message: "Unknown DAT provider ID",
+  },
+  [ApiErrorCode.DAT_FETCH_PROVIDER_ERROR]: {
+    status: 422,
+    code: ApiErrorCode.DAT_FETCH_PROVIDER_ERROR,
+    message: "DAT provider could not satisfy the request",
+  },
+  [ApiErrorCode.DAT_FETCH_NETWORK_ERROR]: {
+    status: 502,
+    code: ApiErrorCode.DAT_FETCH_NETWORK_ERROR,
+    message: "Network error fetching DAT from remote provider",
   },
 };
 
