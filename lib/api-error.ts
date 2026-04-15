@@ -49,6 +49,14 @@ export const ApiErrorCode = {
 
   // 503 Service Unavailable
   FS_READ_ONLY: "FS_READ_ONLY",
+
+  // DAT library (Ticket 2)
+  DAT_NOT_FOUND: "DAT_NOT_FOUND",
+  DAT_DUPLICATE: "DAT_DUPLICATE",
+  DAT_PARSE_ERROR: "DAT_PARSE_ERROR",
+  DAT_FORMAT_UNSUPPORTED: "DAT_FORMAT_UNSUPPORTED",
+  DAT_TOO_LARGE: "DAT_TOO_LARGE",
+  DAT_RATE_LIMITED: "DAT_RATE_LIMITED",
 } as const;
 
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode];
@@ -150,6 +158,38 @@ const API_ERRORS: Record<ApiErrorCode, ApiErrorDef> = {
     status: 503,
     code: ApiErrorCode.FS_READ_ONLY,
     message: "ROM directory is not writable — check container mount (needs :rw)",
+  },
+
+  // DAT library
+  [ApiErrorCode.DAT_NOT_FOUND]: {
+    status: 404,
+    code: ApiErrorCode.DAT_NOT_FOUND,
+    message: "DAT not found",
+  },
+  [ApiErrorCode.DAT_DUPLICATE]: {
+    status: 409,
+    code: ApiErrorCode.DAT_DUPLICATE,
+    message: "This DAT file has already been imported (duplicate file hash)",
+  },
+  [ApiErrorCode.DAT_PARSE_ERROR]: {
+    status: 422,
+    code: ApiErrorCode.DAT_PARSE_ERROR,
+    message: "DAT file could not be parsed",
+  },
+  [ApiErrorCode.DAT_FORMAT_UNSUPPORTED]: {
+    status: 422,
+    code: ApiErrorCode.DAT_FORMAT_UNSUPPORTED,
+    message: "Unsupported DAT format",
+  },
+  [ApiErrorCode.DAT_TOO_LARGE]: {
+    status: 413,
+    code: ApiErrorCode.DAT_TOO_LARGE,
+    message: "DAT file exceeds 50 MB upload limit",
+  },
+  [ApiErrorCode.DAT_RATE_LIMITED]: {
+    status: 429,
+    code: ApiErrorCode.DAT_RATE_LIMITED,
+    message: "Too many DAT uploads — please wait before retrying",
   },
 };
 

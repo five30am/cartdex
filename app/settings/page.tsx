@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { SettingsForm } from "./settings-form";
 import { SystemsToggleCard } from "./systems-toggle-card";
+import { DatLibraryCard } from "./dat-library-card";
 import { db } from "@/lib/db";
 import { systems } from "@/lib/db/schema";
 
@@ -34,6 +35,7 @@ export default function SettingsPage() {
         </div>
         <div className="space-y-4">
           <SettingsForm />
+          <DatLibraryCard />
           <SystemsToggleCard systems={allSystems} />
         </div>
       </div>

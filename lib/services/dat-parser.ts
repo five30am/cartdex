@@ -1,154 +1,218 @@
-import fs from "fs";
-import { XMLParser } from "fast-xml-parser";
-import { db } from "@/lib/db";
-import { games, systems } from "@/lib/db/schema";
-import { eq, or } from "drizzle-orm";
+/**
+ * Logiqx XML DAT parser — v2 rewrite.
+ *
+ * Handles:
+ *   - Multiple <rom> elements per <game>
+ *   - <game status="..."> attribute (good / baddump / nodump)
+ *   - cloneof / romof clone-set relationships
+ *   - Full <header> capture (name, description, version, author, comment, url,
+ *     dat, build, debug, clrmamepro header="..." skipper reference)
+ *   - Fail-fast detection of MAME ListXML (<mame> root element)
+ *
+ * Format sniffing is done by the caller (see sniffDatFormat in dat-ingest.ts).
+ * This module only handles <?xml … <datafile …> documents.
+ */
 
-export interface DatGame {
+import { XMLParser } from "fast-xml-parser";
+
+export type DatEntryStatus = "good" | "baddump" | "nodump";
+
+export const VALID_STATUSES = new Set<string>(["good", "baddump", "nodump"]);
+
+/**
+ * Coerce a raw status string from a DAT file into a valid DatEntryStatus.
+ *
+ * DAT files from the wild occasionally use capitalised or misspelled values.
+ * Strategy: lowercase + exact match → accept; unknown → coerce to "good" and
+ * emit a warning.  This is the Sage-requested enum validation: we do NOT trust
+ * the file blindly.
+ */
+export function coerceStatus(
+  raw: string | undefined,
+  context: string
+): { status: DatEntryStatus; warning?: string } {
+  if (!raw) return { status: "good" };
+  const normalized = raw.toLowerCase().trim();
+  if (normalized === "good" || normalized === "baddump" || normalized === "nodump") {
+    return { status: normalized as DatEntryStatus };
+  }
+  return {
+    status: "good",
+    warning: `Unknown status "${raw}" on "${context}" — coerced to "good"`,
+  };
+}
+
+export interface ParsedRom {
   name: string;
+  size?: number;
   crc32?: string;
   md5?: string;
   sha1?: string;
+  status: DatEntryStatus;
+  /** Warning emitted when an unknown status was coerced. */
+  statusWarning?: string;
 }
 
-export interface DatHeader {
+export interface ParsedGame {
+  name: string;
+  description?: string;
+  cloneof?: string;
+  romof?: string;
+  serial?: string;
+  region?: string;
+  roms: ParsedRom[];
+}
+
+export interface ParsedHeader {
   name: string;
   description?: string;
   version?: string;
+  author?: string;
+  comment?: string;
+  url?: string;
+  /** Basename of the skipper XML from <clrmamepro header="..."/>. */
+  skipper_ref?: string;
 }
 
 export interface ParsedDat {
-  header: DatHeader;
-  games: DatGame[];
+  header: ParsedHeader;
+  games: ParsedGame[];
+  warnings: string[];
 }
 
-export interface MatchResult {
-  matched: number;
-  unmatched: number;
+// ---------------------------------------------------------------------------
+// Internal helpers
+// ---------------------------------------------------------------------------
+
+function parseRomElement(
+  rom: Record<string, unknown>,
+  gameName: string
+): ParsedRom {
+  const raw = rom as Record<string, string | undefined>;
+  const rawStatus = raw["@_status"];
+  const { status, warning } = coerceStatus(rawStatus, gameName);
+
+  return {
+    name: (raw["@_name"] as string) ?? "",
+    size: raw["@_size"] != null ? parseInt(raw["@_size"] as string, 10) : undefined,
+    crc32: (raw["@_crc"] as string | undefined)?.toLowerCase(),
+    md5: (raw["@_md5"] as string | undefined)?.toLowerCase(),
+    sha1: (raw["@_sha1"] as string | undefined)?.toLowerCase(),
+    status,
+    statusWarning: warning,
+  };
 }
+
+function extractSkipperRef(datafile: Record<string, unknown>): string | undefined {
+  // <clrmamepro header="filename.xml"/> lives inside the <header> element
+  const header = datafile.header as Record<string, unknown> | undefined;
+  if (!header) return undefined;
+
+  const clrmamepro = header.clrmamepro as Record<string, unknown> | undefined;
+  if (!clrmamepro) return undefined;
+
+  return (clrmamepro["@_header"] as string | undefined) ?? undefined;
+}
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
 
 /**
- * Parse a No-Intro XML DAT file and return the header + game list.
- * No-Intro DAT format: <datafile><header>...</header><game name="..."><rom name="..." crc="..." md5="..." sha1="..."/></game></datafile>
+ * Parse a Logiqx XML DAT string.
+ *
+ * Throws:
+ *   - If the content appears to be MAME ListXML (root = <mame>)
+ *   - If the <datafile> root element is missing
  */
-export function parseDatFile(filePath: string): ParsedDat {
-  const xml = fs.readFileSync(filePath, "utf-8");
+export function parseLogiqxDat(content: string): ParsedDat {
+  // Fast MAME detection — check before handing to XMLParser to avoid OOM
+  // on 400MB+ MAME ListXML files.
+  const firstElement = content.match(/<(\w+)[\s>]/);
+  if (firstElement) {
+    const tag = firstElement[1].toLowerCase();
+    if (tag === "mame") {
+      throw new Error(
+        "MAME ListXML not supported in v1 — upload a Logiqx <datafile> DAT instead"
+      );
+    }
+  }
 
   const parser = new XMLParser({
     ignoreAttributes: false,
     attributeNamePrefix: "@_",
-    isArray: (name) => name === "game" || name === "rom",
+    isArray: (name) => name === "game" || name === "machine" || name === "rom",
+    // Parse numeric attribute values as strings to avoid precision loss on large sizes
+    parseAttributeValue: false,
   });
 
-  const parsed = parser.parse(xml);
-  const datafile = parsed.datafile;
-
-  if (!datafile) {
-    throw new Error("Invalid DAT file: missing <datafile> root element");
+  let parsed: Record<string, unknown>;
+  try {
+    parsed = parser.parse(content) as Record<string, unknown>;
+  } catch (err) {
+    throw new Error(
+      `XML parse error: ${err instanceof Error ? err.message : String(err)}`
+    );
   }
 
-  const header: DatHeader = {
-    name: datafile.header?.name ?? "Unknown",
-    description: datafile.header?.description,
-    version: datafile.header?.version,
+  const datafile = (parsed.datafile ?? parsed.DATAFILE) as
+    | Record<string, unknown>
+    | undefined;
+  if (!datafile) {
+    throw new Error(
+      "Invalid Logiqx DAT: missing <datafile> root element"
+    );
+  }
+
+  const rawHeader = (datafile.header ?? datafile.HEADER) as
+    | Record<string, unknown>
+    | undefined;
+
+  const header: ParsedHeader = {
+    name: String(rawHeader?.name ?? "Unknown"),
+    description: rawHeader?.description != null
+      ? String(rawHeader.description)
+      : undefined,
+    version: rawHeader?.version != null ? String(rawHeader.version) : undefined,
+    author: rawHeader?.author != null ? String(rawHeader.author) : undefined,
+    comment: rawHeader?.comment != null ? String(rawHeader.comment) : undefined,
+    url: rawHeader?.url != null ? String(rawHeader.url) : undefined,
+    skipper_ref: extractSkipperRef(datafile),
   };
 
-  const rawGames: unknown[] = Array.isArray(datafile.game)
-    ? datafile.game
-    : datafile.game
-    ? [datafile.game]
-    : [];
+  // <game> and <machine> are both valid top-level elements
+  const rawGames = [
+    ...((datafile.game as unknown[]) ?? []),
+    ...((datafile.machine as unknown[]) ?? []),
+  ];
 
-  const datGames: DatGame[] = [];
+  const games: ParsedGame[] = [];
+  const warnings: string[] = [];
 
   for (const g of rawGames) {
     const game = g as Record<string, unknown>;
-    const name = game["@_name"] as string;
+    const name = (game["@_name"] as string | undefined) ?? "";
     if (!name) continue;
 
-    // A game entry may have multiple <rom> children — grab the first one for hashes
-    const roms = Array.isArray(game.rom) ? game.rom : game.rom ? [game.rom] : [];
-    const rom = (roms[0] as Record<string, string>) ?? {};
+    const roms: ParsedRom[] = [];
+    const rawRoms = (game.rom as Record<string, unknown>[]) ?? [];
 
-    datGames.push({
+    for (const r of rawRoms) {
+      const parsed = parseRomElement(r, name);
+      if (parsed.statusWarning) warnings.push(parsed.statusWarning);
+      roms.push(parsed);
+    }
+
+    games.push({
       name,
-      crc32: rom["@_crc"]?.toLowerCase(),
-      md5: rom["@_md5"]?.toLowerCase(),
-      sha1: rom["@_sha1"]?.toLowerCase(),
+      description: game.description != null ? String(game.description) : undefined,
+      cloneof: (game["@_cloneof"] as string | undefined) ?? undefined,
+      romof: (game["@_romof"] as string | undefined) ?? undefined,
+      serial: (game["@_serial"] as string | undefined) ?? undefined,
+      region: (game["@_region"] as string | undefined) ?? undefined,
+      roms,
     });
   }
 
-  return { header, games: datGames };
-}
-
-/**
- * Build a lookup map from hash → DatGame for fast matching.
- */
-export function buildHashIndex(datGames: DatGame[]): {
-  byCrc32: Map<string, DatGame>;
-  byMd5: Map<string, DatGame>;
-  bySha1: Map<string, DatGame>;
-} {
-  const byCrc32 = new Map<string, DatGame>();
-  const byMd5 = new Map<string, DatGame>();
-  const bySha1 = new Map<string, DatGame>();
-
-  for (const game of datGames) {
-    if (game.crc32) byCrc32.set(game.crc32, game);
-    if (game.md5) byMd5.set(game.md5, game);
-    if (game.sha1) bySha1.set(game.sha1, game);
-  }
-
-  return { byCrc32, byMd5, bySha1 };
-}
-
-/**
- * Match ingested ROMs in the DB against a parsed DAT file by hash.
- * Updates matched games: sets verified=true and corrects the title to the No-Intro canonical name.
- * Returns counts of matched vs unmatched games for the given system slug.
- */
-export function matchRomsAgainstDat(
-  datGames: DatGame[],
-  systemSlug: string
-): MatchResult {
-  const system = db
-    .select({ id: systems.id })
-    .from(systems)
-    .where(eq(systems.slug, systemSlug))
-    .get();
-
-  if (!system) {
-    throw new Error(`System not found: ${systemSlug}`);
-  }
-
-  const index = buildHashIndex(datGames);
-
-  const allGames = db
-    .select()
-    .from(games)
-    .where(eq(games.system_id, system.id))
-    .all();
-
-  let matched = 0;
-  let unmatched = 0;
-
-  for (const game of allGames) {
-    let datGame: DatGame | undefined;
-
-    if (game.hash_crc32) datGame = index.byCrc32.get(game.hash_crc32);
-    if (!datGame && game.hash_md5) datGame = index.byMd5.get(game.hash_md5);
-    if (!datGame && game.hash_sha1) datGame = index.bySha1.get(game.hash_sha1);
-
-    if (datGame) {
-      db.update(games)
-        .set({ title: datGame.name, verified: true })
-        .where(eq(games.id, game.id))
-        .run();
-      matched++;
-    } else {
-      unmatched++;
-    }
-  }
-
-  return { matched, unmatched };
+  return { header, games, warnings };
 }
