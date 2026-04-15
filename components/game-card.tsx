@@ -45,8 +45,7 @@ export function GameCard({
             fill
             loading="lazy"
             className={cn(
-              "object-cover group-hover:scale-105 transition-transform duration-300",
-              "transition-opacity duration-300",
+              "object-cover group-hover:scale-105 transition-all duration-300",
               imageLoaded ? "opacity-100" : "opacity-0"
             )}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 16vw"
