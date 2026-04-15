@@ -49,6 +49,7 @@ import {
   ALLOWED_HOSTS,
   FETCH_TIMEOUT_MS,
 } from "./dat-fetch-constants";
+import { computeDiff } from "./dat-diff";
 
 // Re-export constants and error classes so callers and providers can import
 // from one place if they prefer.
@@ -172,6 +173,43 @@ export async function fetchDat(options: FetchDatOptions): Promise<FetchDatResult
   // than modify ingestDat (which would be Ticket 2 scope creep), we do a single
   // UPDATE after the insert. The transaction in ingestDat ensures the row exists
   // by the time we update it, and we're in the same process/connection.
+
+  // Before ingest: find the most recent existing DAT with the same name + this
+  // provider's source_kind "fetch". If found, we'll diff the new version against
+  // it after ingest.
+  //
+  // We look up by name because there's no provider-ID column on dats — the
+  // logical DAT name is the stable identity used by the diff timeline. We only
+  // diff fetch-sourced DATs (not manual uploads) because the auto-diff workflow
+  // is specifically for tracking upstream provider changes.
+  let prevDatForDiff: { id: number; name: string } | undefined;
+  {
+    // We need the DAT name to find the previous version, but we don't have it
+    // yet (it's inside the buffer). Use the provider + systemSlug settings key
+    // to look up the DAT we ingested last time. Since that's a timestamp string
+    // (not a dat_id), we instead query: most recently imported "fetch" DAT whose
+    // file_hash differs from the current one (which we already know is new).
+    // We'll narrow by name after parsing — see the post-ingest block below.
+    //
+    // Strategy: grab the most recently imported fetch-sourced DAT overall.
+    // After ingest gives us the new DAT's name, we cross-check the name matches.
+    // This is a best-effort lookup and only fires computeDiff when confident.
+    const recentFetch = db
+      .select({ id: dats.id, name: dats.name })
+      .from(dats)
+      .where(eq(dats.source_kind, "fetch"))
+      .orderBy(dats.imported_at)
+      .all();
+    // We want the most recently imported by imported_at — orderBy ASC gives us
+    // oldest first, so take the last element for the most recent.
+    // We exclude any DAT whose hash is the current file (already filtered by
+    // the duplicate check above — `existing` is null here, so all rows are prior).
+    if (recentFetch.length > 0) {
+      // Will be narrowed to name-match after ingest
+      prevDatForDiff = recentFetch[recentFetch.length - 1];
+    }
+  }
+
   const result = ingestDat(buffer, fileHash);
 
   // Patch source_kind to "fetch" — ingestDat always writes "upload".
@@ -179,6 +217,28 @@ export async function fetchDat(options: FetchDatOptions): Promise<FetchDatResult
     .set({ source_kind: "fetch" })
     .where(eq(dats.id, result.dat_id))
     .run();
+
+  // --- 5b. Trigger diff if a prior version of this same logical DAT exists ---
+  // We fire computeDiff asynchronously (setImmediate) so we don't block the
+  // fetch response. Errors in diff computation are logged but not surfaced to
+  // the caller — a diff failure should never fail a successful fetch.
+  //
+  // Only trigger for fetch-sourced DATs (not manual uploads). Manual uploads
+  // may be one-off snapshots and the user may not want automated diff tracking.
+  if (prevDatForDiff && prevDatForDiff.name === result.name) {
+    const prevId = prevDatForDiff.id;
+    const newId = result.dat_id;
+    setImmediate(() => {
+      try {
+        computeDiff(prevId, newId);
+      } catch (diffErr) {
+        console.error(
+          `[dat-fetch] computeDiff(${prevId} → ${newId}) failed — diff skipped:`,
+          diffErr
+        );
+      }
+    });
+  }
 
   // --- 6. Persist fetch timestamp ---
   // Store current UTC time as the last-modified value. In a future version,

@@ -242,6 +242,98 @@ export const match_results = sqliteTable(
   ]
 );
 
+// ---------------------------------------------------------------------------
+// DAT auditing — Ticket 9 (scheduled refresh + diff view)
+// ---------------------------------------------------------------------------
+
+/**
+ * Summary record for one DAT version transition.
+ *
+ * Retention policy: keep the last 3 versions of each DAT (by imported_at DESC).
+ * When a new version is ingested via auto-fetch, any versions older than the
+ * 3rd-most-recent for the same dat_name are deleted. This is enforced by
+ * dat-diff.ts immediately after computeDiff() persists the new rows.
+ *
+ * 3 was chosen as the default because:
+ *   - It provides enough history to see a trend (current, previous, one before)
+ *   - DAT files can be 10k–100k entries; keeping more than 3 full entry sets
+ *     in dat_diff_entries would consume significant disk at no practical benefit
+ *     for the timeline UI use case (Kit #351 follow-up)
+ *   - If the user needs deeper history, they can re-upload historical snapshots
+ */
+export const dat_diffs = sqliteTable(
+  "dat_diffs",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    /**
+     * Logical DAT identifier — the `dats.name` value shared by all versions.
+     * Stored denormalised here so timeline queries don't need to join through
+     * two DAT rows.
+     */
+    dat_name: text("dat_name").notNull(),
+    /** The earlier DAT version — the "before" snapshot. */
+    from_dat_id: integer("from_dat_id")
+      .notNull()
+      .references(() => dats.id, { onDelete: "cascade" }),
+    /** The newer DAT version — the "after" snapshot. */
+    to_dat_id: integer("to_dat_id")
+      .notNull()
+      .references(() => dats.id, { onDelete: "cascade" }),
+    computed_at: text("computed_at")
+      .notNull()
+      .default(sql`(datetime('now'))`),
+    added_count: integer("added_count").notNull().default(0),
+    removed_count: integer("removed_count").notNull().default(0),
+    changed_count: integer("changed_count").notNull().default(0),
+  },
+  (t) => [
+    // Timeline query: all diffs for a logical DAT name, newest-first.
+    index("idx_dat_diffs_name_computed").on(t.dat_name, t.computed_at),
+    // Lookup by either endpoint — used by cascade-delete guard and idempotency check.
+    index("idx_dat_diffs_from_dat_id").on(t.from_dat_id),
+    index("idx_dat_diffs_to_dat_id").on(t.to_dat_id),
+  ]
+);
+
+/**
+ * Per-entry detail rows for a diff.
+ * Each row represents one ROM entry that was added, removed, or had its status
+ * changed between the two DAT versions.
+ *
+ * We store these separately from the summary because Kit's UI needs a
+ * click-through to newly-missing entries (#351 follow-up), and materialising
+ * them in a child table is cheaper than recomputing from scratch on demand.
+ */
+export const dat_diff_entries = sqliteTable(
+  "dat_diff_entries",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    dat_diff_id: integer("dat_diff_id")
+      .notNull()
+      .references(() => dat_diffs.id, { onDelete: "cascade" }),
+    /**
+     * "added"          — hash present in to_dat, absent in from_dat
+     * "removed"        — hash present in from_dat, absent in to_dat
+     * "status_changed" — same canonical hash in both, but status field differs
+     */
+    change_type: text("change_type")
+      .$type<"added" | "removed" | "status_changed">()
+      .notNull(),
+    /** ROM/game name from the relevant DAT entry. */
+    entry_name: text("entry_name").notNull(),
+    crc32: text("crc32"),
+    sha1: text("sha1"),
+    /** Previous status — null for "added" entries (no prior row). */
+    prev_status: text("prev_status").$type<"good" | "baddump" | "nodump" | null>(),
+    /** New status — null for "removed" entries (no new row). */
+    new_status: text("new_status").$type<"good" | "baddump" | "nodump" | null>(),
+  },
+  (t) => [
+    index("idx_dat_diff_entries_diff_id").on(t.dat_diff_id),
+    index("idx_dat_diff_entries_change_type").on(t.change_type),
+  ]
+);
+
 export const file_operations = sqliteTable("file_operations", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   game_id: integer("game_id"),

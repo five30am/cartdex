@@ -317,6 +317,45 @@ export function ensureSchema() {
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // DAT auditing — Ticket 9: dat_diffs + dat_diff_entries
+  // ---------------------------------------------------------------------------
+  //
+  // Retention policy: keep last 3 versions per logical DAT name.
+  // Enforced by dat-diff.ts after each computeDiff() call. Not enforced here
+  // because the migration runs at startup and we don't want to prune history
+  // on a schema upgrade.
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS dat_diffs (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      dat_name      TEXT NOT NULL,
+      from_dat_id   INTEGER NOT NULL REFERENCES dats(id) ON DELETE CASCADE,
+      to_dat_id     INTEGER NOT NULL REFERENCES dats(id) ON DELETE CASCADE,
+      computed_at   TEXT NOT NULL DEFAULT (datetime('now')),
+      added_count   INTEGER NOT NULL DEFAULT 0,
+      removed_count INTEGER NOT NULL DEFAULT 0,
+      changed_count INTEGER NOT NULL DEFAULT 0
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_dat_diffs_name_computed ON dat_diffs(dat_name, computed_at);
+    CREATE INDEX IF NOT EXISTS idx_dat_diffs_from_dat_id   ON dat_diffs(from_dat_id);
+    CREATE INDEX IF NOT EXISTS idx_dat_diffs_to_dat_id     ON dat_diffs(to_dat_id);
+
+    CREATE TABLE IF NOT EXISTS dat_diff_entries (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      dat_diff_id INTEGER NOT NULL REFERENCES dat_diffs(id) ON DELETE CASCADE,
+      change_type TEXT NOT NULL,
+      entry_name  TEXT NOT NULL,
+      crc32       TEXT,
+      sha1        TEXT,
+      prev_status TEXT,
+      new_status  TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_dat_diff_entries_diff_id     ON dat_diff_entries(dat_diff_id);
+    CREATE INDEX IF NOT EXISTS idx_dat_diff_entries_change_type ON dat_diff_entries(change_type);
+  `);
+
   // One-time migration: set correct kind for known handheld systems
   const handhelds = ["gb", "gbc", "gba", "psp"];
   for (const slug of handhelds) {

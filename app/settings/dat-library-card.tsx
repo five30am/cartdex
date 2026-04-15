@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -13,8 +13,10 @@ import {
   XCircle,
   AlertTriangle,
   ChevronDown,
+  ChevronRight,
   Info,
   Link2,
+  History,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -92,6 +94,478 @@ const LIBRETRO_SYSTEMS: Array<{ slug: string; label: string }> = [
   { slug: "atarilynx", label: "Atari Lynx" },
   { slug: "pce", label: "PC Engine / TurboGrafx-16" },
 ];
+
+// ---------------------------------------------------------------------------
+// DAT diff types — mirror the GET /api/dats/[id]/diffs response shape
+// ---------------------------------------------------------------------------
+
+interface DiffTimelineEntry {
+  id: number;
+  dat_name: string;
+  from_dat_id: number;
+  to_dat_id: number;
+  computed_at: string;
+  added_count: number;
+  removed_count: number;
+  changed_count: number;
+}
+
+interface DiffDetailEntry {
+  id: number;
+  change_type: "added" | "removed" | "status_changed";
+  entry_name: string;
+  crc32: string | null;
+  sha1: string | null;
+  prev_status: "good" | "baddump" | "nodump" | null;
+  new_status: "good" | "baddump" | "nodump" | null;
+}
+
+interface DiffEntriesPage {
+  diff_id: number;
+  total: number;
+  limit: number;
+  offset: number;
+  change_type: string | null;
+  items: DiffDetailEntry[];
+}
+
+interface DiffApiResponse {
+  dat_id: number;
+  dat_name: string;
+  timeline: DiffTimelineEntry[];
+  entries?: DiffEntriesPage;
+}
+
+// ---------------------------------------------------------------------------
+// Diff detail state — keyed by diffId, stores accumulated pages
+// ---------------------------------------------------------------------------
+
+interface DiffDetailState {
+  items: DiffDetailEntry[];
+  total: number;
+  loading: boolean;
+  activeTab: "added" | "removed" | "status_changed";
+}
+
+// ---------------------------------------------------------------------------
+// Utility: relative time ("2 days ago")
+// ---------------------------------------------------------------------------
+
+function relativeTime(iso: string): string {
+  try {
+    const diff = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diff / 60_000);
+    if (mins < 2) return "just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days < 30) return `${days}d ago`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months}mo ago`;
+    return `${Math.floor(months / 12)}y ago`;
+  } catch {
+    return iso;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// DiffSummaryChip — "+12 / -0 / Δ3" with color coding
+// ---------------------------------------------------------------------------
+
+function DiffSummaryChip({
+  added,
+  removed,
+  changed,
+}: {
+  added: number;
+  removed: number;
+  changed: number;
+}) {
+  return (
+    <span className="inline-flex items-center gap-1 font-mono text-[11px] tabular-nums">
+      <span
+        className={cn(
+          "px-1.5 py-0.5 rounded border",
+          added > 0
+            ? "text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/25 dark:border-emerald-500/30"
+            : "text-muted-foreground/50 bg-muted/30 border-border"
+        )}
+      >
+        +{added}
+      </span>
+      <span
+        className={cn(
+          "px-1.5 py-0.5 rounded border",
+          removed > 0
+            ? "text-red-700 dark:text-red-400 bg-red-500/10 border-red-500/25 dark:border-red-500/30"
+            : "text-muted-foreground/50 bg-muted/30 border-border"
+        )}
+      >
+        -{removed}
+      </span>
+      {changed > 0 && (
+        <span className="px-1.5 py-0.5 rounded border text-amber-700 dark:text-amber-400 bg-amber-500/10 border-amber-500/25 dark:border-amber-500/30">
+          Δ{changed}
+        </span>
+      )}
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// StatusPill — shows a ROM status label
+// ---------------------------------------------------------------------------
+
+function StatusPill({ status }: { status: "good" | "baddump" | "nodump" | null }) {
+  if (!status) return null;
+  const styles: Record<string, string> = {
+    good: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/25 dark:border-emerald-500/30",
+    baddump:
+      "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/25 dark:border-red-500/30",
+    nodump:
+      "bg-zinc-500/10 text-zinc-700 dark:text-zinc-400 border-zinc-500/25 dark:border-zinc-500/30",
+  };
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] font-medium",
+        styles[status] ?? "bg-muted text-muted-foreground border-border"
+      )}
+    >
+      {status}
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// DatDiffTimeline — collapsible history panel for a single DAT row
+// ---------------------------------------------------------------------------
+
+const DETAIL_PAGE_SIZE = 50;
+
+function DatDiffTimeline({ datId }: { datId: number }) {
+  const [open, setOpen] = useState(false);
+  const [timeline, setTimeline] = useState<DiffTimelineEntry[] | null>(null);
+  const [timelineLoading, setTimelineLoading] = useState(false);
+  const [timelineError, setTimelineError] = useState<string | null>(null);
+
+  // Which diff event is expanded to show per-entry details
+  const [expandedDiffId, setExpandedDiffId] = useState<number | null>(null);
+  // Per-diff detail state — each diffId gets its own page accumulator
+  const [diffDetails, setDiffDetails] = useState<Record<number, DiffDetailState>>({});
+
+  // Lazy-load timeline on first open
+  useEffect(() => {
+    if (!open || timeline !== null) return;
+    let cancelled = false;
+    setTimelineLoading(true);
+    setTimelineError(null);
+
+    fetch(`/api/dats/${datId}/diffs`)
+      .then((r) => r.json() as Promise<DiffApiResponse>)
+      .then((data) => {
+        if (cancelled) return;
+        setTimeline(data.timeline ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setTimelineError("Failed to load history");
+      })
+      .finally(() => {
+        if (!cancelled) setTimelineLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, datId, timeline]);
+
+  // Load the first page of entries when a diff is expanded
+  const loadDiffDetail = useCallback(
+    (diffId: number, tab: "added" | "removed" | "status_changed", offset = 0) => {
+      setDiffDetails((prev) => {
+        const current = prev[diffId];
+        // If same tab + same page already loading/loaded, skip
+        if (current?.loading) return prev;
+        return {
+          ...prev,
+          [diffId]: {
+            items: offset === 0 ? [] : current?.items ?? [],
+            total: current?.total ?? 0,
+            loading: true,
+            activeTab: tab,
+          },
+        };
+      });
+
+      const url = `/api/dats/${datId}/diffs?diff_id=${diffId}&change_type=${tab}&limit=${DETAIL_PAGE_SIZE}&offset=${offset}`;
+
+      fetch(url)
+        .then((r) => r.json() as Promise<DiffApiResponse>)
+        .then((data) => {
+          const page = data.entries;
+          if (!page) return;
+          setDiffDetails((prev) => {
+            const current = prev[diffId];
+            const existingItems = offset === 0 ? [] : current?.items ?? [];
+            return {
+              ...prev,
+              [diffId]: {
+                items: [...existingItems, ...page.items],
+                total: page.total,
+                loading: false,
+                activeTab: tab,
+              },
+            };
+          });
+        })
+        .catch(() => {
+          setDiffDetails((prev) => ({
+            ...prev,
+            [diffId]: { ...prev[diffId], loading: false },
+          }));
+        });
+    },
+    [datId]
+  );
+
+  const handleToggleDiff = useCallback(
+    (diffId: number, added: number, removed: number, changed: number) => {
+      if (expandedDiffId === diffId) {
+        setExpandedDiffId(null);
+        return;
+      }
+      setExpandedDiffId(diffId);
+      // Determine initial tab: prefer the first non-zero bucket
+      const initialTab: "added" | "removed" | "status_changed" =
+        added > 0 ? "added" : removed > 0 ? "removed" : changed > 0 ? "status_changed" : "added";
+      loadDiffDetail(diffId, initialTab, 0);
+    },
+    [expandedDiffId, loadDiffDetail]
+  );
+
+  const handleTabChange = useCallback(
+    (diffId: number, tab: "added" | "removed" | "status_changed") => {
+      loadDiffDetail(diffId, tab, 0);
+    },
+    [loadDiffDetail]
+  );
+
+  const handleLoadMore = useCallback(
+    (diffId: number) => {
+      const detail = diffDetails[diffId];
+      if (!detail || detail.loading) return;
+      loadDiffDetail(diffId, detail.activeTab, detail.items.length);
+    },
+    [diffDetails, loadDiffDetail]
+  );
+
+  // Only show the toggle once we know there's history (or it's open and loading)
+  // Before first open, we don't know — render a lightweight "History" button
+  // that triggers the load. After load, if timeline is empty, we hide it entirely.
+  if (timeline !== null && timeline.length === 0) return null;
+
+  return (
+    <div className="mt-1.5">
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className={cn(
+          "flex items-center gap-1 text-[11px] text-muted-foreground/60 hover:text-muted-foreground transition-colors",
+          open && "text-muted-foreground"
+        )}
+        aria-expanded={open}
+      >
+        <History className="w-3 h-3" />
+        <span>History</span>
+        <ChevronDown
+          className={cn(
+            "w-2.5 h-2.5 transition-transform duration-150",
+            open && "rotate-180"
+          )}
+        />
+      </button>
+
+      {open && (
+        <div className="mt-2 pl-4 border-l border-border space-y-1">
+          {timelineLoading && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground/60 py-1">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              <span>Loading history…</span>
+            </div>
+          )}
+
+          {timelineError && (
+            <p className="text-xs text-red-400 py-1">{timelineError}</p>
+          )}
+
+          {timeline !== null && timeline.length > 0 && (
+            <div className="space-y-1.5">
+              {timeline.map((entry) => {
+                const isExpanded = expandedDiffId === entry.id;
+                const detail = diffDetails[entry.id];
+                return (
+                  <div key={entry.id} className="space-y-1.5">
+                    {/* Diff event row */}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleToggleDiff(
+                          entry.id,
+                          entry.added_count,
+                          entry.removed_count,
+                          entry.changed_count
+                        )
+                      }
+                      className={cn(
+                        "w-full flex items-center gap-2.5 text-left px-2 py-1.5 rounded-md transition-colors",
+                        isExpanded
+                          ? "bg-muted/60"
+                          : "hover:bg-muted/40"
+                      )}
+                    >
+                      <ChevronRight
+                        className={cn(
+                          "w-3 h-3 text-muted-foreground/50 shrink-0 transition-transform duration-150",
+                          isExpanded && "rotate-90"
+                        )}
+                      />
+                      <span className="text-xs text-muted-foreground/70 tabular-nums shrink-0 w-16">
+                        {relativeTime(entry.computed_at)}
+                      </span>
+                      <DiffSummaryChip
+                        added={entry.added_count}
+                        removed={entry.removed_count}
+                        changed={entry.changed_count}
+                      />
+                    </button>
+
+                    {/* Per-entry detail panel */}
+                    {isExpanded && (
+                      <div className="ml-5 space-y-2">
+                        {/* Sub-tabs */}
+                        <div className="flex gap-1">
+                          {(
+                            [
+                              { key: "added", label: "Added", count: entry.added_count },
+                              { key: "removed", label: "Removed", count: entry.removed_count },
+                              {
+                                key: "status_changed",
+                                label: "Status changed",
+                                count: entry.changed_count,
+                              },
+                            ] as const
+                          )
+                            .filter((t) => t.count > 0)
+                            .map((tab) => (
+                              <button
+                                key={tab.key}
+                                type="button"
+                                onClick={() => handleTabChange(entry.id, tab.key)}
+                                className={cn(
+                                  "text-[11px] px-2 py-0.5 rounded-full border transition-colors",
+                                  detail?.activeTab === tab.key
+                                    ? "bg-muted text-foreground border-border"
+                                    : "text-muted-foreground border-transparent hover:border-border hover:bg-muted/40"
+                                )}
+                              >
+                                {tab.label}
+                                <span className="ml-1 text-muted-foreground/60 font-mono">
+                                  {tab.count}
+                                </span>
+                              </button>
+                            ))}
+                        </div>
+
+                        {/* Entry list */}
+                        {detail?.loading && detail.items.length === 0 ? (
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground/60 py-1">
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            <span>Loading entries…</span>
+                          </div>
+                        ) : (
+                          <div className="space-y-0.5">
+                            {(detail?.items ?? []).map((item) => (
+                              <div
+                                key={item.id}
+                                className="flex items-start gap-2 px-2 py-1 rounded text-xs bg-muted/20 hover:bg-muted/40 transition-colors"
+                              >
+                                <span className="font-mono text-foreground/80 truncate flex-1 min-w-0">
+                                  {item.entry_name}
+                                </span>
+                                {/* Hash — prefer sha1, fall back to crc32 */}
+                                {(item.sha1 || item.crc32) && (
+                                  <span
+                                    className="font-mono text-[10px] text-muted-foreground/50 shrink-0"
+                                    title={item.sha1 ? `SHA1: ${item.sha1}` : `CRC32: ${item.crc32}`}
+                                  >
+                                    {(item.sha1 ?? item.crc32 ?? "").slice(0, 8)}
+                                  </span>
+                                )}
+                                {/* Status transition for status_changed */}
+                                {item.change_type === "status_changed" &&
+                                  item.prev_status &&
+                                  item.new_status && (
+                                    <span className="flex items-center gap-1 shrink-0">
+                                      <StatusPill status={item.prev_status} />
+                                      <span className="text-muted-foreground/40 text-[10px]">→</span>
+                                      <StatusPill status={item.new_status} />
+                                    </span>
+                                  )}
+                                {/* new_status for added */}
+                                {item.change_type === "added" && item.new_status && (
+                                  <StatusPill status={item.new_status} />
+                                )}
+                                {/* prev_status for removed */}
+                                {item.change_type === "removed" && item.prev_status && (
+                                  <StatusPill status={item.prev_status} />
+                                )}
+                              </div>
+                            ))}
+
+                            {/* Empty state when a tab has no entries */}
+                            {!detail?.loading &&
+                              detail?.items.length === 0 && (
+                                <p className="text-xs text-muted-foreground/50 py-1 px-2">
+                                  No entries in this category.
+                                </p>
+                              )}
+
+                            {/* Load more */}
+                            {detail &&
+                              !detail.loading &&
+                              detail.items.length < detail.total && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleLoadMore(entry.id)}
+                                  className="h-6 px-2 text-[11px] text-muted-foreground/60 hover:text-muted-foreground mt-1 w-full justify-start gap-1"
+                                >
+                                  Load more ({detail.total - detail.items.length} remaining)
+                                </Button>
+                              )}
+
+                            {detail?.loading && detail.items.length > 0 && (
+                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground/60 py-1 px-2">
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                <span>Loading…</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function formatDate(iso: string): string {
   try {
@@ -570,6 +1044,7 @@ export function DatLibraryCard() {
                         </span>
                       )}
                     </div>
+                    <DatDiffTimeline datId={dat.id} />
                   </div>
 
                   {/* System link dropdown */}
