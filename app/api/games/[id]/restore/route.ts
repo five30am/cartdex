@@ -4,6 +4,7 @@ import { games, file_operations } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import fs from "fs";
 import path from "path";
+import { apiError, apiErrorFromUnknown, ApiErrorCode } from "@/lib/api-error";
 
 /** POST /api/games/[id]/restore — move a trashed file back to its original location */
 export async function POST(
@@ -14,12 +15,12 @@ export async function POST(
     const { id } = await params;
     const gameId = parseInt(id, 10);
     if (isNaN(gameId)) {
-      return NextResponse.json({ error: "Invalid game ID" }, { status: 400 });
+      return apiError(ApiErrorCode.INVALID_ID);
     }
 
     const game = db.select().from(games).where(eq(games.id, gameId)).get();
     if (!game) {
-      return NextResponse.json({ error: "Game not found" }, { status: 404 });
+      return apiError(ApiErrorCode.GAME_NOT_FOUND);
     }
 
     // Find most recent 'trashed' operation to get the original path
@@ -37,20 +38,14 @@ export async function POST(
       .get();
 
     if (!trashOp || !trashOp.file_path_before) {
-      return NextResponse.json(
-        { error: "No trash record found for this game — cannot determine restore path" },
-        { status: 404 }
-      );
+      return apiError(ApiErrorCode.TRASH_RECORD_NOT_FOUND);
     }
 
     const currentPath = game.file_path;
     const restorePath = trashOp.file_path_before;
 
     if (!fs.existsSync(currentPath)) {
-      return NextResponse.json(
-        { error: "File not found in trash directory — may have been manually deleted" },
-        { status: 404 }
-      );
+      return apiError(ApiErrorCode.FILE_NOT_IN_TRASH);
     }
 
     // Ensure restore destination directory exists
@@ -83,9 +78,6 @@ export async function POST(
     return NextResponse.json(updated);
   } catch (err) {
     console.error("[games/id/restore] error:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Unknown error" },
-      { status: 500 }
-    );
+    return apiErrorFromUnknown(err);
   }
 }

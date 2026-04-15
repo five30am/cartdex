@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { systems, games } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
+import { apiError, apiErrorFromUnknown, apiErrorWithDetail, ApiErrorCode } from "@/lib/api-error";
 
 export async function PATCH(
   req: NextRequest,
@@ -9,15 +10,20 @@ export async function PATCH(
 ) {
   try {
     const { slug } = await params;
+
+    if (!/^[a-z0-9-]+$/.test(slug)) {
+      return apiErrorWithDetail(ApiErrorCode.INVALID_INPUT, "slug must be lowercase alphanumeric with hyphens");
+    }
+
     const body = await req.json() as { enabled: boolean };
 
     if (typeof body.enabled !== "boolean") {
-      return NextResponse.json({ error: "enabled must be a boolean" }, { status: 400 });
+      return apiErrorWithDetail(ApiErrorCode.INVALID_INPUT, "enabled must be a boolean");
     }
 
     const system = db.select().from(systems).where(eq(systems.slug, slug)).get();
     if (!system) {
-      return NextResponse.json({ error: "System not found" }, { status: 404 });
+      return apiError(ApiErrorCode.SYSTEM_NOT_FOUND);
     }
 
     db.update(systems).set({ enabled: body.enabled }).where(eq(systems.slug, slug)).run();
@@ -25,10 +31,7 @@ export async function PATCH(
     return NextResponse.json({ ok: true, slug, enabled: body.enabled });
   } catch (err) {
     console.error("[systems/slug PATCH] error:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Unknown error" },
-      { status: 500 }
-    );
+    return apiErrorFromUnknown(err);
   }
 }
 
@@ -39,6 +42,10 @@ export async function GET(
   try {
     const { slug } = await params;
 
+    if (!/^[a-z0-9-]+$/.test(slug)) {
+      return apiErrorWithDetail(ApiErrorCode.INVALID_INPUT, "slug must be lowercase alphanumeric with hyphens");
+    }
+
     const system = db
       .select()
       .from(systems)
@@ -46,7 +53,7 @@ export async function GET(
       .get();
 
     if (!system) {
-      return NextResponse.json({ error: "System not found" }, { status: 404 });
+      return apiError(ApiErrorCode.SYSTEM_NOT_FOUND);
     }
 
     const showHidden = _req.nextUrl.searchParams.get("show_hidden") === "true";
@@ -67,9 +74,6 @@ export async function GET(
     });
   } catch (err) {
     console.error("[systems/slug] error:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Unknown error" },
-      { status: 500 }
-    );
+    return apiErrorFromUnknown(err);
   }
 }

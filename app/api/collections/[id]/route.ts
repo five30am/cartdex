@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { collections, collection_games, games, systems } from "@/lib/db/schema";
 import { and, eq, sum } from "drizzle-orm";
+import { apiError, apiErrorFromUnknown, apiErrorWithDetail, ApiErrorCode } from "@/lib/api-error";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -12,7 +13,7 @@ export async function GET(_req: NextRequest, { params }: Props) {
     const { id } = await params;
     const collectionId = parseInt(id, 10);
     if (isNaN(collectionId)) {
-      return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+      return apiError(ApiErrorCode.INVALID_ID);
     }
 
     const col = db
@@ -22,7 +23,7 @@ export async function GET(_req: NextRequest, { params }: Props) {
       .get();
 
     if (!col) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
+      return apiError(ApiErrorCode.COLLECTION_NOT_FOUND);
     }
 
     const collectionGames = db
@@ -68,10 +69,7 @@ export async function GET(_req: NextRequest, { params }: Props) {
     });
   } catch (err) {
     console.error("[collections/id] GET error:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Unknown error" },
-      { status: 500 }
-    );
+    return apiErrorFromUnknown(err);
   }
 }
 
@@ -80,14 +78,14 @@ export async function PUT(req: NextRequest, { params }: Props) {
     const { id } = await params;
     const collectionId = parseInt(id, 10);
     if (isNaN(collectionId)) {
-      return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+      return apiError(ApiErrorCode.INVALID_ID);
     }
 
     const body = await req.json();
     const { name, description } = body as { name?: string; description?: string };
 
     if (!name?.trim()) {
-      return NextResponse.json({ error: "name is required" }, { status: 400 });
+      return apiErrorWithDetail(ApiErrorCode.INVALID_INPUT, "name is required");
     }
 
     const updated = db
@@ -102,16 +100,13 @@ export async function PUT(req: NextRequest, { params }: Props) {
       .get();
 
     if (!updated) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
+      return apiError(ApiErrorCode.COLLECTION_NOT_FOUND);
     }
 
     return NextResponse.json(updated);
   } catch (err) {
     console.error("[collections/id] PUT error:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Unknown error" },
-      { status: 500 }
-    );
+    return apiErrorFromUnknown(err);
   }
 }
 
@@ -120,7 +115,7 @@ export async function DELETE(_req: NextRequest, { params }: Props) {
     const { id } = await params;
     const collectionId = parseInt(id, 10);
     if (isNaN(collectionId)) {
-      return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+      return apiError(ApiErrorCode.INVALID_ID);
     }
 
     // Delete associations first
@@ -135,15 +130,12 @@ export async function DELETE(_req: NextRequest, { params }: Props) {
       .get();
 
     if (!deleted) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
+      return apiError(ApiErrorCode.COLLECTION_NOT_FOUND);
     }
 
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[collections/id] DELETE error:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Unknown error" },
-      { status: 500 }
-    );
+    return apiErrorFromUnknown(err);
   }
 }

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { games, systems, file_operations } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import fs from "fs";
+import { apiError, apiErrorFromUnknown, apiErrorWithDetail, ApiErrorCode } from "@/lib/api-error";
 
 export async function GET(
   _req: NextRequest,
@@ -13,13 +14,13 @@ export async function GET(
     const gameId = parseInt(id, 10);
 
     if (isNaN(gameId)) {
-      return NextResponse.json({ error: "Invalid game ID" }, { status: 400 });
+      return apiError(ApiErrorCode.INVALID_ID);
     }
 
     const game = db.select().from(games).where(eq(games.id, gameId)).get();
 
     if (!game) {
-      return NextResponse.json({ error: "Game not found" }, { status: 404 });
+      return apiError(ApiErrorCode.GAME_NOT_FOUND);
     }
 
     const system = db
@@ -31,10 +32,7 @@ export async function GET(
     return NextResponse.json({ ...game, system });
   } catch (err) {
     console.error("[games/id] error:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Unknown error" },
-      { status: 500 }
-    );
+    return apiErrorFromUnknown(err);
   }
 }
 
@@ -47,13 +45,27 @@ export async function PATCH(
     const { id } = await params;
     const gameId = parseInt(id, 10);
     if (isNaN(gameId)) {
-      return NextResponse.json({ error: "Invalid game ID" }, { status: 400 });
+      return apiError(ApiErrorCode.INVALID_ID);
     }
 
     const body: { hidden: boolean; reason?: string } = await req.json();
+
+    if (typeof body.hidden !== "boolean") {
+      return apiError(ApiErrorCode.INVALID_INPUT);
+    }
+    if (
+      body.reason !== undefined &&
+      (typeof body.reason !== "string" || body.reason.length > 500)
+    ) {
+      return apiErrorWithDetail(
+        ApiErrorCode.INVALID_INPUT,
+        "reason must be a string ≤ 500 chars"
+      );
+    }
+
     const game = db.select().from(games).where(eq(games.id, gameId)).get();
     if (!game) {
-      return NextResponse.json({ error: "Game not found" }, { status: 404 });
+      return apiError(ApiErrorCode.GAME_NOT_FOUND);
     }
 
     const now = new Date().toISOString();
@@ -86,10 +98,7 @@ export async function PATCH(
     return NextResponse.json(updated);
   } catch (err) {
     console.error("[games/id PATCH] error:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Unknown error" },
-      { status: 500 }
-    );
+    return apiErrorFromUnknown(err);
   }
 }
 
@@ -106,26 +115,20 @@ export async function DELETE(
     const { id } = await params;
     const gameId = parseInt(id, 10);
     if (isNaN(gameId)) {
-      return NextResponse.json({ error: "Invalid game ID" }, { status: 400 });
+      return apiError(ApiErrorCode.INVALID_ID);
     }
 
     const body: { confirm?: boolean } = await req.json().catch(() => ({}));
     if (body.confirm !== true) {
-      return NextResponse.json(
-        { error: "confirm: true required in request body to prevent accidental deletes" },
-        { status: 400 }
-      );
+      return apiError(ApiErrorCode.CONFIRM_REQUIRED);
     }
 
     const game = db.select().from(games).where(eq(games.id, gameId)).get();
     if (!game) {
-      return NextResponse.json({ error: "Game not found" }, { status: 404 });
+      return apiError(ApiErrorCode.GAME_NOT_FOUND);
     }
     if (game.hidden_reason !== "trashed") {
-      return NextResponse.json(
-        { error: "Game must be in trash (hidden_reason='trashed') before permanent deletion" },
-        { status: 409 }
-      );
+      return apiError(ApiErrorCode.GAME_NOT_IN_TRASH);
     }
 
     const purgedPath = game.file_path;
@@ -153,9 +156,6 @@ export async function DELETE(
     return NextResponse.json({ success: true, purged_path: purgedPath });
   } catch (err) {
     console.error("[games/id DELETE] error:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Unknown error" },
-      { status: 500 }
-    );
+    return apiErrorFromUnknown(err);
   }
 }
