@@ -19,6 +19,7 @@ import { dats, dat_entries } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { parseLogiqxDat, coerceStatus } from "./dat-parser";
 import { parseClrmaneDat } from "./dat-parser-clrmame";
+import { startMatchJob } from "./dat-match";
 
 export type DatFormat = "logiqx" | "clrmame" | "unknown";
 
@@ -240,6 +241,12 @@ export function ingestDat(buffer: Buffer, fileHash: string): IngestResult {
 
     return { dat_id };
   });
+
+  // Auto-trigger a match pass for the newly ingested DAT — fire and forget.
+  // Does not block the upload response. If a pass is already running the
+  // startMatchJob call is a no-op; the caller can manually trigger via
+  // POST /api/dats/[id]/match when the current job finishes.
+  startMatchJob(result.dat_id);
 
   return {
     dat_id: result.dat_id,

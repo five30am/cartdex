@@ -57,6 +57,9 @@ export const ApiErrorCode = {
   DAT_FORMAT_UNSUPPORTED: "DAT_FORMAT_UNSUPPORTED",
   DAT_TOO_LARGE: "DAT_TOO_LARGE",
   DAT_RATE_LIMITED: "DAT_RATE_LIMITED",
+
+  // DAT match engine (Ticket 4)
+  DAT_MATCH_BUSY: "DAT_MATCH_BUSY",
 } as const;
 
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode];
@@ -190,6 +193,13 @@ const API_ERRORS: Record<ApiErrorCode, ApiErrorDef> = {
     status: 429,
     code: ApiErrorCode.DAT_RATE_LIMITED,
     message: "Too many DAT uploads — please wait before retrying",
+  },
+
+  // DAT match engine
+  [ApiErrorCode.DAT_MATCH_BUSY]: {
+    status: 409,
+    code: ApiErrorCode.DAT_MATCH_BUSY,
+    message: "A match pass is already running — wait for it to complete before starting another",
   },
 };
 

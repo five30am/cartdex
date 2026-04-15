@@ -240,6 +240,67 @@ export function ensureSchema() {
     CREATE INDEX IF NOT EXISTS idx_match_results_dat_entry_id      ON match_results(dat_entry_id);
   `);
 
+  // ---------------------------------------------------------------------------
+  // DAT auditing — Ticket 4: match engine constraints + dat_completion view
+  // ---------------------------------------------------------------------------
+
+  // Sage pre-flag from #343 QA: add UNIQUE constraint on (dat_entry_id, dat_id)
+  // so idempotent re-runs cannot produce duplicate rows on edge cases.
+  // We use CREATE UNIQUE INDEX IF NOT EXISTS rather than ALTER TABLE so this is
+  // safe to apply to an existing match_results table that may already have rows
+  // (which will have been inserted correctly by the match engine's DELETE+INSERT
+  // transaction pattern).
+  sqlite.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_match_results_unique_entry_dat
+      ON match_results(dat_entry_id, dat_id);
+  `);
+
+  // dat_completion VIEW (not materialized — SQLite has no native materialized views;
+  // the view re-aggregates on each query, which is acceptable at typical DAT sizes
+  // of 10k–100k entries with the idx_match_results_dat_id_match_type index in place.
+  // If query latency becomes a problem at scale, promote to a summary table written
+  // by the match engine at job-completion time).
+  //
+  // Formula: missing = total - have - have_baddump - nodump
+  // (we don't store miss rows; they are the residual of all other statuses)
+  //
+  // completion_pct excludes nodump entries from the denominator because they are
+  // unobtainable by definition — including them would unfairly penalise completion %.
+  sqlite.exec(`
+    CREATE VIEW IF NOT EXISTS dat_completion AS
+    SELECT
+      d.id                                                        AS dat_id,
+      d.name                                                      AS dat_name,
+      COUNT(de.id)                                                AS total,
+      COUNT(CASE WHEN mr.match_type = 'have'         THEN 1 END) AS have,
+      COUNT(CASE WHEN mr.match_type = 'have_baddump' THEN 1 END) AS have_baddump,
+      COUNT(CASE WHEN de.status     = 'nodump'       THEN 1 END) AS nodump,
+      COUNT(de.id)
+        - COUNT(CASE WHEN mr.match_type = 'have'         THEN 1 END)
+        - COUNT(CASE WHEN mr.match_type = 'have_baddump' THEN 1 END)
+        - COUNT(CASE WHEN de.status     = 'nodump'       THEN 1 END)
+                                                                  AS missing,
+      CASE
+        WHEN COUNT(de.id) - COUNT(CASE WHEN de.status = 'nodump' THEN 1 END) = 0
+          THEN NULL
+        ELSE ROUND(
+          CAST(COUNT(CASE WHEN mr.match_type = 'have' THEN 1 END) AS REAL)
+          /
+          CAST(
+            COUNT(de.id) - COUNT(CASE WHEN de.status = 'nodump' THEN 1 END)
+          AS REAL)
+          * 100,
+          2
+        )
+      END                                                         AS completion_pct
+    FROM dats d
+    LEFT JOIN dat_entries de ON de.dat_id = d.id
+    LEFT JOIN match_results mr
+      ON mr.dat_entry_id = de.id
+      AND mr.dat_id = de.dat_id
+    GROUP BY d.id, d.name;
+  `);
+
   // DAT auditing Ticket 3 — stripped hash columns for headered-ROM systems
   // Additive only — existing rows default to NULL (stripped hashes not yet computed).
   // Run scripts/rehash-headered.ts to backfill existing library entries.
