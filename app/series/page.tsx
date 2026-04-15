@@ -64,9 +64,9 @@ export default function SeriesPage() {
     <div className="px-6 py-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-xl font-semibold text-neutral-100">Series</h1>
-          <p className="text-sm text-neutral-500 mt-0.5">
-            <span className="text-white font-medium">{allFranchises.length}</span> franchises
+          <h1 className="text-xl font-semibold text-foreground">Series</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            <span className="text-foreground font-medium">{allFranchises.length}</span> franchises
           </p>
         </div>
 
@@ -87,7 +87,7 @@ export default function SeriesPage() {
 function FranchiseCard({ franchise }: { franchise: FranchiseWithMeta }) {
   return (
     <Link href={`/series/${franchise.slug}`} className="group block">
-      <div className="relative aspect-[3/4] w-full bg-neutral-900 rounded-lg overflow-hidden border border-neutral-800 group-hover:border-neutral-600 transition-colors">
+      <div className="relative aspect-[3/4] w-full bg-muted rounded-lg overflow-hidden border border-border group-hover:border-border/80 transition-colors">
         {franchise.cover_art_path ? (
           <Image
             src={franchise.cover_art_path}
@@ -99,17 +99,17 @@ function FranchiseCard({ franchise }: { franchise: FranchiseWithMeta }) {
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center">
             <div className="text-3xl mb-2 opacity-20">🎮</div>
-            <p className="text-xs text-neutral-600 font-medium line-clamp-3">
+            <p className="text-xs text-muted-foreground font-medium line-clamp-3">
               {franchise.name}
             </p>
           </div>
         )}
       </div>
       <div className="mt-2 px-0.5">
-        <p className="text-xs font-medium text-neutral-200 group-hover:text-white transition-colors truncate">
+        <p className="text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors truncate">
           {franchise.name}
         </p>
-        <p className="text-xs text-neutral-500 mt-0.5">
+        <p className="text-xs text-muted-foreground mt-0.5">
           {franchise.game_count} {franchise.game_count === 1 ? "game" : "games"}
         </p>
         {franchise.systems.length > 0 && (
@@ -117,13 +117,13 @@ function FranchiseCard({ franchise }: { franchise: FranchiseWithMeta }) {
             {franchise.systems.slice(0, 3).map((sys) => (
               <span
                 key={sys.slug}
-                className="text-xs bg-neutral-800 text-neutral-400 px-1.5 py-0.5 rounded"
+                className="text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded"
               >
                 {sys.slug.toUpperCase()}
               </span>
             ))}
             {franchise.systems.length > 3 && (
-              <span className="text-xs text-neutral-600">
+              <span className="text-xs text-muted-foreground/60">
                 +{franchise.systems.length - 3}
               </span>
             )}
@@ -138,8 +138,8 @@ function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-24 text-center">
       <div className="text-5xl mb-4 opacity-30">🎯</div>
-      <h3 className="text-lg font-medium text-neutral-200 mb-2">No series yet</h3>
-      <p className="text-sm text-neutral-500 max-w-sm">
+      <h3 className="text-lg font-medium text-foreground mb-2">No series yet</h3>
+      <p className="text-sm text-muted-foreground max-w-sm">
         Franchise groupings will appear here once games are tagged with a series.
       </p>
     </div>

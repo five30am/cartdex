@@ -25,7 +25,7 @@ export function GameGrid({
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <div className="text-5xl mb-4 opacity-30">🎮</div>
-        <p className="text-neutral-500 text-sm">{emptyMessage}</p>
+        <p className="text-muted-foreground text-sm">{emptyMessage}</p>
       </div>
     );
   }

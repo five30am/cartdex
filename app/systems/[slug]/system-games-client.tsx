@@ -149,17 +149,17 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
           className="flex-1 max-w-sm"
         />
         <Select value={sort} onValueChange={handleSortChange}>
-          <SelectTrigger className="w-[180px] bg-neutral-900 border-neutral-700 text-neutral-200">
+          <SelectTrigger className="w-[180px] bg-background border-border text-foreground">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-neutral-900 border-neutral-700">
-            <SelectItem value="title" className="text-neutral-200 focus:bg-neutral-800">Name (A–Z)</SelectItem>
-            <SelectItem value="title_desc" className="text-neutral-200 focus:bg-neutral-800">Name (Z–A)</SelectItem>
-            <SelectItem value="year_desc" className="text-neutral-200 focus:bg-neutral-800">Release date (newest)</SelectItem>
-            <SelectItem value="year" className="text-neutral-200 focus:bg-neutral-800">Release date (oldest)</SelectItem>
-            <SelectItem value="publisher" className="text-neutral-200 focus:bg-neutral-800">Publisher (A–Z)</SelectItem>
-            <SelectItem value="rating_desc" className="text-neutral-200 focus:bg-neutral-800">Highest rated</SelectItem>
-            <SelectItem value="recent" className="text-neutral-200 focus:bg-neutral-800">Recently added</SelectItem>
+          <SelectContent className="bg-popover border-border">
+            <SelectItem value="title" className="text-foreground focus:bg-accent">Name (A–Z)</SelectItem>
+            <SelectItem value="title_desc" className="text-foreground focus:bg-accent">Name (Z–A)</SelectItem>
+            <SelectItem value="year_desc" className="text-foreground focus:bg-accent">Release date (newest)</SelectItem>
+            <SelectItem value="year" className="text-foreground focus:bg-accent">Release date (oldest)</SelectItem>
+            <SelectItem value="publisher" className="text-foreground focus:bg-accent">Publisher (A–Z)</SelectItem>
+            <SelectItem value="rating_desc" className="text-foreground focus:bg-accent">Highest rated</SelectItem>
+            <SelectItem value="recent" className="text-foreground focus:bg-accent">Recently added</SelectItem>
           </SelectContent>
         </Select>
 
@@ -168,20 +168,20 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
             variant="outline"
             size="sm"
             onClick={() => setSelectMode(true)}
-            className="border-neutral-700 text-neutral-400 hover:text-neutral-200 hover:border-neutral-500"
+            className="border-border text-muted-foreground hover:text-foreground hover:border-border"
           >
             <CheckSquare className="h-4 w-4 mr-1.5" />
             Select
           </Button>
         ) : (
           <div className="flex items-center gap-2">
-            <span className="text-sm text-neutral-400">
+            <span className="text-sm text-muted-foreground">
               {selected.size} selected
             </span>
-            <button onClick={selectAll} className="text-xs text-indigo-400 hover:text-indigo-300">
+            <button onClick={selectAll} className="text-xs text-indigo-500 dark:text-indigo-400 hover:text-indigo-400 dark:hover:text-indigo-300">
               Select all
             </button>
-            <button onClick={deselectAll} className="text-xs text-neutral-500 hover:text-neutral-300">
+            <button onClick={deselectAll} className="text-xs text-muted-foreground hover:text-foreground">
               Deselect all
             </button>
             {selected.size > 0 && (
@@ -194,7 +194,7 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
                 Add to Collection
               </Button>
             )}
-            <button onClick={exitSelectMode} className="text-neutral-500 hover:text-neutral-300">
+            <button onClick={exitSelectMode} className="text-muted-foreground hover:text-foreground">
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -202,7 +202,7 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
       </div>
 
       {search && (
-        <p className="text-sm text-neutral-500 mb-4">
+        <p className="text-sm text-muted-foreground mb-4">
           {filtered.length} result{filtered.length !== 1 ? "s" : ""} for &ldquo;{search}&rdquo;
         </p>
       )}

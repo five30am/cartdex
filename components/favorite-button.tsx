@@ -48,7 +48,7 @@ export function FavoriteButton({ gameId, initialFavorite }: Props) {
         "inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-150",
         favorite
           ? "border-pink-500/40 bg-pink-500/10 text-pink-400 hover:bg-pink-500/20"
-          : "border-white/[0.08] bg-transparent text-neutral-500 hover:text-pink-400 hover:border-pink-500/30",
+          : "border-border bg-transparent text-muted-foreground hover:text-pink-400 hover:border-pink-500/30",
         loading && "opacity-60 cursor-not-allowed"
       )}
     >

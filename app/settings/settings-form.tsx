@@ -65,7 +65,7 @@ const FIELDS: FieldDef[] = [
 function ConnectionBadge({ status }: { status: ServiceStatus }) {
   if (!status.configured) {
     return (
-      <span className="inline-flex items-center gap-1.5 text-xs text-neutral-600">
+      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground/60">
         <Minus className="w-3 h-3" />
         Not configured
       </span>
@@ -73,7 +73,7 @@ function ConnectionBadge({ status }: { status: ServiceStatus }) {
   }
   if (status.ok === null) {
     return (
-      <span className="inline-flex items-center gap-1.5 text-xs text-neutral-500">
+      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
         <Loader2 className="w-3 h-3 animate-spin" />
         Testing...
       </span>
@@ -206,7 +206,7 @@ export function SettingsForm() {
     return (
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-[140px] bg-[#111111] border border-white/[0.05] rounded-xl animate-pulse" />
+          <div key={i} className="h-[140px] bg-card border border-border rounded-xl animate-pulse" />
         ))}
       </div>
     );
@@ -273,7 +273,7 @@ export function SettingsForm() {
           subtitle="Re-fetch publisher and series data for previously scraped games"
         >
           <div className="space-y-3">
-            <p className="text-xs text-neutral-600 leading-relaxed">
+            <p className="text-xs text-muted-foreground/60 leading-relaxed">
               Runs in the background at 1 request/second against ScreenScraper.
               Only targets games that have been scraped but are missing publisher or series data.
             </p>
@@ -283,7 +283,7 @@ export function SettingsForm() {
                 variant="ghost"
                 onClick={startBackfill}
                 disabled={backfill.state === "running" || backfillPolling}
-                className="h-9 px-4 text-sm gap-2 text-neutral-400 border border-white/[0.06] hover:text-white hover:bg-white/[0.06] hover:border-white/10"
+                className="h-9 px-4 text-sm gap-2 text-muted-foreground border border-border hover:text-foreground hover:bg-accent"
               >
                 {backfill.state === "running" || backfillPolling ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -293,7 +293,7 @@ export function SettingsForm() {
                 {backfill.state === "running" ? "Backfilling..." : "Run Backfill"}
               </Button>
               {backfill.state === "running" && backfill.progress && (
-                <span className="text-xs text-neutral-500 font-mono">
+                <span className="text-xs text-muted-foreground font-mono">
                   {backfill.progress.current} / {backfill.progress.total}
                 </span>
               )}
@@ -334,7 +334,7 @@ export function SettingsForm() {
             variant="ghost"
             onClick={handleTest}
             disabled={testing || saving}
-            className="h-9 px-4 text-sm gap-2 text-neutral-400 border border-white/[0.06] hover:text-white hover:bg-white/[0.06] hover:border-white/10"
+            className="h-9 px-4 text-sm gap-2 text-muted-foreground border border-border hover:text-foreground hover:bg-accent"
           >
             {testing ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -376,21 +376,21 @@ function SettingsCard({
   children: React.ReactNode;
 }) {
   return (
-    <Card className="bg-[#111111] border-white/[0.06] shadow-none rounded-xl overflow-hidden">
+    <Card className="bg-card border-border shadow-none rounded-xl overflow-hidden">
       <CardHeader className="px-5 pt-4 pb-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="text-neutral-500">{icon}</div>
+            <div className="text-muted-foreground">{icon}</div>
             <div>
-              <p className="text-sm font-semibold text-neutral-200">{title}</p>
-              <p className="text-xs text-neutral-600 mt-0.5">{subtitle}</p>
+              <p className="text-sm font-semibold text-foreground">{title}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
             </div>
           </div>
           {badge && <div>{badge}</div>}
         </div>
       </CardHeader>
       <CardContent className="px-5 pt-4 pb-5 space-y-4">
-        <div className="border-t border-white/[0.04] pt-4 space-y-4">
+        <div className="border-t border-border pt-4 space-y-4">
           {children}
         </div>
       </CardContent>
@@ -409,7 +409,7 @@ function FieldRow({
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-xs font-medium text-neutral-400 uppercase tracking-wider">
+      <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
         {field.label}
       </label>
       <Input
@@ -418,7 +418,7 @@ function FieldRow({
         placeholder={field.placeholder}
         onChange={(e) => onChange(e.target.value)}
         className={cn(
-          "bg-[#0d0d0d] border-white/[0.08] text-neutral-100 placeholder:text-neutral-700",
+          "bg-muted/50 border-border text-foreground placeholder:text-muted-foreground/50",
           "focus-visible:border-blue-500/50 focus-visible:ring-0 focus-visible:ring-offset-0",
           "h-9 text-sm font-mono"
         )}
@@ -426,7 +426,7 @@ function FieldRow({
         data-1p-ignore
       />
       {field.description && (
-        <p className="text-xs text-neutral-700 leading-relaxed">{field.description}</p>
+        <p className="text-xs text-muted-foreground/60 leading-relaxed">{field.description}</p>
       )}
     </div>
   );

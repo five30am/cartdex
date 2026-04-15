@@ -81,12 +81,12 @@ function formatFileDate(isoString: string | null): string {
 
 function RegionBadge({ region }: { region: string }) {
   const colors: Record<string, string> = {
-    USA: "bg-blue-900/50 text-blue-300 border-blue-700/50",
-    USA_EQUIV: "bg-blue-900/30 text-blue-400 border-blue-800/50",
-    World: "bg-green-900/50 text-green-300 border-green-700/50",
-    Europe: "bg-purple-900/50 text-purple-300 border-purple-700/50",
-    Japan: "bg-red-900/50 text-red-300 border-red-700/50",
-    Unknown: "bg-neutral-800 text-neutral-500 border-neutral-700",
+    USA: "bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-700/50",
+    USA_EQUIV: "bg-blue-50 dark:bg-blue-900/30 text-blue-500 dark:text-blue-400 border-blue-200 dark:border-blue-800/50",
+    World: "bg-green-50 dark:bg-green-900/50 text-green-600 dark:text-green-300 border-green-200 dark:border-green-700/50",
+    Europe: "bg-purple-50 dark:bg-purple-900/50 text-purple-600 dark:text-purple-300 border-purple-200 dark:border-purple-700/50",
+    Japan: "bg-red-50 dark:bg-red-900/50 text-red-600 dark:text-red-300 border-red-200 dark:border-red-700/50",
+    Unknown: "bg-muted text-muted-foreground border-border",
   };
   const label = region === "USA_EQUIV" ? "Americas" : region;
   return (
@@ -104,7 +104,7 @@ function RegionBadge({ region }: { region: string }) {
 function HashBadge({ hashed }: { hashed: boolean }) {
   if (hashed) {
     return (
-      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] border bg-neutral-800 text-neutral-400 border-neutral-700">
+      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] border bg-muted text-muted-foreground border-border">
         <ShieldCheck className="w-2.5 h-2.5" />
         hashed
       </span>
@@ -112,7 +112,7 @@ function HashBadge({ hashed }: { hashed: boolean }) {
   }
   return (
     <span
-      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] border bg-amber-950/40 text-amber-400 border-amber-800/50"
+      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] border bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/50"
       title="Not yet hashed — hide protection inactive until next scan"
     >
       <AlertTriangle className="w-2.5 h-2.5" />
@@ -237,7 +237,7 @@ export function DuplicateBrowser() {
             placeholder="Search games..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="bg-neutral-900 border-neutral-800 text-neutral-100 placeholder:text-neutral-600 h-8 text-sm"
+            className="bg-muted border-border text-foreground placeholder:text-muted-foreground/50 h-8 text-sm"
           />
         </form>
 
@@ -246,7 +246,7 @@ export function DuplicateBrowser() {
             size="sm"
             variant="ghost"
             onClick={selectAll}
-            className="text-xs text-neutral-400 hover:text-neutral-200 h-8"
+            className="text-xs text-muted-foreground hover:text-foreground h-8"
           >
             Select All Duplicates
           </Button>
@@ -258,21 +258,21 @@ export function DuplicateBrowser() {
               variant="outline"
               onClick={() => setBulkMenuOpen((v) => !v)}
               disabled={selected.size === 0}
-              className="h-8 text-xs border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800 disabled:opacity-40"
+              className="h-8 text-xs border-border bg-background text-foreground/80 hover:bg-accent disabled:opacity-40"
             >
               {selected.size > 0 ? `${selected.size} selected` : "Bulk Actions"}
               <ChevronDown className="w-3 h-3 ml-1.5" />
             </Button>
             {bulkMenuOpen && selected.size > 0 && (
-              <div className="absolute right-0 top-full mt-1 w-48 bg-neutral-900 border border-neutral-700 rounded-lg shadow-lg z-20 py-1">
+              <div className="absolute right-0 top-full mt-1 w-48 bg-popover border border-border rounded-lg shadow-lg z-20 py-1">
                 <button
-                  className="w-full text-left px-3 py-2 text-sm text-neutral-300 hover:bg-neutral-800"
+                  className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-accent"
                   onClick={() => { setBulkMenuOpen(false); setCollectionModalOpen(true); }}
                 >
                   Add to Collection...
                 </button>
                 <button
-                  className="w-full text-left px-3 py-2 text-sm text-neutral-300 hover:bg-neutral-800"
+                  className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-accent"
                   onClick={async () => {
                     setBulkMenuOpen(false);
                     const res = await fetch("/api/games/bulk", {
@@ -293,7 +293,7 @@ export function DuplicateBrowser() {
                   Hide from Library
                 </button>
                 <button
-                  className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-neutral-800"
+                  className="w-full text-left px-3 py-2 text-sm text-red-500 dark:text-red-400 hover:bg-accent"
                   onClick={() => { setBulkMenuOpen(false); setDeleteModalOpen(true); }}
                 >
                   Move to Trash
@@ -307,12 +307,12 @@ export function DuplicateBrowser() {
       {/* Stats row */}
       {data && !loading && (
         <div className="flex items-center gap-3 flex-wrap">
-          <p className="text-xs text-neutral-600">
+          <p className="text-xs text-muted-foreground">
             {data.total_groups} duplicate group{data.total_groups === 1 ? "" : "s"} &middot;{" "}
             {data.total_duplicates} duplicate{data.total_duplicates === 1 ? "" : "s"} that can be removed
           </p>
           {data.groups.some((g) => g.enrichment_pending) && (
-            <span className="flex items-center gap-1.5 text-xs text-neutral-500">
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Loader2 className="w-3 h-3 animate-spin" />
               Enriching metadata&hellip;
             </span>
@@ -322,7 +322,7 @@ export function DuplicateBrowser() {
 
       {/* Content */}
       {loading && (
-        <div className="flex items-center justify-center py-24 text-neutral-500">
+        <div className="flex items-center justify-center py-24 text-muted-foreground">
           <Loader2 className="w-6 h-6 animate-spin" />
         </div>
       )}
@@ -333,8 +333,8 @@ export function DuplicateBrowser() {
 
       {!loading && !error && data?.groups.length === 0 && (
         <div className="py-16 text-center">
-          <p className="text-neutral-400 font-medium">No duplicates found</p>
-          <p className="text-sm text-neutral-600 mt-1">
+          <p className="text-muted-foreground font-medium">No duplicates found</p>
+          <p className="text-sm text-muted-foreground/60 mt-1">
             {search ? "Try a different search term." : "Your library looks clean."}
           </p>
         </div>
@@ -345,20 +345,20 @@ export function DuplicateBrowser() {
           {data.groups.map((group) => (
             <div
               key={`${group.system_id}-${group.canonical_title}`}
-              className="border border-neutral-800 rounded-lg overflow-hidden bg-neutral-950"
+              className="border border-border rounded-lg overflow-hidden bg-card"
             >
               {/* Group header */}
-              <div className="flex items-center justify-between px-4 py-2.5 bg-neutral-900/60 border-b border-neutral-800">
+              <div className="flex items-center justify-between px-4 py-2.5 bg-muted/60 border-b border-border">
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-xs font-semibold text-blue-400 shrink-0 uppercase tracking-wide">
+                  <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 shrink-0 uppercase tracking-wide">
                     {group.system_name}
                   </span>
-                  <span className="text-neutral-600 shrink-0">&middot;</span>
-                  <span className="text-sm font-medium text-neutral-200 capitalize truncate">
+                  <span className="text-muted-foreground/40 shrink-0">&middot;</span>
+                  <span className="text-sm font-medium text-foreground capitalize truncate">
                     {group.canonical_title}
                   </span>
                 </div>
-                <span className="text-xs text-neutral-600 shrink-0 ml-2">
+                <span className="text-xs text-muted-foreground shrink-0 ml-2">
                   {group.all_files.length} copies
                 </span>
               </div>
@@ -373,7 +373,7 @@ export function DuplicateBrowser() {
                         "flex flex-col gap-1.5 px-3 py-2 rounded-md cursor-pointer transition-colors",
                         selected.has(file.id)
                           ? "bg-blue-950/30 border border-blue-800/40"
-                          : "hover:bg-neutral-900 border border-transparent"
+                          : "hover:bg-muted/50 border border-transparent"
                       )}
                     >
                       <div className="flex items-center gap-3">
@@ -381,9 +381,9 @@ export function DuplicateBrowser() {
                           type="checkbox"
                           checked={selected.has(file.id)}
                           onChange={() => toggleSelect(file.id)}
-                          className="w-3.5 h-3.5 rounded border-neutral-600 accent-blue-500 shrink-0"
+                          className="w-3.5 h-3.5 rounded border-border accent-blue-500 shrink-0"
                         />
-                        <span className="text-sm text-neutral-300 truncate flex-1 min-w-0">
+                        <span className="text-sm text-foreground/80 truncate flex-1 min-w-0">
                           {file.title}
                         </span>
                         <div className="flex items-center gap-1.5 shrink-0">
@@ -396,17 +396,17 @@ export function DuplicateBrowser() {
                             </span>
                           )}
                           <RegionBadge region={file.region} />
-                          <span className="text-xs text-neutral-600 font-mono">
+                          <span className="text-xs text-muted-foreground font-mono">
                             {formatBytes(file.file_size)}
                           </span>
                           <HashBadge hashed={file.hashed} />
                         </div>
                       </div>
                       <div className="pl-6 space-y-0.5">
-                        <p className="text-[11px] text-neutral-600 font-mono truncate" title={toUnraidPath(file.file_path)}>
+                        <p className="text-[11px] text-muted-foreground font-mono truncate" title={toUnraidPath(file.file_path)}>
                           {toUnraidPath(file.file_path)}
                         </p>
-                        <p className="text-[11px] text-neutral-700">
+                        <p className="text-[11px] text-muted-foreground/50">
                           Created {formatFileDate(file.file_created_at)}
                         </p>
                       </div>
@@ -427,11 +427,11 @@ export function DuplicateBrowser() {
             variant="ghost"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1 || loading}
-            className="h-7 w-7 p-0 text-neutral-400"
+            className="h-7 w-7 p-0 text-muted-foreground"
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <span className="text-xs text-neutral-500">
+          <span className="text-xs text-muted-foreground">
             {page} / {data.pages}
           </span>
           <Button
@@ -439,7 +439,7 @@ export function DuplicateBrowser() {
             variant="ghost"
             onClick={() => setPage((p) => Math.min(data.pages, p + 1))}
             disabled={page === data.pages || loading}
-            className="h-7 w-7 p-0 text-neutral-400"
+            className="h-7 w-7 p-0 text-muted-foreground"
           >
             <ChevronRight className="w-4 h-4" />
           </Button>

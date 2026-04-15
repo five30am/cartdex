@@ -41,11 +41,11 @@ export default function PublishersPage() {
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-1">
-            <Building2 className="h-5 w-5 text-neutral-400" />
-            <h1 className="text-2xl font-bold text-white tracking-tight">Publishers</h1>
+            <Building2 className="h-5 w-5 text-muted-foreground" />
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">Publishers</h1>
           </div>
-          <p className="text-sm text-neutral-500">
-            <span className="text-neutral-300 font-medium">{publishers.length}</span>{" "}
+          <p className="text-sm text-muted-foreground">
+            <span className="text-foreground font-medium">{publishers.length}</span>{" "}
             {publishers.length === 1 ? "publisher" : "publishers"}
           </p>
         </div>
@@ -58,17 +58,17 @@ export default function PublishersPage() {
               <Link
                 key={slug}
                 href={`/publishers/${slug}`}
-                className="group flex items-center justify-between gap-3 px-4 py-3 bg-[#111111] border border-white/[0.06] rounded-lg hover:border-blue-500/30 hover:bg-[#141414] transition-all duration-200"
+                className="group flex items-center justify-between gap-3 px-4 py-3 bg-card border border-border rounded-lg hover:border-blue-500/30 hover:bg-accent/30 transition-all duration-200"
               >
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-neutral-200 group-hover:text-white truncate transition-colors">
+                  <p className="text-sm font-medium text-foreground/80 group-hover:text-foreground truncate transition-colors">
                     {publisher}
                   </p>
-                  <p className="text-xs text-neutral-600 mt-0.5 font-mono">
+                  <p className="text-xs text-muted-foreground mt-0.5 font-mono">
                     {count.toLocaleString()} {count === 1 ? "game" : "games"}
                   </p>
                 </div>
-                <ArrowRight className="h-4 w-4 text-neutral-700 group-hover:text-blue-400 shrink-0 transition-colors" />
+                <ArrowRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-blue-400 shrink-0 transition-colors" />
               </Link>
             ))}
           </div>
@@ -81,17 +81,17 @@ export default function PublishersPage() {
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-24 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-[#141414] border border-white/[0.06] flex items-center justify-center mb-5">
-        <Building2 className="w-7 h-7 text-neutral-700" />
+      <div className="w-16 h-16 rounded-2xl bg-muted border border-border flex items-center justify-center mb-5">
+        <Building2 className="w-7 h-7 text-muted-foreground/40" />
       </div>
-      <h3 className="text-base font-semibold text-neutral-200 mb-2">No publisher data yet</h3>
-      <p className="text-sm text-neutral-500 max-w-sm leading-relaxed mb-6">
+      <h3 className="text-base font-semibold text-foreground mb-2">No publisher data yet</h3>
+      <p className="text-sm text-muted-foreground max-w-sm leading-relaxed mb-6">
         Publisher information is pulled from ScreenScraper during metadata scraping.
         Run the backfill from Settings to populate existing games.
       </p>
       <Link
         href="/settings"
-        className="flex items-center gap-1.5 text-sm text-blue-400 hover:text-blue-300 transition-colors font-medium"
+        className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors font-medium"
       >
         Open Settings
         <ArrowRight className="h-3.5 w-3.5" />

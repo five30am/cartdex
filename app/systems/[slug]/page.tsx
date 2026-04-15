@@ -61,7 +61,7 @@ export default async function SystemDetailPage({ params, searchParams }: Props) 
         {/* Breadcrumb */}
         <Link
           href="/"
-          className="inline-flex items-center gap-1 text-xs text-neutral-600 hover:text-neutral-300 transition-colors mb-6 font-medium uppercase tracking-wider"
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mb-6 font-medium uppercase tracking-wider"
         >
           <ChevronLeft className="h-3.5 w-3.5" />
           Systems
@@ -69,11 +69,11 @@ export default async function SystemDetailPage({ params, searchParams }: Props) 
 
         {/* Disabled system banner */}
         {!system.enabled && (
-          <div className="mb-6 rounded-lg border border-neutral-700/50 bg-neutral-900/50 px-4 py-3 flex items-center gap-3">
-            <EyeOff className="w-4 h-4 text-neutral-500 shrink-0" />
-            <p className="text-sm text-neutral-500">
+          <div className="mb-6 rounded-lg border border-border bg-muted/30 px-4 py-3 flex items-center gap-3">
+            <EyeOff className="w-4 h-4 text-muted-foreground shrink-0" />
+            <p className="text-sm text-muted-foreground">
               This system is disabled — it is hidden from browse views.{" "}
-              <Link href="/settings" className="text-neutral-400 hover:text-neutral-200 underline underline-offset-2 transition-colors">
+              <Link href="/settings" className="text-foreground/70 hover:text-foreground underline underline-offset-2 transition-colors">
                 Re-enable in Settings
               </Link>
             </p>
@@ -83,18 +83,18 @@ export default async function SystemDetailPage({ params, searchParams }: Props) 
         {/* Header */}
         <div className="flex items-start justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg bg-[#111111] border border-white/[0.06] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-card border border-border flex items-center justify-center">
               <SystemBadge slug={system.slug} name={system.slug.toUpperCase()} />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">{system.name}</h1>
-              <p className="text-sm text-neutral-600 mt-0.5 font-mono">
-                <span className="text-neutral-400 font-semibold">{visibleGames.length.toLocaleString()}</span> {visibleGames.length === 1 ? "game" : "games"}
+              <h1 className="text-2xl font-bold text-foreground tracking-tight">{system.name}</h1>
+              <p className="text-sm text-muted-foreground mt-0.5 font-mono">
+                <span className="text-foreground/80 font-semibold">{visibleGames.length.toLocaleString()}</span> {visibleGames.length === 1 ? "game" : "games"}
                 {!showHidden && hiddenCount > 0 && (
-                  <> &mdash; <Link href={`/systems/${slug}?show_hidden=true`} className="text-neutral-500 hover:text-neutral-300 underline underline-offset-2">{hiddenCount} hidden</Link></>
+                  <> &mdash; <Link href={`/systems/${slug}?show_hidden=true`} className="text-muted-foreground hover:text-foreground underline underline-offset-2">{hiddenCount} hidden</Link></>
                 )}
                 {showHidden && (
-                  <> &mdash; <Link href={`/systems/${slug}`} className="text-neutral-500 hover:text-neutral-300 underline underline-offset-2">hide hidden</Link></>
+                  <> &mdash; <Link href={`/systems/${slug}`} className="text-muted-foreground hover:text-foreground underline underline-offset-2">hide hidden</Link></>
                 )}
               </p>
             </div>

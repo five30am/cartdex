@@ -60,22 +60,22 @@ export function SystemsToggleCard({ systems: initialSystems }: Props) {
   const handhelds = systems.filter((s) => s.kind === "handheld");
 
   return (
-    <Card className="bg-[#111111] border-white/[0.06] shadow-none rounded-xl overflow-hidden">
+    <Card className="bg-card border-border shadow-none rounded-xl overflow-hidden">
       <CardHeader className="px-5 pt-4 pb-0">
         <div className="flex items-center gap-2.5">
-          <div className="text-neutral-500">
+          <div className="text-muted-foreground">
             <Monitor className="w-4 h-4" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-neutral-200">Systems</p>
-            <p className="text-xs text-neutral-600 mt-0.5">
+            <p className="text-sm font-semibold text-foreground">Systems</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
               Disabled systems are hidden from browse views — games are preserved
             </p>
           </div>
         </div>
       </CardHeader>
       <CardContent className="px-5 pt-4 pb-5">
-        <div className="border-t border-white/[0.04] pt-4 space-y-5">
+        <div className="border-t border-border pt-4 space-y-5">
           {consoles.length > 0 && (
             <SystemGroup label="Consoles" systems={consoles} pending={pending} onToggle={handleToggle} />
           )}
@@ -83,7 +83,7 @@ export function SystemsToggleCard({ systems: initialSystems }: Props) {
             <SystemGroup label="Handhelds" systems={handhelds} pending={pending} onToggle={handleToggle} />
           )}
           {systems.length === 0 && (
-            <p className="text-xs text-neutral-600">No systems registered yet.</p>
+            <p className="text-xs text-muted-foreground">No systems registered yet.</p>
           )}
         </div>
       </CardContent>
@@ -104,24 +104,24 @@ function SystemGroup({
 }) {
   return (
     <div>
-      <p className="text-xs font-medium text-neutral-600 uppercase tracking-wider mb-2">
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
         {label}
       </p>
       <div className="space-y-1">
         {systems.map((system) => (
           <div
             key={system.slug}
-            className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-white/[0.03] transition-colors"
+            className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-accent/50 transition-colors"
           >
             <div className="flex items-center gap-3">
               <span
                 className={`text-sm font-medium transition-colors ${
-                  system.enabled ? "text-neutral-200" : "text-neutral-600"
+                  system.enabled ? "text-foreground" : "text-muted-foreground"
                 }`}
               >
                 {system.name}
               </span>
-              <span className="text-xs text-neutral-700 font-mono">
+              <span className="text-xs text-muted-foreground/50 font-mono">
                 {system.slug}
               </span>
             </div>

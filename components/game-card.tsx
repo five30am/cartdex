@@ -1,5 +1,9 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 import { SystemBadge } from "@/components/system-badge";
 import { Gamepad2, Star } from "lucide-react";
 
@@ -24,21 +28,34 @@ export function GameCard({
   showSystem = false,
   user_rating,
 }: GameCardProps) {
+  const [imageLoaded, setImageLoaded] = useState(false);
+
   return (
     <Link href={`/games/${id}`} className="group block">
-      <div className="relative aspect-[3/4] w-full bg-[#111111] rounded-lg overflow-hidden border border-white/[0.06] group-hover:border-blue-500/30 transition-all duration-200 shadow-none">
+      <div
+        className={cn(
+          "relative aspect-[3/4] w-full bg-card rounded-lg overflow-hidden border border-border group-hover:border-blue-500/30 transition-all duration-200 shadow-none",
+          box_art_path && !imageLoaded && "cover-shimmer"
+        )}
+      >
         {box_art_path ? (
           <Image
             src={box_art_path}
             alt={`${title} box art`}
             fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            loading="lazy"
+            className={cn(
+              "object-cover group-hover:scale-105 transition-transform duration-300",
+              "transition-opacity duration-300",
+              imageLoaded ? "opacity-100" : "opacity-0"
+            )}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 16vw"
+            onLoad={() => setImageLoaded(true)}
           />
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center bg-[#0d0d0d]">
-            <Gamepad2 className="w-8 h-8 text-neutral-800 mb-2" />
-            <p className="text-[11px] text-neutral-700 leading-tight font-medium line-clamp-3">
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center bg-muted/40">
+            <Gamepad2 className="w-8 h-8 text-muted-foreground/20 mb-2" />
+            <p className="text-[11px] text-muted-foreground/50 leading-tight font-medium line-clamp-3">
               {title}
             </p>
           </div>
@@ -47,12 +64,12 @@ export function GameCard({
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
       </div>
       <div className="mt-2 px-0.5">
-        <p className="text-xs font-medium text-neutral-400 group-hover:text-neutral-100 transition-colors truncate leading-tight">
+        <p className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors truncate leading-tight">
           {title}
         </p>
         <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
           {year && (
-            <span className="text-[11px] text-neutral-700 font-mono">{year}</span>
+            <span className="text-[11px] text-muted-foreground/50 font-mono">{year}</span>
           )}
           {user_rating != null && (
             <span className="inline-flex items-center gap-0.5">

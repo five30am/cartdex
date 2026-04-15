@@ -46,8 +46,8 @@ export default async function GameDetailPage({ params }: Props) {
     <div className="px-6 py-8">
       <div className="max-w-4xl mx-auto">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-neutral-500 mb-6">
-          <Link href="/games" className="hover:text-neutral-300 transition-colors">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+          <Link href="/games" className="hover:text-foreground transition-colors">
             All Games
           </Link>
           {system && (
@@ -55,18 +55,18 @@ export default async function GameDetailPage({ params }: Props) {
               <span>/</span>
               <Link
                 href={`/systems/${system.slug}`}
-                className="hover:text-neutral-300 transition-colors"
+                className="hover:text-foreground transition-colors"
               >
                 {system.name}
               </Link>
             </>
           )}
           <span>/</span>
-          <span className="text-neutral-400 truncate max-w-[200px]">{game.title}</span>
+          <span className="text-foreground/70 truncate max-w-[200px]">{game.title}</span>
         </div>
 
         {game.hidden && (
-          <div className="mb-6 flex items-center gap-3 rounded-lg border border-amber-500/20 bg-amber-500/[0.05] px-4 py-3 text-sm text-amber-300">
+          <div className="mb-6 flex items-center gap-3 rounded-lg border border-amber-500/20 bg-amber-500/[0.05] px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
             <EyeOff className="h-4 w-4 shrink-0 text-amber-400" />
             <span>
               This game is currently hidden
@@ -79,7 +79,7 @@ export default async function GameDetailPage({ params }: Props) {
         <div className="flex flex-col md:flex-row gap-8">
           {/* Box art */}
           <div className="shrink-0">
-            <div className="relative w-52 aspect-[3/4] bg-neutral-900 rounded-xl overflow-hidden border border-neutral-800 shadow-2xl">
+            <div className="relative w-52 aspect-[3/4] bg-muted rounded-xl overflow-hidden border border-border shadow-2xl">
               {game.box_art_path ? (
                 <Image
                   src={game.box_art_path}
@@ -92,7 +92,7 @@ export default async function GameDetailPage({ params }: Props) {
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
                   <div className="text-5xl mb-3 opacity-20">🎮</div>
-                  <p className="text-xs text-neutral-600">No art</p>
+                  <p className="text-xs text-muted-foreground">No art</p>
                 </div>
               )}
             </div>
@@ -107,7 +107,7 @@ export default async function GameDetailPage({ params }: Props) {
               {game.verified && (
                 <Badge
                   variant="outline"
-                  className="text-xs border-green-800 text-green-400 bg-green-900/20 flex items-center gap-1"
+                  className="text-xs border-green-200 text-green-700 bg-green-50 dark:border-green-800 dark:text-green-400 dark:bg-green-900/20 flex items-center gap-1"
                 >
                   <CheckCircle2 className="h-3 w-3" />
                   Verified
@@ -115,10 +115,10 @@ export default async function GameDetailPage({ params }: Props) {
               )}
             </div>
 
-            <h1 className="text-2xl font-bold text-white mt-2 mb-1">{game.title}</h1>
+            <h1 className="text-2xl font-bold text-foreground mt-2 mb-1">{game.title}</h1>
 
             {system && (
-              <p className="text-sm text-neutral-400 mb-4">{system.name}</p>
+              <p className="text-sm text-muted-foreground mb-4">{system.name}</p>
             )}
 
             {/* Meta grid */}
@@ -139,7 +139,7 @@ export default async function GameDetailPage({ params }: Props) {
 
             {/* Description */}
             {game.description && (
-              <p className="text-sm text-neutral-300 leading-relaxed mb-6 max-w-prose">
+              <p className="text-sm text-foreground/80 leading-relaxed mb-6 max-w-prose">
                 {game.description}
               </p>
             )}
@@ -147,13 +147,13 @@ export default async function GameDetailPage({ params }: Props) {
             {/* Franchises */}
             {gameFranchises.length > 0 && (
               <div className="mb-6">
-                <p className="text-xs text-neutral-500 uppercase tracking-widest mb-2">Series</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-widest mb-2">Series</p>
                 <div className="flex flex-wrap gap-2">
                   {gameFranchises.map((f) => (
                     <Link
                       key={f.id}
                       href={`/series/${f.slug}`}
-                      className="text-sm px-3 py-1 bg-neutral-800 text-neutral-300 hover:bg-neutral-700 hover:text-white rounded-full transition-colors"
+                      className="text-sm px-3 py-1 bg-muted text-muted-foreground hover:bg-accent hover:text-foreground rounded-full transition-colors"
                     >
                       {f.name}
                     </Link>
@@ -163,10 +163,10 @@ export default async function GameDetailPage({ params }: Props) {
             )}
 
             {/* File info */}
-            <div className="border border-neutral-800 rounded-lg p-4 bg-neutral-900/50">
+            <div className="border border-border rounded-lg p-4 bg-muted/30">
               <div className="flex items-center gap-2 mb-3">
-                <FileText className="h-4 w-4 text-neutral-500" />
-                <p className="text-xs font-medium text-neutral-400 uppercase tracking-widest">File Info</p>
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">File Info</p>
               </div>
               <div className="space-y-2">
                 <FileRow label="Path" value={game.file_path} mono />
@@ -197,8 +197,8 @@ export default async function GameDetailPage({ params }: Props) {
 function MetaItem({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-xs text-neutral-500 uppercase tracking-widest mb-0.5">{label}</p>
-      <p className="text-sm text-neutral-200">{value}</p>
+      <p className="text-xs text-muted-foreground uppercase tracking-widest mb-0.5">{label}</p>
+      <p className="text-sm text-foreground">{value}</p>
     </div>
   );
 }
@@ -206,8 +206,8 @@ function MetaItem({ label, value }: { label: string; value: string }) {
 function FileRow({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="flex items-start gap-3">
-      <p className="text-xs text-neutral-500 w-12 shrink-0 pt-0.5">{label}</p>
-      <p className={`text-xs text-neutral-300 break-all ${mono ? "font-mono" : ""}`}>{value}</p>
+      <p className="text-xs text-muted-foreground w-12 shrink-0 pt-0.5">{label}</p>
+      <p className={`text-xs text-foreground/80 break-all ${mono ? "font-mono" : ""}`}>{value}</p>
     </div>
   );
 }

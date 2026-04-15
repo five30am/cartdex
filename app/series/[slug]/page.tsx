@@ -90,7 +90,7 @@ export default async function FranchiseDetailPage({ params, searchParams }: Prop
         {/* Breadcrumb */}
         <Link
           href="/series"
-          className="inline-flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-300 transition-colors mb-6"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
         >
           <ChevronLeft className="h-4 w-4" />
           Series
@@ -98,15 +98,15 @@ export default async function FranchiseDetailPage({ params, searchParams }: Prop
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white">{franchise.name}</h1>
-          <p className="text-sm text-neutral-500 mt-1">
+          <h1 className="text-2xl font-bold text-foreground">{franchise.name}</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             {franchiseGames.length} {franchiseGames.length === 1 ? "game" : "games"} across{" "}
             {systemOrder.length} {systemOrder.length === 1 ? "system" : "systems"}
             {!showHidden && hiddenCount > 0 && (
-              <> &mdash; <Link href={`/series/${slug}?show_hidden=true`} className="text-neutral-500 hover:text-neutral-300 underline underline-offset-2">{hiddenCount} hidden</Link></>
+              <> &mdash; <Link href={`/series/${slug}?show_hidden=true`} className="text-muted-foreground hover:text-foreground underline underline-offset-2">{hiddenCount} hidden</Link></>
             )}
             {showHidden && (
-              <> &mdash; <Link href={`/series/${slug}`} className="text-neutral-500 hover:text-neutral-300 underline underline-offset-2">hide hidden</Link></>
+              <> &mdash; <Link href={`/series/${slug}`} className="text-muted-foreground hover:text-foreground underline underline-offset-2">hide hidden</Link></>
             )}
           </p>
         </div>
@@ -114,7 +114,7 @@ export default async function FranchiseDetailPage({ params, searchParams }: Prop
         {franchiseGames.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="text-5xl mb-4 opacity-30">🎮</div>
-            <p className="text-neutral-500 text-sm">No games in this franchise yet</p>
+            <p className="text-muted-foreground text-sm">No games in this franchise yet</p>
           </div>
         ) : (
           <div className="space-y-12">
@@ -125,11 +125,11 @@ export default async function FranchiseDetailPage({ params, searchParams }: Prop
                   <div className="flex items-center gap-3 mb-4">
                     <Link
                       href={`/systems/${section.system_slug}`}
-                      className="text-base font-semibold text-neutral-200 hover:text-white transition-colors"
+                      className="text-base font-semibold text-foreground/80 hover:text-foreground transition-colors"
                     >
                       {section.system_name}
                     </Link>
-                    <span className="text-xs text-neutral-600">
+                    <span className="text-xs text-muted-foreground">
                       {section.games.length} {section.games.length === 1 ? "game" : "games"}
                     </span>
                   </div>

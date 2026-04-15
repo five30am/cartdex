@@ -31,7 +31,7 @@ export function AddToCollectionButton({ gameId }: Props) {
         variant="outline"
         size="sm"
         onClick={() => setOpen(true)}
-        className="border-neutral-700 text-neutral-300 hover:text-white hover:border-neutral-500"
+        className="border-border text-muted-foreground hover:text-foreground hover:border-border"
       >
         <FolderPlus className="h-4 w-4 mr-2" />
         Add to Collection

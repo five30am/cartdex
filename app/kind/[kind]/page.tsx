@@ -70,22 +70,22 @@ export default async function KindPage({ params }: Props) {
       <div className="max-w-7xl mx-auto">
         <Link
           href="/"
-          className="inline-flex items-center gap-1 text-xs text-neutral-600 hover:text-neutral-300 transition-colors mb-6 font-medium uppercase tracking-wider"
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mb-6 font-medium uppercase tracking-wider"
         >
           <ChevronLeft className="h-3.5 w-3.5" />
           Systems
         </Link>
 
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-lg bg-[#111111] border border-white/[0.06] flex items-center justify-center">
-            <KindIcon className="w-4 h-4 text-neutral-500" />
+          <div className="w-10 h-10 rounded-lg bg-card border border-border flex items-center justify-center">
+            <KindIcon className="w-4 h-4 text-muted-foreground" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">{kindLabel}</h1>
-            <p className="text-sm text-neutral-600 mt-0.5 font-mono">
-              <span className="text-neutral-400 font-semibold">{kindGames.length.toLocaleString()}</span>{" "}
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">{kindLabel}</h1>
+            <p className="text-sm text-muted-foreground mt-0.5 font-mono">
+              <span className="text-foreground/80 font-semibold">{kindGames.length.toLocaleString()}</span>{" "}
               {kindGames.length === 1 ? "game" : "games"} across{" "}
-              <span className="text-neutral-400 font-semibold">{systemOrder.length}</span>{" "}
+              <span className="text-foreground/80 font-semibold">{systemOrder.length}</span>{" "}
               {systemOrder.length === 1 ? "system" : "systems"}
             </p>
           </div>
@@ -93,8 +93,8 @@ export default async function KindPage({ params }: Props) {
 
         {kindGames.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
-            <KindIcon className="w-10 h-10 text-neutral-700 mb-4" />
-            <p className="text-neutral-500 text-sm">No {kind} games in your library</p>
+            <KindIcon className="w-10 h-10 text-muted-foreground/30 mb-4" />
+            <p className="text-muted-foreground text-sm">No {kind} games in your library</p>
           </div>
         ) : (
           <div className="space-y-12">
@@ -105,11 +105,11 @@ export default async function KindPage({ params }: Props) {
                   <div className="flex items-center gap-3 mb-4">
                     <Link
                       href={`/systems/${section.system_slug}`}
-                      className="text-base font-semibold text-neutral-200 hover:text-white transition-colors"
+                      className="text-base font-semibold text-foreground/80 hover:text-foreground transition-colors"
                     >
                       {section.system_name}
                     </Link>
-                    <span className="text-xs text-neutral-600">
+                    <span className="text-xs text-muted-foreground">
                       {section.games.length} {section.games.length === 1 ? "game" : "games"}
                     </span>
                   </div>

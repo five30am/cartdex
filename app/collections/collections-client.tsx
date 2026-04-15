@@ -72,11 +72,11 @@ export function CollectionsClient({ initialCollections }: Props) {
     <>
       {collections.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-neutral-900 border border-neutral-800 flex items-center justify-center mb-4">
-            <FolderOpen className="h-7 w-7 text-neutral-600" />
+          <div className="w-16 h-16 rounded-2xl bg-muted border border-border flex items-center justify-center mb-4">
+            <FolderOpen className="h-7 w-7 text-muted-foreground/40" />
           </div>
-          <p className="text-neutral-400 font-medium mb-1">No collections yet</p>
-          <p className="text-sm text-neutral-600 mb-6 max-w-xs">
+          <p className="text-muted-foreground font-medium mb-1">No collections yet</p>
+          <p className="text-sm text-muted-foreground/60 mb-6 max-w-xs">
             Create a collection to group games across systems and export them to your device.
           </p>
           <Button
@@ -94,25 +94,25 @@ export function CollectionsClient({ initialCollections }: Props) {
               <Link
                 key={col.id}
                 href={`/collections/${col.id}`}
-                className="group block border border-neutral-800 hover:border-neutral-600 rounded-xl p-5 bg-neutral-900/50 hover:bg-neutral-900 transition-colors"
+                className="group block border border-border hover:border-border/60 rounded-xl p-5 bg-card hover:bg-accent/30 transition-colors"
               >
                 <div className="flex items-start gap-3 mb-3">
                   <div className="w-9 h-9 rounded-lg bg-indigo-900/40 border border-indigo-800/50 flex items-center justify-center shrink-0">
                     <FolderOpen className="h-4.5 w-4.5 text-indigo-400" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-semibold text-neutral-200 group-hover:text-white transition-colors truncate">
+                    <h3 className="text-sm font-semibold text-foreground/80 group-hover:text-foreground transition-colors truncate">
                       {col.name}
                     </h3>
                     {col.description && (
-                      <p className="text-xs text-neutral-500 mt-0.5 line-clamp-2">
+                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
                         {col.description}
                       </p>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4 text-xs text-neutral-500 mb-3">
+                <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
                   <span className="flex items-center gap-1">
                     <Layers className="h-3.5 w-3.5" />
                     {col.game_count} {col.game_count === 1 ? "game" : "games"}
@@ -129,7 +129,7 @@ export function CollectionsClient({ initialCollections }: Props) {
                       <SystemBadge key={sys.slug} slug={sys.slug} name={sys.slug.toUpperCase()} />
                     ))}
                     {col.systems.length > 5 && (
-                      <span className="text-xs text-neutral-600 self-center">
+                      <span className="text-xs text-muted-foreground/60 self-center">
                         +{col.systems.length - 5} more
                       </span>
                     )}
@@ -141,7 +141,7 @@ export function CollectionsClient({ initialCollections }: Props) {
             {/* New collection card */}
             <button
               onClick={() => setShowNewModal(true)}
-              className="border border-dashed border-neutral-800 hover:border-neutral-600 rounded-xl p-5 flex flex-col items-center justify-center gap-2 text-neutral-600 hover:text-neutral-400 transition-colors min-h-[140px]"
+              className="border border-dashed border-border hover:border-border/60 rounded-xl p-5 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground/70 transition-colors min-h-[140px]"
             >
               <PlusCircle className="h-6 w-6" />
               <span className="text-sm">New Collection</span>
@@ -152,29 +152,29 @@ export function CollectionsClient({ initialCollections }: Props) {
 
       {/* New Collection Modal */}
       <Dialog open={showNewModal} onOpenChange={(v) => !v && setShowNewModal(false)}>
-        <DialogContent className="bg-neutral-900 border-neutral-800 text-neutral-100 max-w-sm">
+        <DialogContent className="bg-popover border-border text-popover-foreground max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-neutral-100">New Collection</DialogTitle>
+            <DialogTitle className="text-popover-foreground">New Collection</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 mt-2">
             <div>
-              <label className="text-xs text-neutral-400 mb-1.5 block">Name</label>
+              <label className="text-xs text-muted-foreground mb-1.5 block">Name</label>
               <Input
                 placeholder="e.g. Steam Deck Essentials"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && createCollection()}
                 autoFocus
-                className="bg-neutral-800 border-neutral-700 text-neutral-100 placeholder:text-neutral-600"
+                className="bg-muted border-border text-foreground placeholder:text-muted-foreground/50"
               />
             </div>
             <div>
-              <label className="text-xs text-neutral-400 mb-1.5 block">Description (optional)</label>
+              <label className="text-xs text-muted-foreground mb-1.5 block">Description (optional)</label>
               <Input
                 placeholder="What's this collection for?"
                 value={newDescription}
                 onChange={(e) => setNewDescription(e.target.value)}
-                className="bg-neutral-800 border-neutral-700 text-neutral-100 placeholder:text-neutral-600"
+                className="bg-muted border-border text-foreground placeholder:text-muted-foreground/50"
               />
             </div>
             <div className="flex gap-2 pt-1">
@@ -188,7 +188,7 @@ export function CollectionsClient({ initialCollections }: Props) {
               <Button
                 variant="ghost"
                 onClick={() => setShowNewModal(false)}
-                className="text-neutral-400 hover:text-neutral-200"
+                className="text-muted-foreground hover:text-foreground"
               >
                 Cancel
               </Button>

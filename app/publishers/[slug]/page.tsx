@@ -56,20 +56,20 @@ export default async function PublisherDetailPage({ params }: Props) {
       <div className="max-w-7xl mx-auto">
         <Link
           href="/publishers"
-          className="inline-flex items-center gap-1 text-xs text-neutral-600 hover:text-neutral-300 transition-colors mb-6 font-medium uppercase tracking-wider"
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mb-6 font-medium uppercase tracking-wider"
         >
           <ChevronLeft className="h-3.5 w-3.5" />
           Publishers
         </Link>
 
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-lg bg-[#111111] border border-white/[0.06] flex items-center justify-center">
-            <Building2 className="w-4 h-4 text-neutral-500" />
+          <div className="w-10 h-10 rounded-lg bg-card border border-border flex items-center justify-center">
+            <Building2 className="w-4 h-4 text-muted-foreground" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">{canonicalName}</h1>
-            <p className="text-sm text-neutral-600 mt-0.5 font-mono">
-              <span className="text-neutral-400 font-semibold">{publisherGames.length.toLocaleString()}</span>{" "}
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">{canonicalName}</h1>
+            <p className="text-sm text-muted-foreground mt-0.5 font-mono">
+              <span className="text-foreground/80 font-semibold">{publisherGames.length.toLocaleString()}</span>{" "}
               {publisherGames.length === 1 ? "game" : "games"}
             </p>
           </div>
@@ -77,7 +77,7 @@ export default async function PublisherDetailPage({ params }: Props) {
 
         {publisherGames.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <p className="text-neutral-500 text-sm">No games found for this publisher</p>
+            <p className="text-muted-foreground text-sm">No games found for this publisher</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">

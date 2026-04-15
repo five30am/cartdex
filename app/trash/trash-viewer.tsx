@@ -105,7 +105,7 @@ export function TrashViewer() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24 text-neutral-500">
+      <div className="flex items-center justify-center py-24 text-muted-foreground">
         <Loader2 className="w-6 h-6 animate-spin" />
       </div>
     );
@@ -120,9 +120,9 @@ export function TrashViewer() {
   if (entries.length === 0) {
     return (
       <div className="py-16 text-center">
-        <Trash2 className="w-10 h-10 text-neutral-800 mx-auto mb-3" />
-        <p className="text-neutral-400 font-medium">Trash is empty</p>
-        <p className="text-sm text-neutral-600 mt-1">
+        <Trash2 className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+        <p className="text-muted-foreground font-medium">Trash is empty</p>
+        <p className="text-sm text-muted-foreground/60 mt-1">
           Files moved to trash from the Duplicate Browser will appear here.
         </p>
       </div>
@@ -131,7 +131,7 @@ export function TrashViewer() {
 
   return (
     <>
-      <p className="text-xs text-neutral-600 mb-4">
+      <p className="text-xs text-muted-foreground mb-4">
         {entries.length} file{entries.length === 1 ? "" : "s"} &middot; 30-day retention &middot; auto-purge daily
       </p>
 
@@ -147,42 +147,42 @@ export function TrashViewer() {
               className={cn(
                 "border rounded-lg px-4 py-3 flex items-start gap-4",
                 isExpired
-                  ? "border-red-800/60 bg-red-950/10"
+                  ? "border-red-400/40 dark:border-red-800/60 bg-red-50 dark:bg-red-950/10"
                   : isExpiringSoon
-                  ? "border-amber-800/40 bg-amber-950/10"
-                  : "border-neutral-800 bg-neutral-950"
+                  ? "border-amber-400/40 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-950/10"
+                  : "border-border bg-card"
               )}
             >
               <div className="flex-1 min-w-0 space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-neutral-200 truncate">
+                  <span className="text-sm font-medium text-foreground truncate">
                     {entry.game_title ?? entry.file_path_original.split("/").pop()}
                   </span>
                   {entry.system_slug && (
-                    <span className="text-xs text-neutral-600 shrink-0 uppercase font-mono">
+                    <span className="text-xs text-muted-foreground shrink-0 uppercase font-mono">
                       {entry.system_slug}
                     </span>
                   )}
                 </div>
 
-                <div className="flex items-center gap-1.5 text-xs text-neutral-500">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <Clock className="w-3 h-3 shrink-0" />
                   <span>Trashed {formatDate(entry.trashed_at)}</span>
-                  <span className="text-neutral-700">&middot;</span>
+                  <span className="text-muted-foreground/40">&middot;</span>
                   <span
                     className={cn(
                       isExpired
                         ? "text-red-400 font-medium"
                         : isExpiringSoon
                         ? "text-amber-400"
-                        : "text-neutral-500"
+                        : "text-muted-foreground"
                     )}
                   >
                     {isExpired ? "Expired" : `${entry.days_remaining} days remaining`}
                   </span>
                 </div>
 
-                <p className="text-[11px] text-neutral-700 truncate font-mono">
+                <p className="text-[11px] text-muted-foreground/50 truncate font-mono">
                   {entry.file_path_original}
                 </p>
               </div>
@@ -195,7 +195,7 @@ export function TrashViewer() {
                       variant="ghost"
                       onClick={() => handleRestore(entry)}
                       disabled={busy}
-                      className="h-7 text-xs text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800"
+                      className="h-7 text-xs text-muted-foreground hover:text-foreground hover:bg-accent"
                     >
                       {busy ? (
                         <Loader2 className="w-3 h-3 animate-spin" />
@@ -218,7 +218,7 @@ export function TrashViewer() {
                     </Button>
                   </>
                 ) : (
-                  <span className="text-xs text-neutral-600 italic">game row deleted</span>
+                  <span className="text-xs text-muted-foreground italic">game row deleted</span>
                 )}
               </div>
             </div>
@@ -228,16 +228,16 @@ export function TrashViewer() {
 
       {/* Single-confirm Purge dialog */}
       <Dialog open={!!purgeTarget} onOpenChange={(v) => !v && setPurgeTarget(null)}>
-        <DialogContent className="bg-neutral-900 border-neutral-800 text-neutral-100 max-w-sm">
+        <DialogContent className="bg-popover border-border text-popover-foreground max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-neutral-100 flex items-center gap-2">
+            <DialogTitle className="text-popover-foreground flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-red-400" />
               Permanently delete?
             </DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-neutral-300 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             This will permanently delete{" "}
-            <span className="font-medium text-neutral-100">
+            <span className="font-medium text-foreground">
               {purgeTarget?.game_title ?? purgeTarget?.file_path_original.split("/").pop()}
             </span>{" "}
             from disk. This cannot be undone.
@@ -247,7 +247,7 @@ export function TrashViewer() {
               size="sm"
               variant="ghost"
               onClick={() => setPurgeTarget(null)}
-              className="text-neutral-400 hover:text-neutral-200"
+              className="text-muted-foreground hover:text-foreground"
             >
               Cancel
             </Button>

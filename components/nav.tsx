@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ActionButtons } from "@/components/action-buttons";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Settings, Database, ClipboardList, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -10,7 +11,7 @@ export function Nav() {
   const pathname = usePathname();
 
   return (
-    <header className="border-b border-white/[0.06] px-6 py-0 sticky top-0 z-50 bg-[#0a0a0a]/95 backdrop-blur-md">
+    <header className="border-b border-border px-6 py-0 sticky top-0 z-50 bg-background/95 backdrop-blur-md">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-6 h-14">
         {/* Brand + nav links */}
         <div className="flex items-center gap-6">
@@ -18,7 +19,7 @@ export function Nav() {
             <div className="w-7 h-7 rounded-md bg-blue-600 flex items-center justify-center shadow-[0_0_12px_rgba(37,99,235,0.4)] group-hover:shadow-[0_0_16px_rgba(37,99,235,0.6)] transition-shadow">
               <Database className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="text-[15px] font-semibold tracking-tight text-white">
+            <span className="text-[15px] font-semibold tracking-tight text-foreground">
               RomVault
             </span>
           </Link>
@@ -43,14 +44,16 @@ export function Nav() {
         {/* Actions */}
         <div className="flex items-center gap-3">
           <ActionButtons />
-          <div className="w-px h-5 bg-white/10" />
+          <div className="w-px h-5 bg-border" />
+          <ThemeToggle />
+          <div className="w-px h-5 bg-border" />
           <Link
             href="/audit"
             className={cn(
               "p-1.5 rounded-md transition-colors",
               pathname.startsWith("/audit")
-                ? "text-white bg-white/10"
-                : "text-neutral-500 hover:text-white hover:bg-white/8"
+                ? "text-foreground bg-accent"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent"
             )}
             title="Audit Log"
           >
@@ -61,8 +64,8 @@ export function Nav() {
             className={cn(
               "p-1.5 rounded-md transition-colors",
               pathname.startsWith("/settings")
-                ? "text-white bg-white/10"
-                : "text-neutral-500 hover:text-white hover:bg-white/8"
+                ? "text-foreground bg-accent"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent"
             )}
             title="Settings"
           >
@@ -89,8 +92,8 @@ function NavLink({
       className={cn(
         "px-3 py-1 text-sm rounded-md transition-colors relative",
         active
-          ? "text-white font-medium"
-          : "text-neutral-500 hover:text-neutral-200"
+          ? "text-foreground font-medium"
+          : "text-muted-foreground hover:text-foreground"
       )}
     >
       {children}

@@ -109,26 +109,26 @@ export function DeleteModal({ open, onClose, games, onHideSuccess, onTrashSucces
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
-      <DialogContent className="bg-neutral-900 border-neutral-800 text-neutral-100 max-w-lg">
+      <DialogContent className="bg-popover border-border text-popover-foreground max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-neutral-100">
+          <DialogTitle className="text-popover-foreground">
             {step === "choose" ? `Delete ${label}?` : "Are you sure?"}
           </DialogTitle>
         </DialogHeader>
 
         {step === "choose" && (
           <div className="space-y-4 mt-1">
-            <p className="text-sm text-neutral-400">Choose how to remove these files:</p>
+            <p className="text-sm text-muted-foreground">Choose how to remove these files:</p>
 
             <div className="grid grid-cols-2 gap-3">
               {/* Hide path */}
-              <div className="border border-neutral-700 rounded-lg p-4 space-y-3 flex flex-col">
+              <div className="border border-border rounded-lg p-4 space-y-3 flex flex-col">
                 <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-sm font-medium text-neutral-200">
-                    <EyeOff className="w-4 h-4 text-blue-400" />
+                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <EyeOff className="w-4 h-4 text-blue-500 dark:text-blue-400" />
                     Hide from Library
                   </div>
-                  <ul className="text-xs text-neutral-500 space-y-0.5 mt-2 list-none">
+                  <ul className="text-xs text-muted-foreground space-y-0.5 mt-2 list-none">
                     <li>Files stay on disk.</li>
                     <li>Row flagged hidden.</li>
                     <li>Rescan respects hash.</li>
@@ -146,13 +146,13 @@ export function DeleteModal({ open, onClose, games, onHideSuccess, onTrashSucces
               </div>
 
               {/* Trash path */}
-              <div className="border border-neutral-700 rounded-lg p-4 space-y-3 flex flex-col">
+              <div className="border border-border rounded-lg p-4 space-y-3 flex flex-col">
                 <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-sm font-medium text-neutral-200">
-                    <Trash2 className="w-4 h-4 text-amber-400" />
+                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <Trash2 className="w-4 h-4 text-amber-500 dark:text-amber-400" />
                     Move to Trash
                   </div>
-                  <ul className="text-xs text-neutral-500 space-y-0.5 mt-2 list-none">
+                  <ul className="text-xs text-muted-foreground space-y-0.5 mt-2 list-none">
                     <li>Files move to .trash/.</li>
                     <li>30-day hold.</li>
                     <li>Reversible from Trash.</li>
@@ -172,13 +172,13 @@ export function DeleteModal({ open, onClose, games, onHideSuccess, onTrashSucces
 
             {/* File list */}
             <div className="space-y-1">
-              <p className="text-xs text-neutral-500">These files will be affected:</p>
-              <ul className="text-xs text-neutral-400 space-y-0.5 max-h-32 overflow-y-auto">
+              <p className="text-xs text-muted-foreground">These files will be affected:</p>
+              <ul className="text-xs text-foreground/70 space-y-0.5 max-h-32 overflow-y-auto">
                 {games.map((g) => (
                   <li key={g.id} className="truncate">
                     &middot; {g.title}
                     {g.system_slug && (
-                      <span className="text-neutral-600 ml-1">— {g.system_slug.toUpperCase()}</span>
+                      <span className="text-muted-foreground ml-1">— {g.system_slug.toUpperCase()}</span>
                     )}
                   </li>
                 ))}
@@ -193,7 +193,7 @@ export function DeleteModal({ open, onClose, games, onHideSuccess, onTrashSucces
                 variant="ghost"
                 onClick={handleClose}
                 disabled={loading}
-                className="text-neutral-400 hover:text-neutral-200"
+                className="text-muted-foreground hover:text-foreground"
               >
                 Cancel
               </Button>
@@ -205,9 +205,9 @@ export function DeleteModal({ open, onClose, games, onHideSuccess, onTrashSucces
           <div className="space-y-4 mt-1">
             <div className="flex items-start gap-3 p-3 bg-amber-950/30 border border-amber-800/40 rounded-lg">
               <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
-              <p className="text-sm text-neutral-300">
+              <p className="text-sm text-foreground/80">
                 This will move{" "}
-                <span className="text-neutral-100 font-medium">{label}</span> to{" "}
+                <span className="text-foreground font-medium">{label}</span> to{" "}
                 <code className="text-amber-400 text-xs">/roms/.trash/</code>. They can be
                 restored within 30 days from the Trash Viewer.
               </p>
@@ -222,7 +222,7 @@ export function DeleteModal({ open, onClose, games, onHideSuccess, onTrashSucces
                 variant="ghost"
                 onClick={() => { setStep("choose"); setError(""); setInfo(""); }}
                 disabled={loading}
-                className="text-neutral-400 hover:text-neutral-200"
+                className="text-muted-foreground hover:text-foreground"
               >
                 Cancel
               </Button>

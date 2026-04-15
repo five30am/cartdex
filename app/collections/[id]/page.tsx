@@ -80,24 +80,24 @@ export default async function CollectionDetailPage({ params, searchParams }: Pro
       <div className="max-w-7xl mx-auto">
         <Link
           href="/collections"
-          className="inline-flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-300 transition-colors mb-6"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
         >
           <ChevronLeft className="h-4 w-4" />
           Collections
         </Link>
 
         {!showHidden && hiddenCount > 0 && (
-          <p className="text-sm text-neutral-500 mb-4">
+          <p className="text-sm text-muted-foreground mb-4">
             {hiddenCount} hidden {hiddenCount === 1 ? "game" : "games"} not shown &mdash;{" "}
-            <Link href={`/collections/${collectionId}?show_hidden=true`} className="text-neutral-400 hover:text-neutral-200 underline underline-offset-2">
+            <Link href={`/collections/${collectionId}?show_hidden=true`} className="text-foreground/70 hover:text-foreground underline underline-offset-2">
               show all
             </Link>
           </p>
         )}
         {showHidden && (
-          <p className="text-sm text-neutral-500 mb-4">
+          <p className="text-sm text-muted-foreground mb-4">
             Showing hidden games &mdash;{" "}
-            <Link href={`/collections/${collectionId}`} className="text-neutral-400 hover:text-neutral-200 underline underline-offset-2">
+            <Link href={`/collections/${collectionId}`} className="text-foreground/70 hover:text-foreground underline underline-offset-2">
               hide hidden
             </Link>
           </p>

@@ -55,8 +55,8 @@ export default function HomePage() {
         {/* Stats header */}
         <div className="flex items-end justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">Library</h1>
-            <p className="text-sm text-neutral-500 mt-1">
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">Library</h1>
+            <p className="text-sm text-muted-foreground mt-1">
               Your ROM collection across all platforms
             </p>
           </div>
@@ -107,14 +107,14 @@ function SystemGroup({
   return (
     <div>
       <div className="flex items-center gap-2 mb-4">
-        <span className="text-neutral-600">{icon}</span>
+        <span className="text-muted-foreground">{icon}</span>
         <Link
           href={href}
-          className="text-sm font-semibold text-neutral-400 hover:text-neutral-200 transition-colors uppercase tracking-wider"
+          className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors uppercase tracking-wider"
         >
           {label}
         </Link>
-        <span className="text-xs text-neutral-700 font-mono ml-1">{systems.length}</span>
+        <span className="text-xs text-muted-foreground/40 font-mono ml-1">{systems.length}</span>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
         {systems.map((system) => (
@@ -136,9 +136,9 @@ function StatPill({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-neutral-600">{icon}</span>
-      <span className="font-mono text-sm font-semibold text-white tabular-nums">{value}</span>
-      <span className="text-xs text-neutral-600">{label}</span>
+      <span className="text-muted-foreground">{icon}</span>
+      <span className="font-mono text-sm font-semibold text-foreground tabular-nums">{value}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
     </div>
   );
 }
@@ -152,9 +152,9 @@ function SystemCard({
 
   return (
     <Link href={`/systems/${system.slug}`}>
-      <Card className="bg-[#111111] border-white/[0.06] hover:border-blue-500/40 hover:bg-[#141414] transition-all duration-200 cursor-pointer group overflow-hidden h-full shadow-none">
+      <Card className="bg-card border-border hover:border-blue-500/40 hover:bg-accent/30 transition-all duration-200 cursor-pointer group overflow-hidden h-full shadow-none">
         {/* Console image area */}
-        <div className="relative h-32 w-full bg-[#0d0d0d] overflow-hidden">
+        <div className="relative h-32 w-full bg-muted/40 overflow-hidden">
           <Image
             src={`/images/systems/${system.slug}.png`}
             alt={system.name}
@@ -163,12 +163,12 @@ function SystemCard({
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
           />
           {/* Subtle bottom fade */}
-          <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-[#111111] to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-card to-transparent" />
           {system.dat_source && (
             <div className="absolute top-2.5 right-2.5">
               <Badge
                 variant="outline"
-                className="text-[10px] px-1.5 py-0 h-4 border-white/10 bg-black/60 text-neutral-500 backdrop-blur-sm"
+                className="text-[10px] px-1.5 py-0 h-4 border-border bg-background/60 text-muted-foreground backdrop-blur-sm"
               >
                 {system.dat_source}
               </Badge>
@@ -178,17 +178,17 @@ function SystemCard({
 
         <CardContent className="px-4 pt-3 pb-4">
           {/* System name */}
-          <p className="text-sm font-semibold text-neutral-200 group-hover:text-white transition-colors leading-tight mb-2.5">
+          <p className="text-sm font-semibold text-foreground/80 group-hover:text-foreground transition-colors leading-tight mb-2.5">
             {system.name}
           </p>
 
           {/* Count + badge row */}
           <div className="flex items-end justify-between gap-2">
             <div>
-              <p className={`font-mono text-xl font-bold tabular-nums leading-none ${hasGames ? "text-white" : "text-neutral-700"}`}>
+              <p className={`font-mono text-xl font-bold tabular-nums leading-none ${hasGames ? "text-foreground" : "text-muted-foreground/40"}`}>
                 {system.game_count.toLocaleString()}
               </p>
-              <p className="text-[11px] text-neutral-600 mt-0.5">
+              <p className="text-[11px] text-muted-foreground mt-0.5">
                 {system.game_count === 1 ? "game" : "games"}
               </p>
             </div>
@@ -210,16 +210,16 @@ function SystemCard({
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-28 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-[#141414] border border-white/[0.06] flex items-center justify-center mb-5">
-        <FolderOpen className="w-7 h-7 text-neutral-700" />
+      <div className="w-16 h-16 rounded-2xl bg-muted border border-border flex items-center justify-center mb-5">
+        <FolderOpen className="w-7 h-7 text-muted-foreground/40" />
       </div>
-      <h3 className="text-base font-semibold text-neutral-200 mb-2">
+      <h3 className="text-base font-semibold text-foreground mb-2">
         No games yet
       </h3>
-      <p className="text-sm text-neutral-500 max-w-xs mb-6 leading-relaxed">
+      <p className="text-sm text-muted-foreground max-w-xs mb-6 leading-relaxed">
         Point RomVault at your ROM directory and run a scan to populate your library.
       </p>
-      <code className="text-xs bg-[#111111] border border-white/[0.06] text-blue-400 px-4 py-2.5 rounded-lg font-mono tracking-tight">
+      <code className="text-xs bg-muted border border-border text-blue-500 dark:text-blue-400 px-4 py-2.5 rounded-lg font-mono tracking-tight">
         POST /api/scan {"{ \"path\": \"/data/roms\" }"}
       </code>
     </div>
@@ -234,17 +234,17 @@ function FirstRunBanner() {
           <AlertTriangle className="w-3 h-3 text-amber-400" />
         </div>
         <div>
-          <p className="text-sm font-semibold text-amber-200">
+          <p className="text-sm font-semibold text-amber-700 dark:text-amber-200">
             Setup required
           </p>
-          <p className="text-sm text-amber-400/70 mt-0.5 leading-relaxed">
+          <p className="text-sm text-amber-700/70 dark:text-amber-400/70 mt-0.5 leading-relaxed">
             Configure your ROM path and API credentials to get started.
           </p>
         </div>
       </div>
       <Link
         href="/settings"
-        className="shrink-0 flex items-center gap-1 text-sm text-amber-300 hover:text-amber-100 transition-colors font-medium mt-0.5"
+        className="shrink-0 flex items-center gap-1 text-sm text-amber-600 hover:text-amber-500 dark:text-amber-300 dark:hover:text-amber-100 transition-colors font-medium mt-0.5"
       >
         Open Settings
         <ArrowRight className="w-3.5 h-3.5" />

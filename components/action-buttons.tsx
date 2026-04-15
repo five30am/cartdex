@@ -135,12 +135,12 @@ export function ActionButtons() {
           className={cn(
             "h-8 px-3 text-xs font-medium gap-1.5 transition-all",
             scanStatus.state === "running"
-              ? "text-blue-400 bg-blue-500/10 border border-blue-500/20"
+              ? "text-blue-600 dark:text-blue-400 bg-blue-500/10 border border-blue-500/20"
               : scanStatus.state === "done"
-              ? "text-green-400 bg-green-500/10 border border-green-500/20"
+              ? "text-green-600 dark:text-green-400 bg-green-500/10 border border-green-500/20"
               : scanStatus.state === "error"
-              ? "text-red-400 bg-red-500/10 border border-red-500/20"
-              : "text-neutral-400 border border-white/[0.06] hover:text-white hover:bg-white/[0.06] hover:border-white/10"
+              ? "text-red-600 dark:text-red-400 bg-red-500/10 border border-red-500/20"
+              : "text-muted-foreground border border-border hover:text-foreground hover:bg-accent"
           )}
         >
           {scanStatus.state === "running" ? (
@@ -169,12 +169,12 @@ export function ActionButtons() {
           className={cn(
             "h-8 px-3 text-xs font-medium gap-1.5 transition-all",
             scrapeStatus.state === "running"
-              ? "text-violet-400 bg-violet-500/10 border border-violet-500/20"
+              ? "text-violet-600 dark:text-violet-400 bg-violet-500/10 border border-violet-500/20"
               : scrapeStatus.state === "done"
-              ? "text-green-400 bg-green-500/10 border border-green-500/20"
+              ? "text-green-600 dark:text-green-400 bg-green-500/10 border border-green-500/20"
               : scrapeStatus.state === "error"
-              ? "text-red-400 bg-red-500/10 border border-red-500/20"
-              : "text-neutral-400 border border-white/[0.06] hover:text-white hover:bg-white/[0.06] hover:border-white/10"
+              ? "text-red-600 dark:text-red-400 bg-red-500/10 border border-red-500/20"
+              : "text-muted-foreground border border-border hover:text-foreground hover:bg-accent"
           )}
         >
           {scrapeStatus.state === "running" ? (
@@ -200,20 +200,20 @@ export function ActionButtons() {
       {scanStatus.state === "running" && scanProgress && (
         <div className="flex flex-col items-end gap-1 w-52">
           <div className="flex items-center justify-between w-full">
-            <p className="text-[11px] text-blue-400/80 font-mono">
+            <p className="text-[11px] text-blue-600/80 dark:text-blue-400/80 font-mono">
               {scanStatus.phase === "hashing" ? "hashing" : "discovering"}
             </p>
-            <p className="text-[11px] text-neutral-500 font-mono tabular-nums">
+            <p className="text-[11px] text-muted-foreground font-mono tabular-nums">
               {scanProgress.current.toLocaleString()} / {scanProgress.total.toLocaleString()}
             </p>
           </div>
-          <div className="w-full h-1 bg-white/[0.06] rounded-full overflow-hidden">
+          <div className="w-full h-1 bg-border rounded-full overflow-hidden">
             <div
               className="h-full bg-blue-500 rounded-full transition-all duration-500 ease-out shadow-[0_0_8px_rgba(59,130,246,0.6)]"
               style={{ width: `${scanPct}%` }}
             />
           </div>
-          <p className="text-[10px] text-neutral-600 font-mono">{scanPct}%</p>
+          <p className="text-[10px] text-muted-foreground/60 font-mono">{scanPct}%</p>
         </div>
       )}
 
@@ -221,27 +221,27 @@ export function ActionButtons() {
       {scrapeStatus.state === "running" && scrapeProgress && (
         <div className="flex flex-col items-end gap-1 w-52">
           <div className="flex items-center justify-between w-full">
-            <p className="text-[11px] text-violet-400/80 font-mono">
+            <p className="text-[11px] text-violet-600/80 dark:text-violet-400/80 font-mono">
               scraping metadata
             </p>
-            <p className="text-[11px] text-neutral-500 font-mono tabular-nums">
+            <p className="text-[11px] text-muted-foreground font-mono tabular-nums">
               {scrapeProgress.current.toLocaleString()} / {scrapeProgress.total.toLocaleString()}
             </p>
           </div>
-          <div className="w-full h-1 bg-white/[0.06] rounded-full overflow-hidden">
+          <div className="w-full h-1 bg-border rounded-full overflow-hidden">
             <div
               className="h-full bg-violet-500 rounded-full transition-all duration-500 ease-out shadow-[0_0_8px_rgba(139,92,246,0.6)]"
               style={{ width: `${scrapePct}%` }}
             />
           </div>
-          <p className="text-[10px] text-neutral-600 font-mono">{scrapePct}%</p>
+          <p className="text-[10px] text-muted-foreground/60 font-mono">{scrapePct}%</p>
         </div>
       )}
 
       {/* Result summaries */}
       {scanStatus.state === "done" && scanStatus.result && (
-        <p className="text-[11px] text-neutral-500 font-mono">
-          <span className="text-green-400">{scanStatus.result.newFiles}</span> new &middot; <span className="text-neutral-400">{scanStatus.result.hashed}</span> hashed &middot; <span className="text-neutral-600">{scanStatus.result.skipped}</span> skipped
+        <p className="text-[11px] text-muted-foreground font-mono">
+          <span className="text-green-500 dark:text-green-400">{scanStatus.result.newFiles}</span> new &middot; <span className="text-foreground/70">{scanStatus.result.hashed}</span> hashed &middot; <span className="text-muted-foreground">{scanStatus.result.skipped}</span> skipped
         </p>
       )}
       {scanStatus.state === "error" && (
@@ -250,8 +250,8 @@ export function ActionButtons() {
         </p>
       )}
       {scrapeStatus.state === "done" && scrapeStatus.result && (
-        <p className="text-[11px] text-neutral-500 font-mono">
-          <span className="text-green-400">{scrapeStatus.result.updated}</span> updated of <span className="text-neutral-400">{scrapeStatus.result.processed}</span> games
+        <p className="text-[11px] text-muted-foreground font-mono">
+          <span className="text-green-500 dark:text-green-400">{scrapeStatus.result.updated}</span> updated of <span className="text-foreground/70">{scrapeStatus.result.processed}</span> games
         </p>
       )}
       {scrapeStatus.state === "error" && (

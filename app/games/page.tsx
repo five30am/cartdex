@@ -54,14 +54,14 @@ export default async function AllGamesPage({ searchParams }: Props) {
     <div className="px-6 py-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-xl font-semibold text-neutral-100">All Games</h1>
-          <p className="text-sm text-neutral-500 mt-0.5">
-            <span className="text-white font-medium">{visibleGames.length.toLocaleString()}</span> games in library
+          <h1 className="text-xl font-semibold text-foreground">All Games</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            <span className="text-foreground font-medium">{visibleGames.length.toLocaleString()}</span> games in library
             {!showHidden && hiddenCount > 0 && (
-              <> &mdash; <Link href="/games?show_hidden=true" className="text-neutral-500 hover:text-neutral-300 underline underline-offset-2">{hiddenCount} hidden</Link></>
+              <> &mdash; <Link href="/games?show_hidden=true" className="text-muted-foreground hover:text-foreground underline underline-offset-2">{hiddenCount} hidden</Link></>
             )}
             {showHidden && (
-              <> &mdash; <Link href="/games" className="text-neutral-500 hover:text-neutral-300 underline underline-offset-2">hide hidden</Link></>
+              <> &mdash; <Link href="/games" className="text-muted-foreground hover:text-foreground underline underline-offset-2">hide hidden</Link></>
             )}
           </p>
         </div>

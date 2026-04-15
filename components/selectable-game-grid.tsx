@@ -29,7 +29,7 @@ export function SelectableGameGrid({
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <div className="text-5xl mb-4 opacity-30">🎮</div>
-        <p className="text-neutral-500 text-sm">{emptyMessage}</p>
+        <p className="text-muted-foreground text-sm">{emptyMessage}</p>
       </div>
     );
   }
@@ -45,10 +45,10 @@ export function SelectableGameGrid({
             className="group block text-left"
           >
             <div
-              className={`relative aspect-[3/4] w-full bg-neutral-900 rounded-lg overflow-hidden border-2 transition-all ${
+              className={`relative aspect-[3/4] w-full bg-muted rounded-lg overflow-hidden border-2 transition-all ${
                 isSelected
                   ? "border-indigo-500 ring-2 ring-indigo-500/30"
-                  : "border-neutral-800 hover:border-neutral-600"
+                  : "border-border hover:border-border/60"
               }`}
             >
               {game.box_art_path ? (
@@ -62,7 +62,7 @@ export function SelectableGameGrid({
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center">
                   <div className="text-3xl mb-2 opacity-30">🎮</div>
-                  <p className="text-xs text-neutral-600 leading-tight font-medium line-clamp-3">
+                  <p className="text-xs text-muted-foreground leading-tight font-medium line-clamp-3">
                     {game.title}
                   </p>
                 </div>
@@ -70,7 +70,7 @@ export function SelectableGameGrid({
 
               {/* Selection overlay */}
               {isSelected && (
-                <div className="absolute inset-0 bg-indigo-900/20 flex items-center justify-center">
+                <div className="absolute inset-0 bg-indigo-500/15 dark:bg-indigo-900/20 flex items-center justify-center">
                   <div className="w-8 h-8 rounded-full bg-indigo-600 border-2 border-white flex items-center justify-center shadow-lg">
                     <Check className="h-4 w-4 text-white" />
                   </div>
@@ -79,10 +79,10 @@ export function SelectableGameGrid({
 
               {/* Hover indicator when not selected */}
               {!isSelected && (
-                <div className="absolute top-2 right-2 w-5 h-5 rounded-full border-2 border-neutral-600 bg-neutral-900/60 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute top-2 right-2 w-5 h-5 rounded-full border-2 border-border bg-muted/60 opacity-0 group-hover:opacity-100 transition-opacity" />
               )}
             </div>
-            <p className="text-xs font-medium text-neutral-200 truncate leading-tight mt-2 px-0.5">
+            <p className="text-xs font-medium text-foreground/80 truncate leading-tight mt-2 px-0.5">
               {game.title}
             </p>
           </button>

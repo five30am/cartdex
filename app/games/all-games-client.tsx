@@ -171,13 +171,13 @@ export function AllGamesClient({ games, systems, genres }: Props) {
           className="flex-1 min-w-[200px] max-w-sm"
         />
         <Select value={systemFilter} onValueChange={handleFilterChange(setSystemFilter)}>
-          <SelectTrigger className="w-[160px] bg-neutral-900 border-neutral-700 text-neutral-200">
+          <SelectTrigger className="w-[160px] bg-background border-border text-foreground">
             <SelectValue placeholder="All systems" />
           </SelectTrigger>
-          <SelectContent className="bg-neutral-900 border-neutral-700">
-            <SelectItem value="all" className="text-neutral-200 focus:bg-neutral-800">All systems</SelectItem>
+          <SelectContent className="bg-popover border-border">
+            <SelectItem value="all" className="text-foreground focus:bg-accent">All systems</SelectItem>
             {systems.map((sys) => (
-              <SelectItem key={sys.slug} value={sys.slug} className="text-neutral-200 focus:bg-neutral-800">
+              <SelectItem key={sys.slug} value={sys.slug} className="text-foreground focus:bg-accent">
                 {sys.name}
               </SelectItem>
             ))}
@@ -186,13 +186,13 @@ export function AllGamesClient({ games, systems, genres }: Props) {
 
         {genres.length > 0 && (
           <Select value={genreFilter} onValueChange={handleFilterChange(setGenreFilter)}>
-            <SelectTrigger className="w-[140px] bg-neutral-900 border-neutral-700 text-neutral-200">
+            <SelectTrigger className="w-[140px] bg-background border-border text-foreground">
               <SelectValue placeholder="All genres" />
             </SelectTrigger>
-            <SelectContent className="bg-neutral-900 border-neutral-700">
-              <SelectItem value="all" className="text-neutral-200 focus:bg-neutral-800">All genres</SelectItem>
+            <SelectContent className="bg-popover border-border">
+              <SelectItem value="all" className="text-foreground focus:bg-accent">All genres</SelectItem>
               {genres.map((g) => (
-                <SelectItem key={g} value={g} className="text-neutral-200 focus:bg-neutral-800">
+                <SelectItem key={g} value={g} className="text-foreground focus:bg-accent">
                   {g}
                 </SelectItem>
               ))}
@@ -201,18 +201,18 @@ export function AllGamesClient({ games, systems, genres }: Props) {
         )}
 
         <Select value={sort} onValueChange={(v) => setSort((v ?? "title") as SortOption)}>
-          <SelectTrigger className="w-[160px] bg-neutral-900 border-neutral-700 text-neutral-200">
+          <SelectTrigger className="w-[160px] bg-background border-border text-foreground">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-neutral-900 border-neutral-700">
-            <SelectItem value="title" className="text-neutral-200 focus:bg-neutral-800">Name (A–Z)</SelectItem>
-            <SelectItem value="title_desc" className="text-neutral-200 focus:bg-neutral-800">Name (Z–A)</SelectItem>
-            <SelectItem value="year_desc" className="text-neutral-200 focus:bg-neutral-800">Release date (newest)</SelectItem>
-            <SelectItem value="year" className="text-neutral-200 focus:bg-neutral-800">Release date (oldest)</SelectItem>
-            <SelectItem value="publisher" className="text-neutral-200 focus:bg-neutral-800">Publisher (A–Z)</SelectItem>
-            <SelectItem value="system" className="text-neutral-200 focus:bg-neutral-800">System</SelectItem>
-            <SelectItem value="rating_desc" className="text-neutral-200 focus:bg-neutral-800">Highest rated</SelectItem>
-            <SelectItem value="recent" className="text-neutral-200 focus:bg-neutral-800">Recently added</SelectItem>
+          <SelectContent className="bg-popover border-border">
+            <SelectItem value="title" className="text-foreground focus:bg-accent">Name (A–Z)</SelectItem>
+            <SelectItem value="title_desc" className="text-foreground focus:bg-accent">Name (Z–A)</SelectItem>
+            <SelectItem value="year_desc" className="text-foreground focus:bg-accent">Release date (newest)</SelectItem>
+            <SelectItem value="year" className="text-foreground focus:bg-accent">Release date (oldest)</SelectItem>
+            <SelectItem value="publisher" className="text-foreground focus:bg-accent">Publisher (A–Z)</SelectItem>
+            <SelectItem value="system" className="text-foreground focus:bg-accent">System</SelectItem>
+            <SelectItem value="rating_desc" className="text-foreground focus:bg-accent">Highest rated</SelectItem>
+            <SelectItem value="recent" className="text-foreground focus:bg-accent">Recently added</SelectItem>
           </SelectContent>
         </Select>
 
@@ -221,18 +221,18 @@ export function AllGamesClient({ games, systems, genres }: Props) {
             variant="outline"
             size="sm"
             onClick={() => setSelectMode(true)}
-            className="border-neutral-700 text-neutral-400 hover:text-neutral-200 hover:border-neutral-500"
+            className="border-border text-muted-foreground hover:text-foreground hover:border-border"
           >
             <CheckSquare className="h-4 w-4 mr-1.5" />
             Select
           </Button>
         ) : (
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm text-neutral-400">{selected.size} selected</span>
-            <button onClick={selectAll} className="text-xs text-indigo-400 hover:text-indigo-300">
+            <span className="text-sm text-muted-foreground">{selected.size} selected</span>
+            <button onClick={selectAll} className="text-xs text-indigo-500 dark:text-indigo-400 hover:text-indigo-400 dark:hover:text-indigo-300">
               Select all ({filtered.length})
             </button>
-            <button onClick={deselectAll} className="text-xs text-neutral-500 hover:text-neutral-300">
+            <button onClick={deselectAll} className="text-xs text-muted-foreground hover:text-foreground">
               Deselect all
             </button>
             {selected.size > 0 && (
@@ -245,7 +245,7 @@ export function AllGamesClient({ games, systems, genres }: Props) {
                 Add to Collection
               </Button>
             )}
-            <button onClick={exitSelectMode} className="text-neutral-500 hover:text-neutral-300">
+            <button onClick={exitSelectMode} className="text-muted-foreground hover:text-foreground">
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -254,7 +254,7 @@ export function AllGamesClient({ games, systems, genres }: Props) {
 
       {/* Result count */}
       {(search || systemFilter !== "all" || genreFilter !== "all") && (
-        <p className="text-sm text-neutral-500 mb-4">
+        <p className="text-sm text-muted-foreground mb-4">
           {filtered.length.toLocaleString()} result{filtered.length !== 1 ? "s" : ""}
           {search && <> for &ldquo;{search}&rdquo;</>}
         </p>
@@ -271,7 +271,7 @@ export function AllGamesClient({ games, systems, genres }: Props) {
       ) : paginated.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="text-5xl mb-4 opacity-30">🎮</div>
-          <p className="text-neutral-500 text-sm">No games match your filters</p>
+          <p className="text-muted-foreground text-sm">No games match your filters</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
@@ -297,17 +297,17 @@ export function AllGamesClient({ games, systems, genres }: Props) {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={clampedPage <= 1}
-            className="px-3 py-1.5 text-sm rounded-md bg-neutral-800 text-neutral-300 hover:bg-neutral-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="px-3 py-1.5 text-sm rounded-md bg-muted text-foreground hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             Previous
           </button>
-          <span className="text-sm text-neutral-500 px-2">
+          <span className="text-sm text-muted-foreground px-2">
             Page {clampedPage} of {totalPages}
           </span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={clampedPage >= totalPages}
-            className="px-3 py-1.5 text-sm rounded-md bg-neutral-800 text-neutral-300 hover:bg-neutral-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="px-3 py-1.5 text-sm rounded-md bg-muted text-foreground hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             Next
           </button>

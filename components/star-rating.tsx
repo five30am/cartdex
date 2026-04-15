@@ -56,7 +56,7 @@ export function StarRating({ gameId, initialRating }: Props) {
 
   return (
     <div className="flex flex-col gap-1.5">
-      <p className="text-xs text-neutral-500 uppercase tracking-widest">Your Rating</p>
+      <p className="text-xs text-muted-foreground uppercase tracking-widest">Your Rating</p>
       <div
         className="flex items-center gap-0.5"
         onMouseLeave={() => setHovered(null)}
@@ -78,13 +78,13 @@ export function StarRating({ gameId, initialRating }: Props) {
                 "h-5 w-5 transition-colors",
                 star <= displayRating
                   ? "fill-amber-400 text-amber-400"
-                  : "fill-transparent text-neutral-700 hover:text-amber-400/50"
+                  : "fill-transparent text-muted-foreground/30 hover:text-amber-400/50"
               )}
             />
           </button>
         ))}
         {rating !== null && (
-          <span className="ml-2 text-xs text-neutral-500 font-mono">{rating}/5</span>
+          <span className="ml-2 text-xs text-muted-foreground font-mono">{rating}/5</span>
         )}
       </div>
     </div>
