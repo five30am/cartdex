@@ -1,4 +1,5 @@
 import {
+  index,
   integer,
   sqliteTable,
   text,
@@ -122,6 +123,119 @@ export const settings = sqliteTable("settings", {
     .notNull()
     .default(sql`(datetime('now'))`),
 });
+
+// ---------------------------------------------------------------------------
+// DAT auditing — Ticket 1 (schema + storage foundation)
+// ---------------------------------------------------------------------------
+
+/**
+ * A DAT file imported by the user or fetched from a permissive source.
+ * `file_hash` is SHA-256 of the raw file — used as a dedupe key so
+ * re-uploading the same daily snapshot doesn't create a duplicate row.
+ */
+export const dats = sqliteTable("dats", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  /** Optional FK to systems. NULL = not yet linked to a system. */
+  system_id: integer("system_id").references(() => systems.id),
+  name: text("name").notNull(),
+  description: text("description"),
+  version: text("version"),
+  author: text("author"),
+  /** How the DAT arrived — user upload vs background fetch. */
+  source_kind: text("source_kind")
+    .$type<"upload" | "fetch">()
+    .notNull()
+    .default("upload"),
+  imported_at: text("imported_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+  /** SHA-256 of the raw DAT file. Primary dedupe key for re-uploads. */
+  file_hash: text("file_hash").notNull().unique(),
+  /**
+   * Basename of the skipper XML referenced in the DAT header's
+   * `<clrmamepro header="..."/>` element (e.g. "No-Intro_NES.xml").
+   * NULL means no header-strip is needed for this system.
+   */
+  skipper_ref: text("skipper_ref"),
+});
+
+/**
+ * One row per ROM entry inside a DAT file.
+ * CRC32 is stored as a hex string (e.g. "b19ed489") matching DAT format.
+ */
+export const dat_entries = sqliteTable(
+  "dat_entries",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    dat_id: integer("dat_id")
+      .notNull()
+      .references(() => dats.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    size: integer("size"),
+    crc32: text("crc32"),
+    md5: text("md5"),
+    sha1: text("sha1"),
+    /** DAT-provided status flag. "good" is the default when absent. */
+    status: text("status")
+      .$type<"good" | "baddump" | "nodump">()
+      .notNull()
+      .default("good"),
+    /** Parent game name for clone relationships (Parent/Clone DATs). */
+    cloneof: text("cloneof"),
+    /** Parent set name for MAME merged/split set semantics. */
+    romof: text("romof"),
+    serial: text("serial"),
+    region: text("region"),
+  },
+  (t) => [
+    index("idx_dat_entries_sha1").on(t.sha1),
+    index("idx_dat_entries_crc32_size").on(t.crc32, t.size),
+    index("idx_dat_entries_dat_id").on(t.dat_id),
+  ]
+);
+
+/**
+ * Hit-only match results — one row per matched DAT entry.
+ * Misses are computed at query time via LEFT JOIN from dat_entries,
+ * avoiding the O(DATs × entries) blowup that materialised miss rows would cause.
+ *
+ * `dat_id` is denormalised from dat_entries to make the completion aggregation
+ * index (idx_match_results_dat_id_match_type) effective without a join.
+ */
+export const match_results = sqliteTable(
+  "match_results",
+  {
+    dat_entry_id: integer("dat_entry_id")
+      .notNull()
+      .references(() => dat_entries.id, { onDelete: "cascade" }),
+    /**
+     * Denormalised from dat_entries.dat_id — kept in sync by the match engine.
+     * Required so the completion aggregation index works without joining
+     * through dat_entries on every query.
+     */
+    dat_id: integer("dat_id")
+      .notNull()
+      .references(() => dats.id, { onDelete: "cascade" }),
+    /** FK to games — nullable because the matched file may not have a games row yet. */
+    game_id: integer("game_id").references(() => games.id, {
+      onDelete: "set null",
+    }),
+    match_type: text("match_type")
+      .$type<"have" | "have_baddump" | "nodump">()
+      .notNull(),
+    /** Which hash strategy produced the match. */
+    matched_by: text("matched_by")
+      .$type<"sha1" | "crc32+size">()
+      .notNull(),
+    matched_at: text("matched_at")
+      .notNull()
+      .default(sql`(datetime('now'))`),
+  },
+  (t) => [
+    index("idx_match_results_dat_id_match_type").on(t.dat_id, t.match_type),
+    index("idx_match_results_dat_entry_id").on(t.dat_entry_id),
+  ]
+);
 
 export const file_operations = sqliteTable("file_operations", {
   id: integer("id").primaryKey({ autoIncrement: true }),

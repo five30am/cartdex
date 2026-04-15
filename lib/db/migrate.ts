@@ -191,6 +191,55 @@ export function ensureSchema() {
     // Column already exists — ignore
   }
 
+  // ---------------------------------------------------------------------------
+  // DAT auditing — Ticket 1: dats, dat_entries, match_results
+  // ---------------------------------------------------------------------------
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS dats (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      system_id   INTEGER REFERENCES systems(id),
+      name        TEXT NOT NULL,
+      description TEXT,
+      version     TEXT,
+      author      TEXT,
+      source_kind TEXT NOT NULL DEFAULT 'upload',
+      imported_at TEXT NOT NULL DEFAULT (datetime('now')),
+      file_hash   TEXT NOT NULL UNIQUE,
+      skipper_ref TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS dat_entries (
+      id      INTEGER PRIMARY KEY AUTOINCREMENT,
+      dat_id  INTEGER NOT NULL REFERENCES dats(id) ON DELETE CASCADE,
+      name    TEXT NOT NULL,
+      size    INTEGER,
+      crc32   TEXT,
+      md5     TEXT,
+      sha1    TEXT,
+      status  TEXT NOT NULL DEFAULT 'good',
+      cloneof TEXT,
+      romof   TEXT,
+      serial  TEXT,
+      region  TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_dat_entries_sha1        ON dat_entries(sha1);
+    CREATE INDEX IF NOT EXISTS idx_dat_entries_crc32_size  ON dat_entries(crc32, size);
+    CREATE INDEX IF NOT EXISTS idx_dat_entries_dat_id      ON dat_entries(dat_id);
+
+    CREATE TABLE IF NOT EXISTS match_results (
+      dat_entry_id INTEGER NOT NULL REFERENCES dat_entries(id) ON DELETE CASCADE,
+      dat_id       INTEGER NOT NULL REFERENCES dats(id)        ON DELETE CASCADE,
+      game_id      INTEGER          REFERENCES games(id)        ON DELETE SET NULL,
+      match_type   TEXT NOT NULL,
+      matched_by   TEXT NOT NULL,
+      matched_at   TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_match_results_dat_id_match_type ON match_results(dat_id, match_type);
+    CREATE INDEX IF NOT EXISTS idx_match_results_dat_entry_id      ON match_results(dat_entry_id);
+  `);
+
   // One-time migration: set correct kind for known handheld systems
   const handhelds = ["gb", "gbc", "gba", "psp"];
   for (const slug of handhelds) {
