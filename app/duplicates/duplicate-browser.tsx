@@ -7,14 +7,17 @@ import { DeleteModal } from "@/components/delete-modal";
 import { AddToCollectionModal } from "@/components/add-to-collection-modal";
 import { toast } from "sonner";
 import {
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   AlertTriangle,
   ShieldCheck,
   Loader2,
+  Trash2,
+  FolderPlus,
+  EyeOff,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MultiSelectActionBar } from "@/components/multi-select-action-bar";
 
 interface DuplicateEntry {
   id: number;
@@ -129,7 +132,6 @@ export function DuplicateBrowser() {
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [selected, setSelected] = useState<Set<number>>(new Set());
-  const [bulkMenuOpen, setBulkMenuOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [collectionModalOpen, setCollectionModalOpen] = useState(false);
   const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -206,7 +208,22 @@ export function DuplicateBrowser() {
 
   function clearSelection() {
     setSelected(new Set());
-    setBulkMenuOpen(false);
+  }
+
+  async function handleHideSelected() {
+    const res = await fetch("/api/games/bulk", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: [...selected], action: "hide" }),
+    });
+    const d = await res.json();
+    if (res.ok) {
+      toast.success(`${d.processed} file${d.processed === 1 ? "" : "s"} hidden`);
+      clearSelection();
+      fetchData();
+    } else {
+      toast.error(d.error ?? "Hide failed");
+    }
   }
 
   function handleSearch(e: React.FormEvent) {
@@ -250,57 +267,6 @@ export function DuplicateBrowser() {
           >
             Select All Duplicates
           </Button>
-
-          {/* Bulk Actions */}
-          <div className="relative">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setBulkMenuOpen((v) => !v)}
-              disabled={selected.size === 0}
-              className="h-8 text-xs border-border bg-background text-foreground/80 hover:bg-accent disabled:opacity-40"
-            >
-              {selected.size > 0 ? `${selected.size} selected` : "Bulk Actions"}
-              <ChevronDown className="w-3 h-3 ml-1.5" />
-            </Button>
-            {bulkMenuOpen && selected.size > 0 && (
-              <div className="absolute right-0 top-full mt-1 w-48 bg-popover border border-border rounded-lg shadow-lg z-20 py-1">
-                <button
-                  className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-accent"
-                  onClick={() => { setBulkMenuOpen(false); setCollectionModalOpen(true); }}
-                >
-                  Add to Collection...
-                </button>
-                <button
-                  className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-accent"
-                  onClick={async () => {
-                    setBulkMenuOpen(false);
-                    const res = await fetch("/api/games/bulk", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ ids: [...selected], action: "hide" }),
-                    });
-                    const d = await res.json();
-                    if (res.ok) {
-                      toast.success(`${d.processed} file${d.processed === 1 ? "" : "s"} hidden`);
-                      clearSelection();
-                      fetchData();
-                    } else {
-                      toast.error(d.error ?? "Hide failed");
-                    }
-                  }}
-                >
-                  Hide from Library
-                </button>
-                <button
-                  className="w-full text-left px-3 py-2 text-sm text-red-500 dark:text-red-400 hover:bg-accent"
-                  onClick={() => { setBulkMenuOpen(false); setDeleteModalOpen(true); }}
-                >
-                  Move to Trash
-                </button>
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
@@ -463,6 +429,31 @@ export function DuplicateBrowser() {
           toast.success("Added to collection");
           clearSelection();
         }}
+      />
+
+      {/* Floating multi-select action bar — slides in when selection > 0 */}
+      <MultiSelectActionBar
+        selectedCount={selected.size}
+        noun="file"
+        onClear={clearSelection}
+        actions={[
+          {
+            label: "Add to Collection",
+            icon: <FolderPlus />,
+            onClick: () => setCollectionModalOpen(true),
+          },
+          {
+            label: "Hide from Library",
+            icon: <EyeOff />,
+            onClick: handleHideSelected,
+          },
+          {
+            label: "Move to Trash",
+            icon: <Trash2 />,
+            variant: "destructive",
+            onClick: () => setDeleteModalOpen(true),
+          },
+        ]}
       />
     </div>
   );
