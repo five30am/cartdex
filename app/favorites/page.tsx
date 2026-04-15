@@ -94,6 +94,7 @@ export default function FavoritesPage() {
                         year={game.year}
                         box_art_path={game.box_art_path}
                         user_rating={game.user_rating}
+                        initialFavorite
                       />
                     ))}
                   </div>

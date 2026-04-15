@@ -5,7 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { SystemBadge } from "@/components/system-badge";
-import { Gamepad2, Star } from "lucide-react";
+import { Gamepad2, Heart, Star } from "lucide-react";
+import { toast } from "sonner";
 
 interface GameCardProps {
   id: number;
@@ -16,6 +17,68 @@ interface GameCardProps {
   system_name?: string;
   showSystem?: boolean;
   user_rating?: number | null;
+  initialFavorite?: boolean;
+}
+
+// Compact icon-only favorite toggle for use inside the card overlay.
+// Stops click propagation so activating it doesn't navigate to the detail page.
+function CardFavoriteButton({
+  gameId,
+  initialFavorite = false,
+}: {
+  gameId: number;
+  initialFavorite?: boolean;
+}) {
+  const [favorite, setFavorite] = useState(initialFavorite);
+  const [loading, setLoading] = useState(false);
+
+  async function toggle(e: React.MouseEvent | React.KeyboardEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (loading) return;
+    setLoading(true);
+    const next = !favorite;
+    try {
+      const res = await fetch("/api/games/favorite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gameId, favorite: next }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setFavorite(next);
+        toast(next ? "Added to favorites" : "Removed from favorites");
+      } else {
+        toast.error(data.error ?? "Failed to update favorite");
+      }
+    } catch {
+      toast.error("Request failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <button
+      onClick={toggle}
+      disabled={loading}
+      aria-label={favorite ? "Remove from favorites" : "Add to favorites"}
+      aria-pressed={favorite}
+      className={cn(
+        "flex items-center justify-center w-8 h-8 rounded-lg border backdrop-blur-sm transition-all duration-150",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+        favorite
+          ? "border-pink-500/60 bg-pink-500/20 text-pink-400 hover:bg-pink-500/30"
+          : "border-border bg-background/70 text-muted-foreground hover:border-pink-500/50 hover:text-pink-400",
+        loading && "opacity-50 cursor-not-allowed"
+      )}
+    >
+      <Heart
+        className={cn("w-3.5 h-3.5", favorite && "fill-pink-400")}
+        aria-hidden="true"
+      />
+    </button>
+  );
 }
 
 export function GameCard({
@@ -27,6 +90,7 @@ export function GameCard({
   system_name,
   showSystem = false,
   user_rating,
+  initialFavorite = false,
 }: GameCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
 
@@ -59,8 +123,19 @@ export function GameCard({
             </p>
           </div>
         )}
-        {/* Hover overlay */}
+        {/* Gradient overlay — always present, fades in on hover */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+        {/* Action overlay — hidden at rest, revealed on hover or keyboard focus-within */}
+        <div
+          className={cn(
+            "absolute inset-0 flex items-end justify-end p-2",
+            "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
+            "transition-opacity duration-200",
+            "pointer-events-none group-hover:pointer-events-auto group-focus-within:pointer-events-auto"
+          )}
+        >
+          <CardFavoriteButton gameId={id} initialFavorite={initialFavorite} />
+        </div>
       </div>
       <div className="mt-2 px-0.5">
         <p className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors truncate leading-tight">
