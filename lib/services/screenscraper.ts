@@ -378,7 +378,7 @@ export async function downloadBoxArt(
   // Assert the resolved path is still inside ARTWORK_ROOT.
   const resolvedDir = path.resolve(dir);
   const resolvedFile = path.resolve(filePath);
-  if (!resolvedDir.startsWith(ARTWORK_ROOT) || !resolvedFile.startsWith(ARTWORK_ROOT)) {
+  if (!resolvedDir.startsWith(ARTWORK_ROOT + path.sep) || !resolvedFile.startsWith(ARTWORK_ROOT + path.sep)) {
     console.warn(
       `[screenscraper] box art path resolved outside artwork root — aborting write`
     );
