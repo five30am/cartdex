@@ -46,7 +46,7 @@ jobs:
 
           url = os.environ["PORTAINER_URL"]
           key = os.environ["PORTAINER_KEY"]
-          stack_id = 43
+          stack_name = "romvault"
           endpoint_id = 3
 
           def portainer(method, path, body=None):
@@ -59,7 +59,16 @@ jobs:
               r = subprocess.run(args, capture_output=True, text=True)
               return json.loads(r.stdout)
 
-          # 1. Fetch current stack env vars from Portainer (preserve any real values)
+          # 1. Look up stack by name to get ID (resilient to ID changes)
+          all_stacks = portainer("GET", "stacks")
+          match = next((s for s in all_stacks if s["Name"] == stack_name), None)
+          if not match:
+              print(f"ERROR: No stack named '{stack_name}' found in Portainer")
+              sys.exit(1)
+          stack_id = match["Id"]
+          print(f"Found stack '{stack_name}' with ID {stack_id}")
+
+          # Fetch full stack details to preserve current env vars
           current = portainer("GET", f"stacks/{stack_id}")
           env = current.get("Env") or []
 
@@ -73,7 +82,7 @@ jobs:
               "Env": env
           }
 
-          print(f"Triggering Portainer redeploy for stack {stack_id} (romvault)...")
+          print(f"Triggering Portainer redeploy for stack {stack_id} ({stack_name})...")
           response = portainer("PUT", f"stacks/{stack_id}?endpointId={endpoint_id}", payload)
 
           if "message" in response:
