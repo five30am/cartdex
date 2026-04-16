@@ -27,8 +27,20 @@ async function testScreenScraper(): Promise<ServiceStatus> {
 
     const res = await fetch(
       `https://api.screenscraper.fr/api2/ssuserInfos.php?${params.toString()}`,
-      { signal: AbortSignal.timeout(10_000) }
+      {
+        signal: AbortSignal.timeout(10_000),
+        // Prevent redirect-based SSRF: a MITM or compromised DNS response could
+        // return a 302 pointing to an internal service. The target URL is not
+        // user-influenced here, but redirect:"manual" is still belt-and-suspenders.
+        redirect: "manual",
+      }
     );
+
+    // Treat any redirect as a failure — the ScreenScraper API endpoint does not
+    // redirect under normal operation.
+    if (res.status >= 300 && res.status < 400) {
+      return { configured: true, ok: false, error: `Unexpected redirect (HTTP ${res.status})` };
+    }
 
     if (res.ok || res.status === 404) {
       // 404 means the endpoint exists but no specific user data — creds were accepted
@@ -68,7 +80,13 @@ async function testIGDB(): Promise<ServiceStatus> {
         grant_type: "client_credentials",
       }),
       signal: AbortSignal.timeout(10_000),
+      // Belt-and-suspenders: same redirect guard as igdb.ts getAccessToken().
+      redirect: "manual",
     });
+
+    if (res.status >= 300 && res.status < 400) {
+      return { configured: true, ok: false, error: `Unexpected redirect (HTTP ${res.status})` };
+    }
 
     if (res.ok) {
       return { configured: true, ok: true, error: null };

@@ -2,6 +2,37 @@ import fs from "fs";
 import path from "path";
 import { getSetting } from "./config";
 
+/**
+ * Allowlist of hostnames that box art images may be fetched from.
+ * Exact-match only — no wildcards, no suffix matching.
+ *
+ * ScreenScraper serves media from its primary domain. IGDB images are served
+ * from images.igdb.com. Both are trusted content CDNs with no user-controlled
+ * redirect capability. Nothing else may be fetched as box art.
+ *
+ * If ScreenScraper ever migrates to a new CDN hostname, add it here with a
+ * comment explaining the source and why it is trusted.
+ */
+const ALLOWED_ART_HOSTS = new Set<string>([
+  "www.screenscraper.fr",
+  "screenscraper.fr",
+  "images.igdb.com",
+]);
+
+/**
+ * Maximum size in bytes for a downloaded box art file.
+ * Default: 10 MB. Override with ART_MAX_BYTES env var.
+ *
+ * We enforce this via streaming read (not Content-Length header alone) because
+ * a malicious or misbehaving server can lie in Content-Length and then stream
+ * far more data. response.arrayBuffer() would buffer the full stream into memory
+ * before we could check the size — this guard prevents that.
+ */
+const ART_MAX_BYTES = parseInt(process.env.ART_MAX_BYTES ?? "", 10) || 10 * 1024 * 1024;
+
+/** Resolved absolute path of the artwork root directory. */
+const ARTWORK_ROOT = path.resolve(process.cwd(), "public", "artwork");
+
 export interface ScreenScraperGame {
   title: string | null;
   description: string | null;
@@ -231,29 +262,137 @@ export async function lookupByFilename(
 /**
  * Download box art from a URL and save it to public/artwork/{systemSlug}/{gameSlug}.jpg.
  * Returns the public path on success, null on failure.
+ *
+ * Security controls:
+ *   1. Host allowlist — only ALLOWED_ART_HOSTS may serve box art.
+ *   2. Redirect guard — redirect:"manual" + refuse any 3xx response, preventing
+ *      an allowlisted host from 302-ing to an internal network address.
+ *   3. Streaming size cap — body is read chunk-by-chunk; aborted once ART_MAX_BYTES
+ *      is exceeded, so we never buffer an unbounded payload into memory.
+ *   4. Safe path assembly — filename derived from gameSlug only (caller-controlled
+ *      value that has already been slugified), joined under ARTWORK_ROOT with a
+ *      path traversal assertion.
  */
 export async function downloadBoxArt(
   url: string,
   systemSlug: string,
   gameSlug: string
 ): Promise<string | null> {
+  // --- 1. Host allowlist ---
+  let parsed: URL;
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(30_000) });
-    if (!res.ok) {
-      console.warn(`[screenscraper] box art download failed: HTTP ${res.status}`);
-      return null;
-    }
+    parsed = new URL(url);
+  } catch {
+    console.warn(`[screenscraper] box art URL is not a valid URL: ${url}`);
+    return null;
+  }
 
-    const dir = path.join(process.cwd(), "public", "artwork", systemSlug);
-    fs.mkdirSync(dir, { recursive: true });
+  if (!ALLOWED_ART_HOSTS.has(parsed.hostname)) {
+    console.warn(
+      `[screenscraper] box art fetch blocked — host "${parsed.hostname}" is not in ALLOWED_ART_HOSTS`
+    );
+    return null;
+  }
 
-    const filePath = path.join(dir, `${gameSlug}.jpg`);
-    const buffer = Buffer.from(await res.arrayBuffer());
-    fs.writeFileSync(filePath, buffer);
-
-    return `/api/artwork/${systemSlug}/${gameSlug}.jpg`;
+  // --- 2. Redirect guard ---
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      redirect: "manual",
+      signal: AbortSignal.timeout(30_000),
+    });
   } catch (err) {
     console.warn("[screenscraper] box art download error:", err instanceof Error ? err.message : String(err));
     return null;
   }
+
+  if (res.status >= 300 && res.status < 400) {
+    console.warn(
+      `[screenscraper] box art fetch refused redirect (HTTP ${res.status}) from ${url} — ` +
+        `redirect target may not be an allowlisted host`
+    );
+    return null;
+  }
+
+  if (!res.ok) {
+    console.warn(`[screenscraper] box art download failed: HTTP ${res.status}`);
+    return null;
+  }
+
+  if (!res.body) {
+    console.warn(`[screenscraper] box art response has no body for ${url}`);
+    return null;
+  }
+
+  // --- 3. Streaming size cap ---
+  const reader = res.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let received = 0;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      received += value.byteLength;
+      if (received > ART_MAX_BYTES) {
+        await reader.cancel();
+        console.warn(
+          `[screenscraper] box art stream exceeded ${ART_MAX_BYTES}-byte limit at ${received} bytes — aborting`
+        );
+        return null;
+      }
+      chunks.push(value);
+    }
+  } catch (err) {
+    console.warn("[screenscraper] box art stream error:", err instanceof Error ? err.message : String(err));
+    return null;
+  } finally {
+    try {
+      reader.releaseLock();
+    } catch {
+      // Already released or cancelled — ignore.
+    }
+  }
+
+  // --- 4. Safe path assembly ---
+  // systemSlug and gameSlug are our own slugs (alphanumeric + hyphens), but
+  // assert basename safety defensively in case values ever come from external input.
+  const safeSystemSlug = path.basename(systemSlug);
+  const safeGameSlug = path.basename(gameSlug);
+
+  if (
+    safeSystemSlug !== systemSlug ||
+    safeGameSlug !== gameSlug ||
+    systemSlug.includes("..") ||
+    gameSlug.includes("..")
+  ) {
+    console.warn(
+      `[screenscraper] box art path traversal guard triggered — systemSlug="${systemSlug}" gameSlug="${gameSlug}"`
+    );
+    return null;
+  }
+
+  const dir = path.join(ARTWORK_ROOT, safeSystemSlug);
+  const filePath = path.join(dir, `${safeGameSlug}.jpg`);
+
+  // Assert the resolved path is still inside ARTWORK_ROOT.
+  const resolvedDir = path.resolve(dir);
+  const resolvedFile = path.resolve(filePath);
+  if (!resolvedDir.startsWith(ARTWORK_ROOT) || !resolvedFile.startsWith(ARTWORK_ROOT)) {
+    console.warn(
+      `[screenscraper] box art path resolved outside artwork root — aborting write`
+    );
+    return null;
+  }
+
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+    const buffer = Buffer.concat(chunks, received);
+    fs.writeFileSync(filePath, buffer);
+  } catch (err) {
+    console.warn("[screenscraper] box art write error:", err instanceof Error ? err.message : String(err));
+    return null;
+  }
+
+  return `/api/artwork/${safeSystemSlug}/${safeGameSlug}.jpg`;
 }

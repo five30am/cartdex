@@ -38,7 +38,18 @@ async function getAccessToken(): Promise<string | null> {
         grant_type: "client_credentials",
       }),
       signal: AbortSignal.timeout(10_000),
+      // redirect:"manual" prevents a compromised or MITM'd Twitch endpoint from
+      // redirecting the token request (carrying client credentials in the body)
+      // to an attacker-controlled or internal host.
+      redirect: "manual",
     });
+
+    // Refuse any redirect — even from a hardcoded trusted host — because the
+    // redirect target is unvalidated and could point to an internal service.
+    if (res.status >= 300 && res.status < 400) {
+      console.warn(`[igdb] token fetch refused unexpected redirect (HTTP ${res.status})`);
+      return null;
+    }
 
     if (!res.ok) {
       console.warn(`[igdb] token fetch failed: HTTP ${res.status}`);
