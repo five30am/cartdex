@@ -36,7 +36,50 @@ jobs:
             ghcr.io/five30am/romvault:latest
             ghcr.io/five30am/romvault:${{ steps.sha.outputs.short }}
 
-      - name: Notify deploy triggered
+      - name: Trigger Portainer redeploy
+        env:
+          PORTAINER_URL: ${{ secrets.PORTAINER_URL }}
+          PORTAINER_KEY: ${{ secrets.PORTAINER_KEY }}
         run: |
-          echo "Image pushed to ghcr.io/five30am/romvault:latest"
-          echo "Portainer GitOps stack (ID 43) polls every 5m and will pull + redeploy automatically."
+          python3 << 'PYEOF'
+          import json, os, subprocess, sys
+
+          url = os.environ["PORTAINER_URL"]
+          key = os.environ["PORTAINER_KEY"]
+          stack_id = 43
+          endpoint_id = 3
+
+          def portainer(method, path, body=None):
+              args = ["curl", "-sk", "-X", method,
+                      f"{url}/api/{path}",
+                      "-H", f"X-API-Key: {key}",
+                      "-H", "Content-Type: application/json"]
+              if body:
+                  args += ["-d", json.dumps(body)]
+              r = subprocess.run(args, capture_output=True, text=True)
+              return json.loads(r.stdout)
+
+          # 1. Fetch current stack env vars from Portainer (preserve any real values)
+          current = portainer("GET", f"stacks/{stack_id}")
+          env = current.get("Env") or []
+
+          # 2. Read compose file from repo
+          with open("docker-compose.yml") as f:
+              compose_content = f.read()
+
+          # 3. PUT to trigger redeploy with current env preserved
+          payload = {
+              "StackFileContent": compose_content,
+              "Env": env
+          }
+
+          print(f"Triggering Portainer redeploy for stack {stack_id} (romvault)...")
+          response = portainer("PUT", f"stacks/{stack_id}?endpointId={endpoint_id}", payload)
+
+          if "message" in response:
+              print(f"ERROR: {response['message']}")
+              print(f"Details: {response.get('details', '')}")
+              sys.exit(1)
+          else:
+              print(f"Redeploy successful. Stack: {response.get('Name')}, Status: {response.get('Status')}")
+          PYEOF
