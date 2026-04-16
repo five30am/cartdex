@@ -23,13 +23,13 @@ export function Nav() {
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
             <div
-              className="w-8 h-8 rounded-md flex items-center justify-center shrink-0"
+              className="w-10 h-10 rounded-md flex items-center justify-center shrink-0"
               style={{
                 background: "linear-gradient(135deg, var(--ochre) 0%, var(--sand-dim) 100%)",
                 boxShadow: "var(--glow-ochre)",
                 fontFamily: "'Orbitron', sans-serif",
                 fontWeight: 800,
-                fontSize: 14,
+                fontSize: "0.875rem",
                 color: "var(--dark-bg)",
               }}
             >
@@ -39,7 +39,7 @@ export function Nav() {
               style={{
                 fontFamily: "'Orbitron', sans-serif",
                 fontWeight: 700,
-                fontSize: 18,
+                fontSize: "1.125rem",
                 letterSpacing: "3px",
                 color: "var(--sand)",
                 textTransform: "uppercase",
@@ -115,7 +115,7 @@ function NavLink({
       style={{
         fontFamily: "'Rajdhani', sans-serif",
         fontWeight: 500,
-        fontSize: 15,
+        fontSize: "0.9375rem",
         letterSpacing: "1.5px",
         textTransform: "uppercase",
         color: active ? "var(--sand-light)" : "var(--text-dim)",

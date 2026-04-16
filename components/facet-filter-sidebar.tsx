@@ -58,7 +58,7 @@ export function FacetFilterSidebar({
 
   return (
     <aside
-      className={cn("w-64 shrink-0 border-l pl-5", className)}
+      className={cn("w-72 shrink-0 border-l pl-5", className)}
       style={{
         borderLeftColor: "var(--panel-border)",
         background: "linear-gradient(270deg, rgba(13,10,7,0.5) 0%, transparent 100%)",
@@ -70,7 +70,7 @@ export function FacetFilterSidebar({
           style={{
             fontFamily: "'Orbitron', sans-serif",
             fontWeight: 600,
-            fontSize: 14,
+            fontSize: "0.875rem",
             letterSpacing: "3px",
             textTransform: "uppercase",
             color: "var(--sand)",
@@ -83,7 +83,7 @@ export function FacetFilterSidebar({
             onClick={clearAll}
             style={{
               fontFamily: "'Share Tech Mono', monospace",
-              fontSize: 12,
+              fontSize: "0.75rem",
               letterSpacing: "1px",
               color: "var(--text-dim)",
               background: "transparent",
@@ -101,7 +101,7 @@ export function FacetFilterSidebar({
         className="mb-4"
         style={{
           fontFamily: "'Share Tech Mono', monospace",
-          fontSize: 14,
+          fontSize: "0.875rem",
           color: "var(--text-dim)",
         }}
       >
@@ -130,7 +130,7 @@ export function FacetFilterSidebar({
                   style={{
                     fontFamily: "'Rajdhani', sans-serif",
                     fontWeight: 600,
-                    fontSize: 16,
+                    fontSize: "1rem",
                     letterSpacing: "1px",
                     textTransform: "uppercase",
                     color: "var(--text-primary)",
@@ -143,7 +143,7 @@ export function FacetFilterSidebar({
                       style={{
                         background: "var(--ochre)",
                         color: "var(--dark-bg)",
-                        fontSize: 10,
+                        fontSize: "0.625rem",
                         fontFamily: "'Share Tech Mono', monospace",
                       }}
                     >
@@ -187,7 +187,7 @@ export function FacetFilterSidebar({
         <span
           style={{
             fontFamily: "'Share Tech Mono', monospace",
-            fontSize: 11,
+            fontSize: "0.6875rem",
             letterSpacing: "4px",
             color: "var(--panel-border)",
             textTransform: "uppercase",
@@ -221,7 +221,7 @@ function FacetRow({ label, count, active, onClick, isAllOption }: FacetRowProps)
           ? "rgba(196,164,108,0.10)"
           : "transparent",
         fontFamily: "'Rajdhani', sans-serif",
-        fontSize: 15,
+        fontSize: "0.9375rem",
         fontWeight: active ? 600 : 500,
         color: active ? "var(--sand-light)" : "var(--text-primary)",
         fontStyle: isAllOption && !active ? "italic" : "normal",
@@ -231,7 +231,7 @@ function FacetRow({ label, count, active, onClick, isAllOption }: FacetRowProps)
       <span
         style={{
           fontFamily: "'Share Tech Mono', monospace",
-          fontSize: 13,
+          fontSize: "0.8125rem",
           color: "var(--text-dim)",
           flexShrink: 0,
         }}

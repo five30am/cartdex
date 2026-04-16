@@ -58,7 +58,7 @@ export function SearchBar({
         style={{
           fontFamily: "'Rajdhani', sans-serif",
           fontWeight: 500,
-          fontSize: 16,
+          fontSize: "1rem",
           letterSpacing: "0.5px",
           color: "var(--text-primary)",
           background: "var(--card-bg)",

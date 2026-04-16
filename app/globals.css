@@ -157,10 +157,12 @@
     min-height: 100vh;
     overflow-x: hidden;
     /* Space for fixed status bar */
-    padding-bottom: 32px;
+    padding-bottom: 44px;
   }
   html {
     font-family: 'Rajdhani', system-ui, sans-serif;
+    /* Scale all rem-based sizing 1.5× for readability */
+    font-size: 150%;
   }
 
   /* Scanline overlay */
@@ -289,25 +291,25 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 32px;
+  height: 44px;
   background: var(--panel-bg);
   border-top: 1px solid var(--panel-border);
   display: flex;
   align-items: center;
-  padding: 0 16px;
-  gap: 24px;
+  padding: 0 1rem;
+  gap: 1.5rem;
   z-index: 100;
 }
 
 .sw-status-item {
   font-family: 'Share Tech Mono', monospace;
-  font-size: 12px;
-  letter-spacing: 1px;
+  font-size: 0.5rem;
+  letter-spacing: 0.0625rem;
   text-transform: uppercase;
   color: var(--text-dim);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 0.375rem;
 }
 
 .sw-status-dot {

@@ -142,7 +142,7 @@ export function GameCard({
               className="relative z-10 leading-tight line-clamp-3"
               style={{
                 fontFamily: "'Orbitron', sans-serif",
-                fontSize: 13,
+                fontSize: "0.8125rem",
                 letterSpacing: "3px",
                 color: "var(--text-dim)",
                 opacity: 0.5,
@@ -177,7 +177,7 @@ export function GameCard({
           style={{
             fontFamily: "'Rajdhani', sans-serif",
             fontWeight: 600,
-            fontSize: 15,
+            fontSize: "0.9375rem",
             color: "var(--text-primary)",
           }}
         >
@@ -188,7 +188,7 @@ export function GameCard({
             <span
               style={{
                 fontFamily: "'Share Tech Mono', monospace",
-                fontSize: 13,
+                fontSize: "0.8125rem",
                 color: "var(--text-dim)",
               }}
             >
@@ -204,7 +204,7 @@ export function GameCard({
               <span
                 style={{
                   fontFamily: "'Share Tech Mono', monospace",
-                  fontSize: 11,
+                  fontSize: "0.6875rem",
                   color: "var(--sand-dim)",
                 }}
               >

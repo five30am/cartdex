@@ -301,7 +301,7 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
               className="w-[180px]"
               style={{
                 fontFamily: "'Share Tech Mono', monospace",
-                fontSize: 14,
+                fontSize: "0.875rem",
                 letterSpacing: "1px",
                 color: "var(--text-primary)",
                 background: "var(--card-bg)",
@@ -380,7 +380,7 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
               className="sw-nav-btn"
               style={{
                 fontFamily: "'Share Tech Mono', monospace",
-                fontSize: 13,
+                fontSize: "0.8125rem",
                 letterSpacing: "1px",
                 textTransform: "uppercase",
                 color: "var(--text-dim)",
@@ -402,7 +402,7 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
               <span
                 style={{
                   fontFamily: "'Share Tech Mono', monospace",
-                  fontSize: 13,
+                  fontSize: "0.8125rem",
                   color: "var(--text-dim)",
                 }}
               >
@@ -412,7 +412,7 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
                 onClick={selectAll}
                 style={{
                   fontFamily: "'Share Tech Mono', monospace",
-                  fontSize: 12,
+                  fontSize: "0.75rem",
                   color: "var(--accent-blue)",
                   background: "transparent",
                   border: "none",
@@ -425,7 +425,7 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
                 onClick={deselectAll}
                 style={{
                   fontFamily: "'Share Tech Mono', monospace",
-                  fontSize: 12,
+                  fontSize: "0.75rem",
                   color: "var(--text-dim)",
                   background: "transparent",
                   border: "none",
@@ -442,7 +442,7 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
                     background: "var(--ochre)",
                     color: "var(--dark-bg)",
                     height: 28,
-                    fontSize: 12,
+                    fontSize: "0.75rem",
                     fontFamily: "'Share Tech Mono', monospace",
                   }}
                 >
@@ -465,7 +465,7 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
             className="mb-4"
             style={{
               fontFamily: "'Share Tech Mono', monospace",
-              fontSize: 13,
+              fontSize: "0.8125rem",
               color: "var(--text-dim)",
             }}
           >

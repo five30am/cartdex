@@ -363,7 +363,7 @@ export default async function SystemDetailPage({ params, searchParams }: Props) 
           className="inline-flex items-center gap-1.5 mb-4 transition-colors sw-breadcrumb"
           style={{
             fontFamily: "'Share Tech Mono', monospace",
-            fontSize: 13,
+            fontSize: "0.8125rem",
             letterSpacing: "2px",
             textTransform: "uppercase",
             color: "var(--text-dim)",
@@ -381,7 +381,7 @@ export default async function SystemDetailPage({ params, searchParams }: Props) 
             style={{ borderColor: "var(--panel-border)", background: "var(--card-bg)" }}
           >
             <EyeOff className="w-4 h-4 shrink-0" style={{ color: "var(--text-dim)" }} />
-            <p style={{ fontSize: 14, color: "var(--text-dim)", fontFamily: "'Rajdhani', sans-serif" }}>
+            <p style={{ fontSize: "0.875rem", color: "var(--text-dim)", fontFamily: "'Rajdhani', sans-serif" }}>
               This system is disabled — it is hidden from browse views.{" "}
               <Link
                 href="/settings"
@@ -401,7 +401,7 @@ export default async function SystemDetailPage({ params, searchParams }: Props) 
               style={{
                 fontFamily: "'Orbitron', sans-serif",
                 fontWeight: 600,
-                fontSize: 32,
+                fontSize: "2rem",
                 letterSpacing: "2px",
                 color: "var(--text-bright)",
                 lineHeight: 1.1,
@@ -413,7 +413,7 @@ export default async function SystemDetailPage({ params, searchParams }: Props) 
               className="flex items-center gap-2 mt-1 flex-wrap"
               style={{
                 fontFamily: "'Share Tech Mono', monospace",
-                fontSize: 15,
+                fontSize: "0.9375rem",
                 color: "var(--text-dim)",
               }}
             >

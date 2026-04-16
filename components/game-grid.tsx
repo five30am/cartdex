@@ -27,7 +27,7 @@ export function GameGrid({
         <p
           style={{
             fontFamily: "'Orbitron', sans-serif",
-            fontSize: 13,
+            fontSize: "0.8125rem",
             letterSpacing: "3px",
             color: "var(--text-dim)",
             opacity: 0.5,
@@ -44,7 +44,7 @@ export function GameGrid({
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(155px, 1fr))",
+        gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
         gap: "20px",
       }}
     >
