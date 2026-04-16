@@ -1,19 +1,9 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Nav } from "@/components/nav";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { StatusBar } from "@/components/status-bar";
 
 export const metadata: Metadata = {
   title: "RomVault",
@@ -28,19 +18,25 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className="h-full dark"
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground">
+      <body className="min-h-full flex flex-col">
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="dark"
+          enableSystem={false}
+          forcedTheme="dark"
         >
+          {/* Ambient radial glows */}
+          <div className="sw-ambient-glow sw-ambient-glow-1" aria-hidden="true" />
+          <div className="sw-ambient-glow sw-ambient-glow-2" aria-hidden="true" />
+
           <Nav />
           <main className="flex-1">
             {children}
           </main>
+          <StatusBar />
           <Toaster />
         </ThemeProvider>
       </body>

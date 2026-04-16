@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { SystemBadge } from "@/components/system-badge";
-import { Gamepad2, Heart, Star } from "lucide-react";
+import { Heart, Star } from "lucide-react";
 import { toast } from "sonner";
 
 interface GameCardProps {
@@ -20,8 +20,6 @@ interface GameCardProps {
   initialFavorite?: boolean;
 }
 
-// Compact icon-only favorite toggle for use inside the card overlay.
-// Stops click propagation so activating it doesn't navigate to the detail page.
 function CardFavoriteButton({
   gameId,
   initialFavorite = false,
@@ -65,16 +63,19 @@ function CardFavoriteButton({
       aria-label={favorite ? "Remove from favorites" : "Add to favorites"}
       aria-pressed={favorite}
       className={cn(
-        "flex items-center justify-center w-8 h-8 rounded-lg border backdrop-blur-sm transition-all duration-150",
+        "flex items-center justify-center w-8 h-8 rounded-md border backdrop-blur-sm transition-all duration-150",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
-        favorite
-          ? "border-pink-500/60 bg-pink-500/20 text-pink-400 hover:bg-pink-500/30"
-          : "border-border bg-background/70 text-muted-foreground hover:border-pink-500/50 hover:text-pink-400",
         loading && "opacity-50 cursor-not-allowed"
       )}
+      style={{
+        borderColor: favorite ? "rgba(196,164,108,0.6)" : "var(--panel-border)",
+        background: favorite ? "rgba(196,164,108,0.15)" : "rgba(13,10,7,0.7)",
+        color: favorite ? "var(--sand)" : "var(--text-dim)",
+      }}
     >
       <Heart
-        className={cn("w-3.5 h-3.5", favorite && "fill-pink-400")}
+        className={cn("w-3.5 h-3.5")}
+        style={{ fill: favorite ? "var(--sand)" : "transparent" }}
         aria-hidden="true"
       />
     </button>
@@ -95,13 +96,20 @@ export function GameCard({
   const [imageLoaded, setImageLoaded] = useState(false);
 
   return (
-    <Link href={`/games/${id}`} className="group block">
+    <Link href={`/games/${id}`} className="group block game-card-animated">
+      {/* Thumbnail */}
       <div
         className={cn(
-          "relative aspect-[3/4] w-full bg-card rounded-lg overflow-hidden border border-border group-hover:border-blue-500/30 transition-all duration-200 shadow-none",
+          "relative w-full rounded-md overflow-hidden border transition-all duration-200 game-thumb-hologram",
           box_art_path && !imageLoaded && "cover-shimmer"
         )}
+        style={{
+          aspectRatio: "0.72",
+          borderColor: "var(--panel-border)",
+          background: "var(--card-bg)",
+        }}
       >
+
         {box_art_path ? (
           <Image
             src={box_art_path}
@@ -109,23 +117,47 @@ export function GameCard({
             fill
             loading="lazy"
             className={cn(
-              "object-cover group-hover:scale-105 transition-all duration-300",
+              "object-cover transition-all duration-300",
               imageLoaded ? "opacity-100" : "opacity-0"
             )}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 16vw"
             onLoad={() => setImageLoaded(true)}
           />
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center bg-muted/40">
-            <Gamepad2 className="w-8 h-8 text-muted-foreground/20 mb-2" />
-            <p className="text-[11px] text-muted-foreground/50 leading-tight font-medium line-clamp-3">
-              {title}
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center"
+            style={{
+              background: "linear-gradient(145deg, var(--card-bg) 0%, #0f0b06 100%)",
+            }}
+          >
+            {/* Decorative background radials */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "radial-gradient(circle at 30% 40%, rgba(181,101,29,0.08) 0%, transparent 60%), radial-gradient(circle at 70% 70%, rgba(74,122,155,0.05) 0%, transparent 50%)",
+              }}
+            />
+            <p
+              className="relative z-10 leading-tight line-clamp-3"
+              style={{
+                fontFamily: "'Orbitron', sans-serif",
+                fontSize: 13,
+                letterSpacing: "3px",
+                color: "var(--text-dim)",
+                opacity: 0.5,
+                textTransform: "uppercase",
+              }}
+            >
+              {title.slice(0, 2)}
             </p>
           </div>
         )}
-        {/* Gradient overlay — always present, fades in on hover */}
+
+        {/* Gradient overlay on hover */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-        {/* Action overlay — hidden at rest, revealed on hover or keyboard focus-within */}
+
+        {/* Favorite button overlay */}
         <div
           className={cn(
             "absolute inset-0 flex items-end justify-end p-2",
@@ -137,18 +169,47 @@ export function GameCard({
           <CardFavoriteButton gameId={id} initialFavorite={initialFavorite} />
         </div>
       </div>
+
+      {/* Card info below thumbnail */}
       <div className="mt-2 px-0.5">
-        <p className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors truncate leading-tight">
+        <p
+          className="truncate leading-tight"
+          style={{
+            fontFamily: "'Rajdhani', sans-serif",
+            fontWeight: 600,
+            fontSize: 15,
+            color: "var(--text-primary)",
+          }}
+        >
           {title}
         </p>
         <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
           {year && (
-            <span className="text-[11px] text-muted-foreground/50 font-mono">{year}</span>
+            <span
+              style={{
+                fontFamily: "'Share Tech Mono', monospace",
+                fontSize: 13,
+                color: "var(--text-dim)",
+              }}
+            >
+              {year}
+            </span>
           )}
           {user_rating != null && (
             <span className="inline-flex items-center gap-0.5">
-              <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-              <span className="text-[11px] text-amber-500 font-mono">{user_rating}</span>
+              <Star
+                className="w-2.5 h-2.5"
+                style={{ fill: "var(--sand)", color: "var(--sand)" }}
+              />
+              <span
+                style={{
+                  fontFamily: "'Share Tech Mono', monospace",
+                  fontSize: 11,
+                  color: "var(--sand-dim)",
+                }}
+              >
+                {user_rating}
+              </span>
             </span>
           )}
           {showSystem && system_slug && system_name && (

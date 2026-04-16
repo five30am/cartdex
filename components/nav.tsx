@@ -4,22 +4,47 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ActionButtons } from "@/components/action-buttons";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Settings, Database, ClipboardList, Heart } from "lucide-react";
+import { Settings, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function Nav() {
   const pathname = usePathname();
 
   return (
-    <header className="border-b border-border px-6 py-0 sticky top-0 z-50 bg-background/95 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-6 h-14">
+    <header
+      className="sticky top-0 z-50 border-b px-6"
+      style={{
+        background: "linear-gradient(180deg, #18120a 0%, #0d0a07 100%)",
+        borderBottomColor: "var(--panel-border)",
+      }}
+    >
+      <div className="flex items-center justify-between gap-6 h-14">
         {/* Brand + nav links */}
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-            <div className="w-7 h-7 rounded-md bg-blue-600 flex items-center justify-center shadow-[0_0_12px_rgba(37,99,235,0.4)] group-hover:shadow-[0_0_16px_rgba(37,99,235,0.6)] transition-shadow">
-              <Database className="w-3.5 h-3.5 text-white" />
+            <div
+              className="w-8 h-8 rounded-md flex items-center justify-center shrink-0"
+              style={{
+                background: "linear-gradient(135deg, var(--ochre) 0%, var(--sand-dim) 100%)",
+                boxShadow: "var(--glow-ochre)",
+                fontFamily: "'Orbitron', sans-serif",
+                fontWeight: 800,
+                fontSize: 14,
+                color: "var(--dark-bg)",
+              }}
+            >
+              RV
             </div>
-            <span className="text-[15px] font-semibold tracking-tight text-foreground">
+            <span
+              style={{
+                fontFamily: "'Orbitron', sans-serif",
+                fontWeight: 700,
+                fontSize: 18,
+                letterSpacing: "3px",
+                color: "var(--sand)",
+                textTransform: "uppercase",
+              }}
+            >
               RomVault
             </span>
           </Link>
@@ -28,10 +53,7 @@ export function Nav() {
             <NavLink href="/" active={pathname === "/"}>Systems</NavLink>
             <NavLink href="/games" active={pathname.startsWith("/games")}>All Games</NavLink>
             <NavLink href="/favorites" active={pathname.startsWith("/favorites")}>
-              <span className="flex items-center gap-1">
-                <Heart className={cn("w-3 h-3", pathname.startsWith("/favorites") ? "fill-pink-400 text-pink-400" : "")} />
-                Favorites
-              </span>
+              ♦ Favorites
             </NavLink>
             <NavLink href="/publishers" active={pathname.startsWith("/publishers")}>Publishers</NavLink>
             <NavLink href="/series" active={pathname.startsWith("/series")}>Series</NavLink>
@@ -42,11 +64,11 @@ export function Nav() {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <ActionButtons />
-          <div className="w-px h-5 bg-border" />
+          <div className="w-px h-5" style={{ background: "var(--panel-border)" }} />
           <ThemeToggle />
-          <div className="w-px h-5 bg-border" />
+          <div className="w-px h-5" style={{ background: "var(--panel-border)" }} />
           <Link
             href="/audit"
             className={cn(
@@ -89,17 +111,19 @@ function NavLink({
   return (
     <Link
       href={href}
-      className={cn(
-        "px-3 py-1 text-sm rounded-md transition-colors relative",
-        active
-          ? "text-foreground font-medium"
-          : "text-muted-foreground hover:text-foreground"
-      )}
+      className="px-3 py-1.5 rounded-md transition-all duration-200"
+      style={{
+        fontFamily: "'Rajdhani', sans-serif",
+        fontWeight: 500,
+        fontSize: 15,
+        letterSpacing: "1.5px",
+        textTransform: "uppercase",
+        color: active ? "var(--sand-light)" : "var(--text-dim)",
+        background: active ? "rgba(196, 164, 108, 0.08)" : "transparent",
+        textDecoration: "none",
+      }}
     >
       {children}
-      {active && (
-        <span className="absolute bottom-[-1px] left-3 right-3 h-[2px] bg-blue-500 rounded-full" />
-      )}
     </Link>
   );
 }

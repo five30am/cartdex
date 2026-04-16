@@ -24,14 +24,30 @@ export function GameGrid({
   if (games.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <div className="text-5xl mb-4 opacity-30">🎮</div>
-        <p className="text-muted-foreground text-sm">{emptyMessage}</p>
+        <p
+          style={{
+            fontFamily: "'Orbitron', sans-serif",
+            fontSize: 13,
+            letterSpacing: "3px",
+            color: "var(--text-dim)",
+            opacity: 0.5,
+            textTransform: "uppercase",
+          }}
+        >
+          {emptyMessage}
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(155px, 1fr))",
+        gap: "20px",
+      }}
+    >
       {games.map((game) => (
         <GameCard
           key={game.id}

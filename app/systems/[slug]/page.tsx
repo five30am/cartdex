@@ -348,12 +348,27 @@ export default async function SystemDetailPage({ params, searchParams }: Props) 
   }));
 
   return (
-    <div className="px-6 py-8">
-      <div className="max-w-7xl mx-auto">
+    <div>
+      {/* System header */}
+      <div
+        className="px-8 pt-7 pb-6 border-b"
+        style={{
+          borderBottomColor: "var(--panel-border)",
+          background: "linear-gradient(180deg, rgba(26,18,8,0.5) 0%, transparent 100%)",
+        }}
+      >
         {/* Breadcrumb */}
         <Link
           href="/"
-          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mb-6 font-medium uppercase tracking-wider"
+          className="inline-flex items-center gap-1.5 mb-4 transition-colors sw-breadcrumb"
+          style={{
+            fontFamily: "'Share Tech Mono', monospace",
+            fontSize: 13,
+            letterSpacing: "2px",
+            textTransform: "uppercase",
+            color: "var(--text-dim)",
+            textDecoration: "none",
+          }}
         >
           <ChevronLeft className="h-3.5 w-3.5" />
           Systems
@@ -361,40 +376,81 @@ export default async function SystemDetailPage({ params, searchParams }: Props) 
 
         {/* Disabled system banner */}
         {!system.enabled && (
-          <div className="mb-6 rounded-lg border border-border bg-muted/30 px-4 py-3 flex items-center gap-3">
-            <EyeOff className="w-4 h-4 text-muted-foreground shrink-0" />
-            <p className="text-sm text-muted-foreground">
+          <div
+            className="mb-5 rounded px-4 py-3 flex items-center gap-3 border"
+            style={{ borderColor: "var(--panel-border)", background: "var(--card-bg)" }}
+          >
+            <EyeOff className="w-4 h-4 shrink-0" style={{ color: "var(--text-dim)" }} />
+            <p style={{ fontSize: 14, color: "var(--text-dim)", fontFamily: "'Rajdhani', sans-serif" }}>
               This system is disabled — it is hidden from browse views.{" "}
-              <Link href="/settings" className="text-foreground/70 hover:text-foreground underline underline-offset-2 transition-colors">
+              <Link
+                href="/settings"
+                style={{ color: "var(--accent-blue)", textDecoration: "underline" }}
+              >
                 Re-enable in Settings
               </Link>
             </p>
           </div>
         )}
 
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4 mb-8">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg bg-card border border-border flex items-center justify-center">
-              <SystemBadge slug={system.slug} name={system.slug.toUpperCase()} />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground tracking-tight">{system.name}</h1>
-              <div className="flex items-center gap-2.5 mt-1 flex-wrap">
-                <p className="text-sm text-muted-foreground font-mono">
-                  <span className="text-foreground/80 font-semibold">{visibleGames.length.toLocaleString()}</span> {visibleGames.length === 1 ? "game" : "games"}
-                  {!showHidden && hiddenCount > 0 && (
-                    <> &mdash; <Link href={`/systems/${slug}?show_hidden=true`} className="text-muted-foreground hover:text-foreground underline underline-offset-2">{hiddenCount} hidden</Link></>
-                  )}
-                  {showHidden && (
-                    <> &mdash; <Link href={`/systems/${slug}`} className="text-muted-foreground hover:text-foreground underline underline-offset-2">hide hidden</Link></>
-                  )}
-                </p>
-                <CompletionPill data={completionData} size="md" />
-              </div>
+        {/* Title row */}
+        <div className="flex items-center gap-4 mb-1">
+          <SystemBadge slug={system.slug} name={system.slug.toUpperCase()} variant="header" />
+          <div>
+            <h1
+              style={{
+                fontFamily: "'Orbitron', sans-serif",
+                fontWeight: 600,
+                fontSize: 32,
+                letterSpacing: "2px",
+                color: "var(--text-bright)",
+                lineHeight: 1.1,
+              }}
+            >
+              {system.name}
+            </h1>
+            <div
+              className="flex items-center gap-2 mt-1 flex-wrap"
+              style={{
+                fontFamily: "'Share Tech Mono', monospace",
+                fontSize: 15,
+                color: "var(--text-dim)",
+              }}
+            >
+              <span style={{ color: "var(--sand)", fontWeight: 700 }}>
+                {visibleGames.length.toLocaleString()}
+              </span>
+              {" "}games
+              {!showHidden && hiddenCount > 0 && (
+                <>
+                  {" "}—{" "}
+                  <Link
+                    href={`/systems/${slug}?show_hidden=true`}
+                    style={{ color: "var(--accent-blue)", textDecoration: "none", borderBottom: "1px solid transparent" }}
+                  >
+                    {hiddenCount} hidden
+                  </Link>
+                </>
+              )}
+              {showHidden && (
+                <>
+                  {" "}—{" "}
+                  <Link
+                    href={`/systems/${slug}`}
+                    style={{ color: "var(--accent-blue)", textDecoration: "none" }}
+                  >
+                    hide hidden
+                  </Link>
+                </>
+              )}
+              <CompletionPill data={completionData} size="md" />
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="px-6 py-8">
+        <div className="max-w-7xl mx-auto">
 
         {/* Set Completion / Compare DATs section */}
         {(completionData || hasMultipleDats) && (
@@ -434,6 +490,7 @@ export default async function SystemDetailPage({ params, searchParams }: Props) 
 
         {/* Client-side search + sort + grid */}
         <SystemGamesClient games={annotatedGames} systemSlug={system.slug} />
+        </div>
       </div>
     </div>
   );

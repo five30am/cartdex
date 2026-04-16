@@ -13,13 +13,12 @@ interface SearchBarProps {
 export function SearchBar({
   value,
   onChange,
-  placeholder = "Search...",
+  placeholder = "Search the archives...",
   className = "",
 }: SearchBarProps) {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Debounce handler: fire onChange 300ms after user stops typing
   const handleInput = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const next = e.target.value;
@@ -29,7 +28,6 @@ export function SearchBar({
     [onChange]
   );
 
-  // Keep the input value in sync when value prop changes externally (e.g. clear)
   useEffect(() => {
     if (inputRef.current && inputRef.current.value !== value) {
       inputRef.current.value = value;
@@ -46,19 +44,32 @@ export function SearchBar({
 
   return (
     <div className={`relative ${className}`}>
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+      <Search
+        className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none"
+        style={{ color: "var(--text-dim)" }}
+      />
       <input
         ref={inputRef}
         type="text"
         defaultValue={value}
         onChange={handleInput}
         placeholder={placeholder}
-        className="w-full bg-muted border border-border rounded-lg pl-9 pr-9 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-colors"
+        className="w-full rounded-md pl-9 pr-9 py-2.5 outline-none transition-all duration-200 sw-search-input"
+        style={{
+          fontFamily: "'Rajdhani', sans-serif",
+          fontWeight: 500,
+          fontSize: 16,
+          letterSpacing: "0.5px",
+          color: "var(--text-primary)",
+          background: "var(--card-bg)",
+          border: "1px solid var(--panel-border)",
+        }}
       />
       {value && (
         <button
           onClick={handleClear}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
+          style={{ color: "var(--text-dim)" }}
           aria-label="Clear search"
         >
           <X className="h-4 w-4" />

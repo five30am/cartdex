@@ -293,14 +293,29 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
           <SearchBar
             value={search}
             onChange={setSearch}
-            placeholder="Search games..."
+            placeholder="Search the archives..."
             className="flex-1 max-w-sm"
           />
           <Select value={sort} onValueChange={handleSortChange}>
-            <SelectTrigger className="w-[180px] bg-background border-border text-foreground">
+            <SelectTrigger
+              className="w-[180px]"
+              style={{
+                fontFamily: "'Share Tech Mono', monospace",
+                fontSize: 14,
+                letterSpacing: "1px",
+                color: "var(--text-primary)",
+                background: "var(--card-bg)",
+                border: "1px solid var(--panel-border)",
+              }}
+            >
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-popover border-border">
+            <SelectContent
+              style={{
+                background: "var(--panel-bg)",
+                border: "1px solid var(--panel-border)",
+              }}
+            >
               <SelectItem value="title" className="text-foreground focus:bg-accent">
                 Name (A–Z)
               </SelectItem>
@@ -329,17 +344,18 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
           <div
             role="group"
             aria-label="View mode"
-            className="flex items-center rounded-md border border-border overflow-hidden shrink-0"
+            className="flex items-center overflow-hidden shrink-0 rounded"
+            style={{ border: "1px solid var(--panel-border)" }}
           >
             <button
               onClick={() => handleViewModeChange("grid")}
               aria-label="Grid view"
               aria-pressed={viewMode === "grid"}
-              className={
-                viewMode === "grid"
-                  ? "flex items-center justify-center px-2.5 py-1.5 bg-accent text-accent-foreground"
-                  : "flex items-center justify-center px-2.5 py-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
-              }
+              className="flex items-center justify-center px-2.5 py-1.5 transition-colors"
+              style={{
+                background: viewMode === "grid" ? "rgba(196,164,108,0.12)" : "transparent",
+                color: viewMode === "grid" ? "var(--sand)" : "var(--text-dim)",
+              }}
             >
               <LayoutGrid className="h-4 w-4" aria-hidden="true" />
             </button>
@@ -347,40 +363,74 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
               onClick={() => handleViewModeChange("table")}
               aria-label="Table view"
               aria-pressed={viewMode === "table"}
-              className={
-                viewMode === "table"
-                  ? "flex items-center justify-center px-2.5 py-1.5 bg-accent text-accent-foreground border-l border-border"
-                  : "flex items-center justify-center px-2.5 py-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors border-l border-border"
-              }
+              className="flex items-center justify-center px-2.5 py-1.5 transition-colors"
+              style={{
+                borderLeft: "1px solid var(--panel-border)",
+                background: viewMode === "table" ? "rgba(196,164,108,0.12)" : "transparent",
+                color: viewMode === "table" ? "var(--sand)" : "var(--text-dim)",
+              }}
             >
               <List className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
 
           {!selectMode && viewMode !== "table" ? (
-            <Button
-              variant="outline"
-              size="sm"
+            <button
               onClick={() => setSelectMode(true)}
-              className="border-border text-muted-foreground hover:text-foreground hover:border-border"
+              className="sw-nav-btn"
+              style={{
+                fontFamily: "'Share Tech Mono', monospace",
+                fontSize: 13,
+                letterSpacing: "1px",
+                textTransform: "uppercase",
+                color: "var(--text-dim)",
+                background: "transparent",
+                border: "1px solid var(--panel-border)",
+                padding: "6px 14px",
+                borderRadius: 4,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
             >
-              <CheckSquare className="h-4 w-4 mr-1.5" />
+              <CheckSquare className="h-4 w-4" />
               Select
-            </Button>
+            </button>
           ) : !selectMode ? null : (
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
+              <span
+                style={{
+                  fontFamily: "'Share Tech Mono', monospace",
+                  fontSize: 13,
+                  color: "var(--text-dim)",
+                }}
+              >
                 {selected.size} selected
               </span>
               <button
                 onClick={selectAll}
-                className="text-xs text-indigo-500 dark:text-indigo-400 hover:text-indigo-400 dark:hover:text-indigo-300"
+                style={{
+                  fontFamily: "'Share Tech Mono', monospace",
+                  fontSize: 12,
+                  color: "var(--accent-blue)",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                }}
               >
                 Select all
               </button>
               <button
                 onClick={deselectAll}
-                className="text-xs text-muted-foreground hover:text-foreground"
+                style={{
+                  fontFamily: "'Share Tech Mono', monospace",
+                  fontSize: 12,
+                  color: "var(--text-dim)",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                }}
               >
                 Deselect all
               </button>
@@ -388,7 +438,13 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
                 <Button
                   size="sm"
                   onClick={() => setShowCollectionModal(true)}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white h-7 text-xs"
+                  style={{
+                    background: "var(--ochre)",
+                    color: "var(--dark-bg)",
+                    height: 28,
+                    fontSize: 12,
+                    fontFamily: "'Share Tech Mono', monospace",
+                  }}
                 >
                   <FolderPlus className="h-3.5 w-3.5 mr-1.5" />
                   Add to Collection
@@ -396,7 +452,7 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
               )}
               <button
                 onClick={exitSelectMode}
-                className="text-muted-foreground hover:text-foreground"
+                style={{ color: "var(--text-dim)", background: "transparent", border: "none", cursor: "pointer" }}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -405,7 +461,14 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
         </div>
 
         {search && (
-          <p className="text-sm text-muted-foreground mb-4">
+          <p
+            className="mb-4"
+            style={{
+              fontFamily: "'Share Tech Mono', monospace",
+              fontSize: 13,
+              color: "var(--text-dim)",
+            }}
+          >
             {filtered.length} result{filtered.length !== 1 ? "s" : ""} for
             &ldquo;{search}&rdquo;
           </p>
