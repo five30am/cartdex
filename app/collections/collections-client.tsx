@@ -7,6 +7,7 @@ import { FolderOpen, PlusCircle, Layers, HardDrive, Loader2 } from "lucide-react
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SystemBadge } from "@/components/system-badge";
+import { mutationHeaders } from "@/lib/api-token";
 import {
   Dialog,
   DialogContent,
@@ -43,7 +44,7 @@ export function CollectionsClient({ initialCollections }: Props) {
     try {
       const res = await fetch("/api/collections", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...(await mutationHeaders()), "Content-Type": "application/json" },
         body: JSON.stringify({ name: newName.trim(), description: newDescription.trim() || null }),
       });
       if (res.ok) {

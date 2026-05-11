@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { FolderOpen, Wifi, Key, CheckCircle2, XCircle, Minus, Loader2, Save, Zap, RefreshCw, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { mutationHeaders } from "@/lib/api-token";
 
 interface ServiceStatus {
   configured: boolean;
@@ -141,7 +142,7 @@ export function SettingsForm() {
     try {
       const res = await fetch("/api/settings", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...(await mutationHeaders()), "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       const data = await res.json();
@@ -179,7 +180,7 @@ export function SettingsForm() {
     if (backfill.state === "running") return;
     setBackfillPolling(true);
     try {
-      await fetch("/api/backfill/publisher-series", { method: "POST" });
+      await fetch("/api/backfill/publisher-series", { method: "POST", headers: await mutationHeaders() });
       pollBackfill();
     } catch {
       setBackfillPolling(false);

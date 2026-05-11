@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PlusCircle, FolderOpen, Check, Loader2 } from "lucide-react";
+import { mutationHeaders } from "@/lib/api-token";
 
 interface Collection {
   id: number;
@@ -52,7 +53,7 @@ export function AddToCollectionModal({ open, onClose, gameIds, onSuccess }: Prop
     try {
       const res = await fetch(`/api/collections/${collectionId}/games`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...(await mutationHeaders()), "Content-Type": "application/json" },
         body: JSON.stringify({ gameIds }),
       });
       if (res.ok) {
@@ -76,7 +77,7 @@ export function AddToCollectionModal({ open, onClose, gameIds, onSuccess }: Prop
     try {
       const createRes = await fetch("/api/collections", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...(await mutationHeaders()), "Content-Type": "application/json" },
         body: JSON.stringify({ name: newName.trim() }),
       });
       if (!createRes.ok) {

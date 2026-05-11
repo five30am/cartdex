@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { mutationHeaders } from "@/lib/api-token";
 
 interface Props {
   gameId: number;
@@ -22,7 +23,7 @@ export function FavoriteButton({ gameId, initialFavorite }: Props) {
     try {
       const res = await fetch("/api/games/favorite", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...(await mutationHeaders()), "Content-Type": "application/json" },
         body: JSON.stringify({ gameId, favorite: next }),
       });
       const data = await res.json();

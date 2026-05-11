@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Monitor } from "lucide-react";
+import { mutationHeaders } from "@/lib/api-token";
 
 interface SystemRow {
   id: number;
@@ -33,7 +34,7 @@ export function SystemsToggleCard({ systems: initialSystems }: Props) {
     try {
       const res = await fetch(`/api/systems/${slug}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...(await mutationHeaders()), "Content-Type": "application/json" },
         body: JSON.stringify({ enabled }),
       });
       if (!res.ok) {

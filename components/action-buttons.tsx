@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ScanLine, Download, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { mutationHeaders } from "@/lib/api-token";
 
 interface ScanStatus {
   state: "idle" | "running" | "done" | "error";
@@ -87,7 +88,7 @@ export function ActionButtons() {
     try {
       const res = await fetch("/api/scan", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...(await mutationHeaders()), "Content-Type": "application/json" },
         body: JSON.stringify({}),
       });
       const data = await res.json();
@@ -102,7 +103,7 @@ export function ActionButtons() {
   async function handleScrape() {
     setScrapeStatus({ state: "running" });
     try {
-      const res = await fetch("/api/scrape", { method: "POST" });
+      const res = await fetch("/api/scrape", { method: "POST", headers: await mutationHeaders() });
       const data = await res.json();
       if (!data.ok) {
         setScrapeStatus({ state: "error", error: data.error });

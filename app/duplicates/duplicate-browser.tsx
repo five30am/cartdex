@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { DeleteModal } from "@/components/delete-modal";
 import { AddToCollectionModal } from "@/components/add-to-collection-modal";
 import { toast } from "sonner";
+import { mutationHeaders } from "@/lib/api-token";
 import {
   ChevronLeft,
   ChevronRight,
@@ -213,7 +214,7 @@ export function DuplicateBrowser() {
   async function handleHideSelected() {
     const res = await fetch("/api/games/bulk", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { ...(await mutationHeaders()), "Content-Type": "application/json" },
       body: JSON.stringify({ ids: [...selected], action: "hide" }),
     });
     const d = await res.json();

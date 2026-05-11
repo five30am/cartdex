@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
+import { mutationHeaders } from "@/lib/api-token";
 import {
   Download,
   Trash2,
@@ -109,7 +110,7 @@ export function CollectionDetailClient({
     try {
       const res = await fetch(`/api/collections/${collection.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...(await mutationHeaders()), "Content-Type": "application/json" },
         body: JSON.stringify({ name: tempName.trim(), description: description || null }),
       });
       if (res.ok) {
@@ -133,7 +134,7 @@ export function CollectionDetailClient({
     try {
       const res = await fetch(`/api/collections/${collection.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...(await mutationHeaders()), "Content-Type": "application/json" },
         body: JSON.stringify({ name, description: tempDesc.trim() || null }),
       });
       if (res.ok) {
@@ -153,7 +154,7 @@ export function CollectionDetailClient({
   async function deleteCollection() {
     setDeleting(true);
     try {
-      const res = await fetch(`/api/collections/${collection.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/collections/${collection.id}`, { method: "DELETE", headers: await mutationHeaders() });
       if (res.ok) {
         toast.success("Collection deleted");
         router.push("/collections");
@@ -173,6 +174,7 @@ export function CollectionDetailClient({
     try {
       const res = await fetch(`/api/collections/${collection.id}/games/${gameId}`, {
         method: "DELETE",
+        headers: await mutationHeaders(),
       });
       if (res.ok) {
         setGames((prev) => prev.filter((g) => g.id !== gameId));

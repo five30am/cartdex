@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { SystemBadge } from "@/components/system-badge";
 import { Heart, Star } from "lucide-react";
 import { toast } from "sonner";
+import { mutationHeaders } from "@/lib/api-token";
 
 interface GameCardProps {
   id: number;
@@ -39,7 +40,7 @@ function CardFavoriteButton({
     try {
       const res = await fetch("/api/games/favorite", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...(await mutationHeaders()), "Content-Type": "application/json" },
         body: JSON.stringify({ gameId, favorite: next }),
       });
       const data = await res.json();

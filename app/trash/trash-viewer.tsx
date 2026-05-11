@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Loader2, RotateCcw, Trash2, Clock, AlertTriangle } from "lucide-react";
+import { mutationHeaders } from "@/lib/api-token";
 import {
   Dialog,
   DialogContent,
@@ -55,7 +56,7 @@ export function TrashViewer() {
     if (!entry.game_id) return;
     setActionId(entry.operation_id);
     try {
-      const res = await fetch(`/api/games/${entry.game_id}/restore`, { method: "POST" });
+      const res = await fetch(`/api/games/${entry.game_id}/restore`, { method: "POST", headers: await mutationHeaders() });
       if (!res.ok) {
         const d = await res.json();
         toast.error(d.error ?? "Restore failed");
@@ -78,7 +79,7 @@ export function TrashViewer() {
     try {
       const res = await fetch(`/api/games/${target.game_id}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...(await mutationHeaders()), "Content-Type": "application/json" },
         body: JSON.stringify({ confirm: true }),
       });
       if (!res.ok) {

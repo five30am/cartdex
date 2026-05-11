@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { mutationHeaders } from "@/lib/api-token";
 
 interface Props {
   gameId: number;
@@ -21,7 +22,7 @@ export function StarRating({ gameId, initialRating }: Props) {
     try {
       const res = await fetch("/api/games/rating", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...(await mutationHeaders()), "Content-Type": "application/json" },
         body: JSON.stringify({ gameId, rating: newRating }),
       });
       const data = await res.json();

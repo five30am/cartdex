@@ -19,6 +19,7 @@ import {
   History,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { mutationHeaders } from "@/lib/api-token";
 
 interface DatRow {
   id: number;
@@ -635,7 +636,7 @@ export function DatLibraryCard() {
     try {
       const res = await fetch(`/api/dats/${datId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...(await mutationHeaders()), "Content-Type": "application/json" },
         body: JSON.stringify({ system_id: systemId }),
       });
       if (res.ok) {
@@ -673,7 +674,7 @@ export function DatLibraryCard() {
     form.append("file", file);
 
     try {
-      const res = await fetch("/api/dats", { method: "POST", body: form });
+      const res = await fetch("/api/dats", { method: "POST", headers: await mutationHeaders(), body: form });
       const data = await res.json();
 
       if (res.ok) {
@@ -719,7 +720,7 @@ export function DatLibraryCard() {
     try {
       const res = await fetch("/api/dats/fetch", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...(await mutationHeaders()), "Content-Type": "application/json" },
         body: JSON.stringify({
           providerId: selectedProvider.id,
           systems: [selectedSystem],
@@ -780,7 +781,7 @@ export function DatLibraryCard() {
     if (deletingId !== null) return;
     setDeletingId(id);
     try {
-      const res = await fetch(`/api/dats/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/dats/${id}`, { method: "DELETE", headers: await mutationHeaders() });
       if (res.ok) {
         setDats((prev) => prev.filter((d) => d.id !== id));
       }

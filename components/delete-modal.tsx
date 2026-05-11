@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { EyeOff, Trash2, AlertTriangle, Loader2 } from "lucide-react";
+import { mutationHeaders } from "@/lib/api-token";
 
 interface GameRef {
   id: number;
@@ -48,7 +49,7 @@ export function DeleteModal({ open, onClose, games, onHideSuccess, onTrashSucces
     try {
       const res = await fetch("/api/games/bulk", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...(await mutationHeaders()), "Content-Type": "application/json" },
         body: JSON.stringify({ ids: games.map((g) => g.id), action: "hide" }),
       });
       const data = await res.json();
@@ -75,7 +76,7 @@ export function DeleteModal({ open, onClose, games, onHideSuccess, onTrashSucces
     try {
       const res = await fetch("/api/games/bulk", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...(await mutationHeaders()), "Content-Type": "application/json" },
         body: JSON.stringify({ ids: games.map((g) => g.id), action: "trash" }),
       });
       const data = await res.json();
