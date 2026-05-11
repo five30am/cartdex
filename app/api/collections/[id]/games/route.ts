@@ -2,12 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { collections, collection_games } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
+import { requireMutationAuth } from "@/lib/auth";
 
 interface Props {
   params: Promise<{ id: string }>;
 }
 
 export async function POST(req: NextRequest, { params }: Props) {
+  const authFailure = requireMutationAuth(req);
+  if (authFailure) return authFailure;
+
   try {
     const { id } = await params;
     const collectionId = parseInt(id, 10);

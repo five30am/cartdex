@@ -4,12 +4,16 @@ import { games, systems, file_operations } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import fs from "fs";
 import path from "path";
+import { requireMutationAuth } from "@/lib/auth";
 
 /** POST /api/games/[id]/trash — move a single game file to .trash/ */
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authFailure = requireMutationAuth(req);
+  if (authFailure) return authFailure;
+
   try {
     const { id } = await params;
     const gameId = parseInt(id, 10);

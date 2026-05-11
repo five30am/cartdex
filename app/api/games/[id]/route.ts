@@ -4,6 +4,7 @@ import { games, systems, file_operations } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import fs from "fs";
 import { apiError, apiErrorFromUnknown, apiErrorWithDetail, ApiErrorCode } from "@/lib/api-error";
+import { requireMutationAuth } from "@/lib/auth";
 
 export async function GET(
   _req: NextRequest,
@@ -41,6 +42,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authFailure = requireMutationAuth(req);
+  if (authFailure) return authFailure;
+
   try {
     const { id } = await params;
     const gameId = parseInt(id, 10);
@@ -111,6 +115,9 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authFailure = requireMutationAuth(req);
+  if (authFailure) return authFailure;
+
   try {
     const { id } = await params;
     const gameId = parseInt(id, 10);

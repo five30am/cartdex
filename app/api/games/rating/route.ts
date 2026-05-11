@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { games } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { requireMutationAuth } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
+  const authFailure = requireMutationAuth(req);
+  if (authFailure) return authFailure;
+
   try {
     const { gameId, rating } = await req.json();
 

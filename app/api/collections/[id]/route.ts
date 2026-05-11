@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { collections, collection_games, games, systems } from "@/lib/db/schema";
 import { and, eq, sum } from "drizzle-orm";
 import { apiError, apiErrorFromUnknown, apiErrorWithDetail, ApiErrorCode } from "@/lib/api-error";
+import { requireMutationAuth } from "@/lib/auth";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -74,6 +75,9 @@ export async function GET(_req: NextRequest, { params }: Props) {
 }
 
 export async function PUT(req: NextRequest, { params }: Props) {
+  const authFailure = requireMutationAuth(req);
+  if (authFailure) return authFailure;
+
   try {
     const { id } = await params;
     const collectionId = parseInt(id, 10);
@@ -110,7 +114,10 @@ export async function PUT(req: NextRequest, { params }: Props) {
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: Props) {
+export async function DELETE(req: NextRequest, { params }: Props) {
+  const authFailure = requireMutationAuth(req);
+  if (authFailure) return authFailure;
+
   try {
     const { id } = await params;
     const collectionId = parseInt(id, 10);

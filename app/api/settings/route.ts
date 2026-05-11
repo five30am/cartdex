@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { settings } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { requireMutationAuth } from "@/lib/auth";
 
 // Keys that should be masked in GET responses
 const SENSITIVE_KEYS = new Set([
@@ -36,6 +37,9 @@ export async function GET() {
 }
 
 export async function PUT(req: NextRequest) {
+  const authFailure = requireMutationAuth(req);
+  if (authFailure) return authFailure;
+
   let body: Record<string, string>;
   try {
     body = await req.json();

@@ -2,12 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { collection_games } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
+import { requireMutationAuth } from "@/lib/auth";
 
 interface Props {
   params: Promise<{ id: string; gameId: string }>;
 }
 
-export async function DELETE(_req: NextRequest, { params }: Props) {
+export async function DELETE(req: NextRequest, { params }: Props) {
+  const authFailure = requireMutationAuth(req);
+  if (authFailure) return authFailure;
+
   try {
     const { id, gameId } = await params;
     const collectionId = parseInt(id, 10);

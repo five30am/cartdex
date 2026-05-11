@@ -36,6 +36,7 @@ import {
   ApiErrorCode,
 } from "@/lib/api-error";
 import { RateLimiter, getClientIp } from "@/lib/rate-limiter";
+import { requireMutationAuth } from "@/lib/auth";
 
 // ---------------------------------------------------------------------------
 // Config
@@ -97,6 +98,9 @@ interface FetchSummary {
 }
 
 export async function POST(req: NextRequest) {
+  const authFailure = requireMutationAuth(req);
+  if (authFailure) return authFailure;
+
   // Rate limit
   const ip = getClientIp(req);
   if (!fetchLimiter.check(ip)) {

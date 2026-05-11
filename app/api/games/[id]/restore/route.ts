@@ -5,12 +5,16 @@ import { eq, and, desc } from "drizzle-orm";
 import fs from "fs";
 import path from "path";
 import { apiError, apiErrorFromUnknown, ApiErrorCode } from "@/lib/api-error";
+import { requireMutationAuth } from "@/lib/auth";
 
 /** POST /api/games/[id]/restore — move a trashed file back to its original location */
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authFailure = requireMutationAuth(req);
+  if (authFailure) return authFailure;
+
   try {
     const { id } = await params;
     const gameId = parseInt(id, 10);

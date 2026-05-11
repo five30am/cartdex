@@ -4,6 +4,7 @@ import { games, collections, collection_games, file_operations } from "@/lib/db/
 import { eq, inArray } from "drizzle-orm";
 import fs from "fs";
 import path from "path";
+import { requireMutationAuth } from "@/lib/auth";
 
 type BulkAction = "add_to_collection" | "hide" | "trash";
 
@@ -14,6 +15,9 @@ interface BulkBody {
 }
 
 export async function POST(req: NextRequest) {
+  const authFailure = requireMutationAuth(req);
+  if (authFailure) return authFailure;
+
   try {
     const body: BulkBody = await req.json();
     const { ids, action, collection_id } = body;

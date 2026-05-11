@@ -30,6 +30,9 @@ export const ApiErrorCode = {
   INVALID_ACTION: "INVALID_ACTION",
   PATH_TRAVERSAL: "PATH_TRAVERSAL",
 
+  // 401 Unauthorized
+  UNAUTHORIZED: "UNAUTHORIZED",
+
   // 404 Not Found
   GAME_NOT_FOUND: "GAME_NOT_FOUND",
   SYSTEM_NOT_FOUND: "SYSTEM_NOT_FOUND",
@@ -109,6 +112,13 @@ const API_ERRORS: Record<ApiErrorCode, ApiErrorDef> = {
     status: 400,
     code: ApiErrorCode.PATH_TRAVERSAL,
     message: "Destination path escapes trash directory",
+  },
+
+  // 401
+  [ApiErrorCode.UNAUTHORIZED]: {
+    status: 401,
+    code: ApiErrorCode.UNAUTHORIZED,
+    message: "Unauthorized — valid X-Api-Token header required for mutation endpoints",
   },
 
   // 404

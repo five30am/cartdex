@@ -14,6 +14,7 @@ import {
   apiErrorFromUnknown,
   ApiErrorCode,
 } from "@/lib/api-error";
+import { requireMutationAuth } from "@/lib/auth";
 
 // ---------------------------------------------------------------------------
 // GET
@@ -55,6 +56,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authFailure = requireMutationAuth(req);
+  if (authFailure) return authFailure;
+
   try {
     const { id } = await params;
     const datId = parseInt(id, 10);
@@ -99,9 +103,12 @@ export async function PATCH(
 // ---------------------------------------------------------------------------
 
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authFailure = requireMutationAuth(req);
+  if (authFailure) return authFailure;
+
   try {
     const { id } = await params;
     const datId = parseInt(id, 10);

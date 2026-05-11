@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { startScanInBackground, getScanStatus } from "@/lib/services/ingest";
 import { getSetting } from "@/lib/services/config";
+import { requireMutationAuth } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
+  const authFailure = requireMutationAuth(req);
+  if (authFailure) return authFailure;
+
   try {
     const status = getScanStatus();
     if (status.state === "running") {

@@ -1,7 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getScrapeStatus, startScrapeInBackground } from "@/lib/services/metadata";
+import { requireMutationAuth } from "@/lib/auth";
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const authFailure = requireMutationAuth(req);
+  if (authFailure) return authFailure;
+
   const status = getScrapeStatus();
   if (status.state === "running") {
     return NextResponse.json({ ok: true, message: "Scrape already in progress", ...status });

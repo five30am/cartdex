@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { reconcileMissingFiles, getScanStatus } from "@/lib/services/ingest";
+import { requireMutationAuth } from "@/lib/auth";
 
 /**
  * POST /api/scan/reconcile
@@ -12,7 +13,10 @@ import { reconcileMissingFiles, getScanStatus } from "@/lib/services/ingest";
  * as Phase 3 of a full scan. Use it after bulk external deletions (CLI, SMB, etc.)
  * to clean phantom rows from the duplicates view without waiting for a full rescan.
  */
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const authFailure = requireMutationAuth(req);
+  if (authFailure) return authFailure;
+
   try {
     const status = getScanStatus();
     if (status.state === "running") {

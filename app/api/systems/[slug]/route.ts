@@ -3,11 +3,15 @@ import { db } from "@/lib/db";
 import { systems, games } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import { apiError, apiErrorFromUnknown, apiErrorWithDetail, ApiErrorCode } from "@/lib/api-error";
+import { requireMutationAuth } from "@/lib/auth";
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  const authFailure = requireMutationAuth(req);
+  if (authFailure) return authFailure;
+
   try {
     const { slug } = await params;
 

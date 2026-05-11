@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { collections, collection_games, games } from "@/lib/db/schema";
 import { eq, count, sum, sql } from "drizzle-orm";
+import { requireMutationAuth } from "@/lib/auth";
 
 export async function GET() {
   try {
@@ -39,6 +40,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const authFailure = requireMutationAuth(req);
+  if (authFailure) return authFailure;
+
   try {
     const body = await req.json();
     const { name, description } = body as { name: string; description?: string };

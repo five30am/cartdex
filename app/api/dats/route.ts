@@ -24,6 +24,7 @@ import {
   ApiErrorCode,
 } from "@/lib/api-error";
 import { RateLimiter, getClientIp } from "@/lib/rate-limiter";
+import { requireMutationAuth } from "@/lib/auth";
 
 // ---------------------------------------------------------------------------
 // Config
@@ -43,6 +44,9 @@ const uploadLimiter = new RateLimiter({ windowMs: 5 * 60_000, maxRequests: 10 })
 // ---------------------------------------------------------------------------
 
 export async function POST(req: NextRequest) {
+  const authFailure = requireMutationAuth(req);
+  if (authFailure) return authFailure;
+
   // Rate limit check
   const ip = getClientIp(req);
   if (!uploadLimiter.check(ip)) {
