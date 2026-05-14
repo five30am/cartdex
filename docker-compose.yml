@@ -26,4 +26,8 @@ services:
 
 volumes:
   romvault_data:
+    external: true
+    name: romvault_romvault_data
   romvault_artwork:
+    external: true
+    name: romvault_romvault_artwork
