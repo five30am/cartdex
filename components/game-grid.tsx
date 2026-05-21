@@ -26,7 +26,7 @@ export function GameGrid({
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <p
           style={{
-            fontFamily: "'Orbitron', sans-serif",
+            fontFamily: "var(--cd-font-heading)",
             fontSize: "0.8125rem",
             letterSpacing: "3px",
             color: "var(--text-dim)",

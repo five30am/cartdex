@@ -300,7 +300,7 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
             <SelectTrigger
               className="w-[180px]"
               style={{
-                fontFamily: "'Share Tech Mono', monospace",
+                fontFamily: "var(--cd-font-mono)",
                 fontSize: "0.875rem",
                 letterSpacing: "1px",
                 color: "var(--text-primary)",
@@ -379,7 +379,7 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
               onClick={() => setSelectMode(true)}
               className="sw-nav-btn"
               style={{
-                fontFamily: "'Share Tech Mono', monospace",
+                fontFamily: "var(--cd-font-mono)",
                 fontSize: "0.8125rem",
                 letterSpacing: "1px",
                 textTransform: "uppercase",
@@ -401,7 +401,7 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
             <div className="flex items-center gap-2">
               <span
                 style={{
-                  fontFamily: "'Share Tech Mono', monospace",
+                  fontFamily: "var(--cd-font-mono)",
                   fontSize: "0.8125rem",
                   color: "var(--text-dim)",
                 }}
@@ -411,7 +411,7 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
               <button
                 onClick={selectAll}
                 style={{
-                  fontFamily: "'Share Tech Mono', monospace",
+                  fontFamily: "var(--cd-font-mono)",
                   fontSize: "0.75rem",
                   color: "var(--accent-blue)",
                   background: "transparent",
@@ -424,7 +424,7 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
               <button
                 onClick={deselectAll}
                 style={{
-                  fontFamily: "'Share Tech Mono', monospace",
+                  fontFamily: "var(--cd-font-mono)",
                   fontSize: "0.75rem",
                   color: "var(--text-dim)",
                   background: "transparent",
@@ -443,7 +443,7 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
                     color: "var(--dark-bg)",
                     height: 28,
                     fontSize: "0.75rem",
-                    fontFamily: "'Share Tech Mono', monospace",
+                    fontFamily: "var(--cd-font-mono)",
                   }}
                 >
                   <FolderPlus className="h-3.5 w-3.5 mr-1.5" />
@@ -464,7 +464,7 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
           <p
             className="mb-4"
             style={{
-              fontFamily: "'Share Tech Mono', monospace",
+              fontFamily: "var(--cd-font-mono)",
               fontSize: "0.8125rem",
               color: "var(--text-dim)",
             }}

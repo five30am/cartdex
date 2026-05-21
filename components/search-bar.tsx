@@ -56,7 +56,7 @@ export function SearchBar({
         placeholder={placeholder}
         className="w-full rounded-md pl-9 pr-9 py-2.5 outline-none transition-all duration-200 sw-search-input"
         style={{
-          fontFamily: "'Rajdhani', sans-serif",
+          fontFamily: "var(--cd-font-body)",
           fontWeight: 500,
           fontSize: "1rem",
           letterSpacing: "0.5px",

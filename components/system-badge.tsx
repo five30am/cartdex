@@ -12,7 +12,7 @@ export function SystemBadge({
     return (
       <span
         style={{
-          fontFamily: "'Orbitron', sans-serif",
+          fontFamily: "var(--cd-font-heading)",
           fontWeight: 700,
           fontSize: "0.8125rem",
           letterSpacing: "2px",
@@ -33,7 +33,7 @@ export function SystemBadge({
   return (
     <span
       style={{
-        fontFamily: "'Orbitron', sans-serif",
+        fontFamily: "var(--cd-font-heading)",
         fontWeight: 700,
         fontSize: "0.625rem",
         letterSpacing: "1px",

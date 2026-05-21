@@ -68,7 +68,7 @@ export function FacetFilterSidebar({
       <div className="flex items-baseline justify-between mb-3 pt-0.5">
         <span
           style={{
-            fontFamily: "'Orbitron', sans-serif",
+            fontFamily: "var(--cd-font-heading)",
             fontWeight: 600,
             fontSize: "0.875rem",
             letterSpacing: "3px",
@@ -82,7 +82,7 @@ export function FacetFilterSidebar({
           <button
             onClick={clearAll}
             style={{
-              fontFamily: "'Share Tech Mono', monospace",
+              fontFamily: "var(--cd-font-mono)",
               fontSize: "0.75rem",
               letterSpacing: "1px",
               color: "var(--text-dim)",
@@ -100,7 +100,7 @@ export function FacetFilterSidebar({
       <p
         className="mb-4"
         style={{
-          fontFamily: "'Share Tech Mono', monospace",
+          fontFamily: "var(--cd-font-mono)",
           fontSize: "0.875rem",
           color: "var(--text-dim)",
         }}
@@ -128,7 +128,7 @@ export function FacetFilterSidebar({
                 <span
                   className="flex items-center gap-1.5"
                   style={{
-                    fontFamily: "'Rajdhani', sans-serif",
+                    fontFamily: "var(--cd-font-body)",
                     fontWeight: 600,
                     fontSize: "1rem",
                     letterSpacing: "1px",
@@ -144,7 +144,7 @@ export function FacetFilterSidebar({
                         background: "var(--ochre)",
                         color: "var(--dark-bg)",
                         fontSize: "0.625rem",
-                        fontFamily: "'Share Tech Mono', monospace",
+                        fontFamily: "var(--cd-font-mono)",
                       }}
                     >
                       1
@@ -186,7 +186,7 @@ export function FacetFilterSidebar({
       <div className="mt-8">
         <span
           style={{
-            fontFamily: "'Share Tech Mono', monospace",
+            fontFamily: "var(--cd-font-mono)",
             fontSize: "0.6875rem",
             letterSpacing: "4px",
             color: "var(--panel-border)",
@@ -220,7 +220,7 @@ function FacetRow({ label, count, active, onClick, isAllOption }: FacetRowProps)
         background: active
           ? "rgba(196,164,108,0.10)"
           : "transparent",
-        fontFamily: "'Rajdhani', sans-serif",
+        fontFamily: "var(--cd-font-body)",
         fontSize: "0.9375rem",
         fontWeight: active ? 600 : 500,
         color: active ? "var(--sand-light)" : "var(--text-primary)",
@@ -230,7 +230,7 @@ function FacetRow({ label, count, active, onClick, isAllOption }: FacetRowProps)
       <span className="truncate pr-2">{label}</span>
       <span
         style={{
-          fontFamily: "'Share Tech Mono', monospace",
+          fontFamily: "var(--cd-font-mono)",
           fontSize: "0.8125rem",
           color: "var(--text-dim)",
           flexShrink: 0,

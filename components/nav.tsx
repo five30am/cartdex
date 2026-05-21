@@ -26,7 +26,7 @@ export function Nav() {
               style={{
                 background: "linear-gradient(135deg, var(--ochre) 0%, var(--sand-dim) 100%)",
                 boxShadow: "var(--glow-ochre)",
-                fontFamily: "'Orbitron', sans-serif",
+                fontFamily: "var(--cd-font-heading)",
                 fontWeight: 800,
                 fontSize: "0.875rem",
                 color: "var(--dark-bg)",
@@ -36,7 +36,7 @@ export function Nav() {
             </div>
             <span
               style={{
-                fontFamily: "'Orbitron', sans-serif",
+                fontFamily: "var(--cd-font-heading)",
                 fontWeight: 700,
                 fontSize: "1.125rem",
                 letterSpacing: "3px",
@@ -110,7 +110,7 @@ function NavLink({
       href={href}
       className="px-3 py-1.5 rounded-md transition-all duration-200"
       style={{
-        fontFamily: "'Rajdhani', sans-serif",
+        fontFamily: "var(--cd-font-body)",
         fontWeight: 500,
         fontSize: "0.9375rem",
         letterSpacing: "1.5px",
