@@ -1,10 +1,10 @@
 #!/bin/bash
-# purge-trash.sh — auto-purge ROM trash files older than RETENTION_DAYS
+# purge-trash.sh -- auto-purge ROM trash files older than RETENTION_DAYS
 #
-# Runs on the Docker host (10.10.5.252) as a daily cron job.
-# Operates directly on the NFS-mounted path — no API calls, no Docker exec.
+# Runs on the Docker host as a daily cron job.
+# Operates directly on the ROM storage path -- no API calls, no Docker exec.
 #
-# Install (add to root crontab on 10.10.5.252):
+# Install (add to root crontab on the Docker host):
 #   0 3 * * * /opt/cartdex/scripts/purge-trash.sh >> /var/log/cartdex-purge.log 2>&1
 #
 # The script needs to be deployed to /opt/cartdex/scripts/ on the host.

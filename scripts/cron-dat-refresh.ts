@@ -28,7 +28,7 @@
  *   --provider <id>  Only run a specific provider (repeatable).
  *   --dry-run        Print what would be fetched; skip all network + DB calls.
  *
- * Wire to systemd timer on the Claude VM (10.10.5.109):
+ * Wire to systemd timer on the host running CartDex:
  *   1. Create /etc/systemd/system/cartdex-dat-refresh.service:
  *
  *      [Unit]

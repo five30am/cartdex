@@ -45,3 +45,16 @@ next-env.d.ts
 *.db
 *.db-shm
 *.db-wal
+
+# Internal operations docs (not for public consumption)
+CLAUDE.md
+AGENTS.md
+DEPLOY.md
+
+# Keys and secrets
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+*.pub
