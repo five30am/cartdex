@@ -337,6 +337,17 @@
   --sidebar-ring: #9e7bff;
 }
 
+/* ── SNES: pixel-art icon rendering — system icon images use nearest-neighbor ── */
+[data-theme="snes"] .cd-system-icon {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* ── Tatooine: system icons rendered with smooth bilinear (default browser behavior) ── */
+[data-theme="tatooine"] .cd-system-icon {
+  image-rendering: auto;
+}
+
 /* ── SNES: hide ambient glow radials (Tatooine-only motif) ── */
 [data-theme="snes"] .sw-ambient-glow {
   display: none;
