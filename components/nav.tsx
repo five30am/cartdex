@@ -13,7 +13,7 @@ export function Nav() {
     <header
       className="sticky top-0 z-50 border-b px-6"
       style={{
-        background: "linear-gradient(180deg, #18120a 0%, #0d0a07 100%)",
+        background: "var(--cd-nav-gradient)",
         borderBottomColor: "var(--panel-border)",
       }}
     >
@@ -116,7 +116,7 @@ function NavLink({
         letterSpacing: "1.5px",
         textTransform: "uppercase",
         color: active ? "var(--sand-light)" : "var(--text-dim)",
-        background: active ? "rgba(196, 164, 108, 0.08)" : "transparent",
+        background: active ? "var(--cd-accent-tint-08)" : "transparent",
         textDecoration: "none",
       }}
     >

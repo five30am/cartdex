@@ -108,6 +108,18 @@
   --cd-glow-sand:       0 0 20px rgba(196, 164, 108, 0.15);
   --cd-glow-ochre:      0 0 12px rgba(181, 101, 29, 0.2);
 
+  /* ── Tint slots: semi-transparent accent overlays ── */
+  --cd-accent-tint-08:  rgba(196, 164, 108, 0.08);
+  --cd-accent-tint-10:  rgba(196, 164, 108, 0.10);
+  --cd-accent-tint-12:  rgba(196, 164, 108, 0.12);
+  --cd-accent-tint-15:  rgba(196, 164, 108, 0.15);
+  --cd-bg-70:           rgba(13, 10, 7, 0.70);
+  --cd-bg-50:           rgba(13, 10, 7, 0.50);
+  --cd-card-deep:       #0f0b06;
+  --cd-ochre-tint-08:   rgba(181, 101, 29, 0.08);
+  --cd-info-tint-05:    rgba(74, 122, 155, 0.05);
+  --cd-nav-gradient:    linear-gradient(180deg, #18120a 0%, #0d0a07 100%);
+
   --cd-font-heading: 'Orbitron', system-ui, sans-serif;
   --cd-font-body:    'Rajdhani', system-ui, sans-serif;
   --cd-font-mono:    'Share Tech Mono', 'Courier New', monospace;
@@ -230,6 +242,18 @@
   --cd-shadow:          #0c0a1c;
   --cd-glow-sand:       none;
   --cd-glow-ochre:      none;
+
+  /* ── Tint slots: semi-transparent accent overlays (SNES purple) ── */
+  --cd-accent-tint-08:  rgba(158, 123, 255, 0.08);
+  --cd-accent-tint-10:  rgba(158, 123, 255, 0.10);
+  --cd-accent-tint-12:  rgba(158, 123, 255, 0.12);
+  --cd-accent-tint-15:  rgba(158, 123, 255, 0.15);
+  --cd-bg-70:           rgba(15, 12, 32, 0.70);
+  --cd-bg-50:           rgba(15, 12, 32, 0.50);
+  --cd-card-deep:       #0c0a1c;
+  --cd-ochre-tint-08:   rgba(107, 78, 184, 0.08);
+  --cd-info-tint-05:    rgba(94, 156, 255, 0.05);
+  --cd-nav-gradient:    linear-gradient(180deg, #1a1530 0%, #0f0c20 100%);
 
   --cd-font-heading: 'Press Start 2P', 'Courier New', monospace;
   --cd-font-body:    'VT323', 'Courier New', monospace;

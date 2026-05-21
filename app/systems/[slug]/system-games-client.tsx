@@ -353,7 +353,7 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
               aria-pressed={viewMode === "grid"}
               className="flex items-center justify-center px-2.5 py-1.5 transition-colors"
               style={{
-                background: viewMode === "grid" ? "rgba(196,164,108,0.12)" : "transparent",
+                background: viewMode === "grid" ? "var(--cd-accent-tint-12)" : "transparent",
                 color: viewMode === "grid" ? "var(--sand)" : "var(--text-dim)",
               }}
             >
@@ -366,7 +366,7 @@ export function SystemGamesClient({ games, systemSlug }: Props) {
               className="flex items-center justify-center px-2.5 py-1.5 transition-colors"
               style={{
                 borderLeft: "1px solid var(--panel-border)",
-                background: viewMode === "table" ? "rgba(196,164,108,0.12)" : "transparent",
+                background: viewMode === "table" ? "var(--cd-accent-tint-12)" : "transparent",
                 color: viewMode === "table" ? "var(--sand)" : "var(--text-dim)",
               }}
             >

@@ -61,7 +61,7 @@ export function FacetFilterSidebar({
       className={cn("w-72 shrink-0 border-l pl-5", className)}
       style={{
         borderLeftColor: "var(--panel-border)",
-        background: "linear-gradient(270deg, rgba(13,10,7,0.5) 0%, transparent 100%)",
+        background: "linear-gradient(270deg, var(--cd-bg-50) 0%, transparent 100%)",
       }}
     >
       {/* Sidebar header */}
@@ -218,7 +218,7 @@ function FacetRow({ label, count, active, onClick, isAllOption }: FacetRowProps)
         padding: "6px 10px",
         borderLeft: `2px solid ${active ? "var(--ochre)" : "transparent"}`,
         background: active
-          ? "rgba(196,164,108,0.10)"
+          ? "var(--cd-accent-tint-10)"
           : "transparent",
         fontFamily: "var(--cd-font-body)",
         fontSize: "0.9375rem",

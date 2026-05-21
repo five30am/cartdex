@@ -69,8 +69,8 @@ function CardFavoriteButton({
         loading && "opacity-50 cursor-not-allowed"
       )}
       style={{
-        borderColor: favorite ? "rgba(196,164,108,0.6)" : "var(--panel-border)",
-        background: favorite ? "rgba(196,164,108,0.15)" : "rgba(13,10,7,0.7)",
+        borderColor: favorite ? "var(--cd-border-active)" : "var(--panel-border)",
+        background: favorite ? "var(--cd-accent-tint-15)" : "var(--cd-bg-70)",
         color: favorite ? "var(--sand)" : "var(--text-dim)",
       }}
     >
@@ -128,7 +128,7 @@ export function GameCard({
           <div
             className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center"
             style={{
-              background: "linear-gradient(145deg, var(--card-bg) 0%, #0f0b06 100%)",
+              background: "linear-gradient(145deg, var(--card-bg) 0%, var(--cd-card-deep) 100%)",
             }}
           >
             {/* Decorative background radials */}
@@ -136,7 +136,7 @@ export function GameCard({
               className="absolute inset-0"
               style={{
                 background:
-                  "radial-gradient(circle at 30% 40%, rgba(181,101,29,0.08) 0%, transparent 60%), radial-gradient(circle at 70% 70%, rgba(74,122,155,0.05) 0%, transparent 50%)",
+                  "radial-gradient(circle at 30% 40%, var(--cd-ochre-tint-08) 0%, transparent 60%), radial-gradient(circle at 70% 70%, var(--cd-info-tint-05) 0%, transparent 50%)",
               }}
             />
             <p

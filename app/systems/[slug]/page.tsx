@@ -354,7 +354,7 @@ export default async function SystemDetailPage({ params, searchParams }: Props) 
         className="px-8 pt-7 pb-6 border-b"
         style={{
           borderBottomColor: "var(--panel-border)",
-          background: "linear-gradient(180deg, rgba(26,18,8,0.5) 0%, transparent 100%)",
+          background: "linear-gradient(180deg, var(--cd-bg-50) 0%, transparent 100%)",
         }}
       >
         {/* Breadcrumb */}
