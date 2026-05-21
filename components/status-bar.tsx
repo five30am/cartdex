@@ -7,7 +7,7 @@ export function StatusBar() {
         Archive Online
       </div>
       <div className="sw-status-item">Holocron Archive System</div>
-      <div className="sw-status-item">RomVault v4.2.0</div>
+      <div className="sw-status-item">CartDex v4.2.0</div>
       <div style={{ flex: 1 }} />
       <div className="sw-status-item">// archive.holocron.v4.2</div>
     </div>

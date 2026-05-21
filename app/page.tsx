@@ -264,7 +264,7 @@ function EmptyState() {
         No games yet
       </h3>
       <p className="text-sm text-muted-foreground max-w-xs mb-6 leading-relaxed">
-        Point RomVault at your ROM directory and run a scan to populate your library.
+        Point CartDex at your ROM directory and run a scan to populate your library.
       </p>
       <code className="text-xs bg-muted border border-border text-blue-500 dark:text-blue-400 px-4 py-2.5 rounded-lg font-mono tracking-tight">
         POST /api/scan {"{ \"path\": \"/data/roms\" }"}

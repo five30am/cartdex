@@ -21,7 +21,7 @@ async function testScreenScraper(): Promise<ServiceStatus> {
       devpassword: "BHwOpPqhgFO",
       ssid: username,
       sspassword: password,
-      softname: "romvault",
+      softname: "cartdex",
       output: "json",
     });
 

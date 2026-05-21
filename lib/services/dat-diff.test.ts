@@ -30,7 +30,7 @@ let dbPath: string;
 
 before(async () => {
   const suffix = crypto.randomBytes(6).toString("hex");
-  dbPath = path.join(os.tmpdir(), `romvault-diff-test-${suffix}.db`);
+  dbPath = path.join(os.tmpdir(), `cartdex-diff-test-${suffix}.db`);
   process.env["DB_PATH"] = dbPath;
 
   // Import and run schema setup after env var is in place

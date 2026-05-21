@@ -33,7 +33,7 @@ export function Nav() {
                 color: "var(--dark-bg)",
               }}
             >
-              RV
+              CD
             </div>
             <span
               style={{
@@ -45,7 +45,7 @@ export function Nav() {
                 textTransform: "uppercase",
               }}
             >
-              RomVault
+              CartDex
             </span>
           </Link>
 

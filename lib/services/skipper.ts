@@ -1,7 +1,7 @@
 /**
  * lib/services/skipper.ts
  *
- * Headered-ROM skipper engine for RomVault.
+ * Headered-ROM skipper engine for CartDex.
  *
  * Some retro ROM formats prepend a copier/emulator-specific header that is NOT
  * part of the canonical ROM data.  DAT files (No-Intro, Redump, etc.) hash the

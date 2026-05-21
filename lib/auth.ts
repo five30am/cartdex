@@ -1,12 +1,12 @@
 /**
- * Mutation auth guard for RomVault API routes.
+ * Mutation auth guard for CartDex API routes.
  *
- * RomVault is a single-user homelab tool — no user sessions or per-user
- * permissions exist. Auth is a shared static token: set ROMVAULT_API_TOKEN
+ * CartDex is a single-user homelab tool — no user sessions or per-user
+ * permissions exist. Auth is a shared static token: set CARTDEX_API_TOKEN
  * in the container environment (or .env). Requests must supply the token
  * in the `X-Api-Token` header on all POST / PATCH / PUT / DELETE routes.
  *
- * If ROMVAULT_API_TOKEN is not set in the environment the guard logs a warning
+ * If CARTDEX_API_TOKEN is not set in the environment the guard logs a warning
  * and REJECTS all mutation requests — fail-closed, not fail-open. This prevents
  * accidentally deploying with an open API after an env misconfiguration.
  *
@@ -29,13 +29,13 @@ import { apiError, ApiErrorCode } from "@/lib/api-error";
  * Constant-time comparison is used to prevent timing-based token enumeration.
  */
 export function requireMutationAuth(req: NextRequest): ReturnType<typeof apiError> | null {
-  const expected = process.env.ROMVAULT_API_TOKEN;
+  const expected = process.env.CARTDEX_API_TOKEN;
 
   if (!expected || expected.trim() === "") {
     // Fail-closed: no token configured means no mutations allowed.
     console.warn(
-      "[auth] ROMVAULT_API_TOKEN is not set — mutation endpoints are locked. " +
-        "Set ROMVAULT_API_TOKEN in the container environment to enable writes."
+      "[auth] CARTDEX_API_TOKEN is not set — mutation endpoints are locked. " +
+        "Set CARTDEX_API_TOKEN in the container environment to enable writes."
     );
     return apiError(ApiErrorCode.UNAUTHORIZED);
   }

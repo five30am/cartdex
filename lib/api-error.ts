@@ -1,5 +1,5 @@
 /**
- * Centralized API error vocabulary for RomVault route handlers.
+ * Centralized API error vocabulary for CartDex route handlers.
  *
  * Pattern: define HTTP status + machine-readable code + human message once.
  * Call `apiError(ApiErrorCode.GAME_NOT_FOUND)` at the call site — no magic

@@ -1,7 +1,7 @@
 /**
  * Client-side API token management.
  *
- * RomVault uses a static shared token (ROMVAULT_API_TOKEN) to authenticate
+ * CartDex uses a static shared token (CARTDEX_API_TOKEN) to authenticate
  * all mutation requests. The browser fetches the token once from GET /api/config
  * on first use and caches it in sessionStorage for the lifetime of the tab.
  *
@@ -24,7 +24,7 @@
  * fail-closed guarantee from requireMutationAuth().
  */
 
-const SESSION_KEY = "romvault_api_token";
+const SESSION_KEY = "cartdex_api_token";
 
 let fetchPromise: Promise<string> | null = null;
 

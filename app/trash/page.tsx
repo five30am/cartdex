@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { TrashViewer } from "./trash-viewer";
 
-export const metadata: Metadata = { title: "Trash — RomVault" };
+export const metadata: Metadata = { title: "Trash — CartDex" };
 
 export default function TrashPage() {
   return (

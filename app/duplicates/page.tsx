@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { DuplicateBrowser } from "./duplicate-browser";
 
-export const metadata: Metadata = { title: "Duplicates — RomVault" };
+export const metadata: Metadata = { title: "Duplicates — CartDex" };
 
 export default function DuplicatesPage() {
   return (

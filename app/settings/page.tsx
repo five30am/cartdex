@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { systems } from "@/lib/db/schema";
 
 export const metadata: Metadata = {
-  title: "Settings — RomVault",
+  title: "Settings — CartDex",
 };
 
 export const dynamic = "force-dynamic";

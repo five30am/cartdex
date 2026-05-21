@@ -1,6 +1,6 @@
-# RomVault UI Reskin — Star Wars / Earth Tone Theme
+# CartDex UI Reskin — Star Wars / Earth Tone Theme
 
-Reskin the existing RomVault web frontend to match the design reference file at `romvault_starwars.html` (attached/in project root). This is a complete visual overhaul — the app's functionality, routing, and data layer stay the same. Only the CSS/styling, fonts, and minor structural HTML changes are needed.
+Reskin the existing CartDex web frontend to match the design reference file at `romvault_starwars.html` (attached/in project root). This is a complete visual overhaul — the app's functionality, routing, and data layer stay the same. Only the CSS/styling, fonts, and minor structural HTML changes are needed.
 
 ## Design Direction
 

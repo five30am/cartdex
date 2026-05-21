@@ -5,6 +5,6 @@ export default {
   out: "./drizzle",
   dialect: "sqlite",
   dbCredentials: {
-    url: process.env.DB_PATH ?? "./data/romvault.db",
+    url: process.env.DB_PATH ?? "./data/cartdex.db",
   },
 } satisfies Config;

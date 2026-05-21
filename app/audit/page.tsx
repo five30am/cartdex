@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { AuditLog } from "./audit-log";
 
-export const metadata: Metadata = { title: "Audit Log — RomVault" };
+export const metadata: Metadata = { title: "Audit Log — CartDex" };
 
 export default function AuditPage() {
   return (

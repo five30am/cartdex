@@ -29,22 +29,22 @@
  *   --dry-run        Print what would be fetched; skip all network + DB calls.
  *
  * Wire to systemd timer on the Claude VM (10.10.5.109):
- *   1. Create /etc/systemd/system/romvault-dat-refresh.service:
+ *   1. Create /etc/systemd/system/cartdex-dat-refresh.service:
  *
  *      [Unit]
- *      Description=RomVault weekly DAT refresh
+ *      Description=CartDex weekly DAT refresh
  *
  *      [Service]
  *      Type=oneshot
- *      WorkingDirectory=/path/to/romvault
+ *      WorkingDirectory=/path/to/cartdex
  *      ExecStart=npx tsx scripts/cron-dat-refresh.ts
  *      StandardOutput=journal
  *      StandardError=journal
  *
- *   2. Create /etc/systemd/system/romvault-dat-refresh.timer:
+ *   2. Create /etc/systemd/system/cartdex-dat-refresh.timer:
  *
  *      [Unit]
- *      Description=Run RomVault DAT refresh weekly
+ *      Description=Run CartDex DAT refresh weekly
  *
  *      [Timer]
  *      OnCalendar=Sun *-*-* 02:00:00
@@ -54,8 +54,8 @@
  *      WantedBy=timers.target
  *
  *   3. sudo systemctl daemon-reload
- *      sudo systemctl enable --now romvault-dat-refresh.timer
- *      sudo systemctl list-timers romvault-dat-refresh.timer
+ *      sudo systemctl enable --now cartdex-dat-refresh.timer
+ *      sudo systemctl list-timers cartdex-dat-refresh.timer
  *
  * IMPORTANT — NO module-init side effects:
  *   This file imports library modules that register their own side effects only
@@ -144,7 +144,7 @@ let totalFetched = 0;
 let totalDuplicates = 0;
 let totalErrors = 0;
 
-console.log(`\nRomVault DAT Refresh`);
+console.log(`\nCartDex DAT Refresh`);
 console.log(`====================`);
 console.log(`Mode       : ${dryRun ? "DRY RUN (no network or DB writes)" : "LIVE"}`);
 console.log(`Providers  : ${targetProviders.map((p) => p.id).join(", ")}`);

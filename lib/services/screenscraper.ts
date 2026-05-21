@@ -203,7 +203,7 @@ async function fetchFromScreenScraper(params: URLSearchParams): Promise<ScreenSc
   params.set("devpassword", devPassword);
   params.set("ssid", username);
   params.set("sspassword", password);
-  params.set("softname", "romvault");
+  params.set("softname", "cartdex");
   params.set("output", "json");
 
   await rateLimit();

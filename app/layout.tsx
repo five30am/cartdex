@@ -6,7 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { StatusBar } from "@/components/status-bar";
 
 export const metadata: Metadata = {
-  title: "RomVault",
+  title: "CartDex",
   description: "Self-hosted ROM library manager",
 };
 

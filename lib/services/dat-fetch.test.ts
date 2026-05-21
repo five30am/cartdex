@@ -83,7 +83,7 @@ let dbPath: string;
 
 before(async () => {
   const suffix = crypto.randomBytes(6).toString("hex");
-  dbPath = path.join(os.tmpdir(), `romvault-fetch-test-${suffix}.db`);
+  dbPath = path.join(os.tmpdir(), `cartdex-fetch-test-${suffix}.db`);
 
   // Point the DB module at our temp file via env var before importing.
   // The db singleton reads DATABASE_PATH at module init time.

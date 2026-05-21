@@ -4,7 +4,7 @@ import * as schema from "./schema";
 import path from "path";
 import fs from "fs";
 
-const DB_PATH = process.env.DB_PATH ?? path.join(process.cwd(), "data", "romvault.db");
+const DB_PATH = process.env.DB_PATH ?? path.join(process.cwd(), "data", "cartdex.db");
 
 // Ensure data directory exists
 const dbDir = path.dirname(DB_PATH);

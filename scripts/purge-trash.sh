@@ -5,9 +5,9 @@
 # Operates directly on the NFS-mounted path — no API calls, no Docker exec.
 #
 # Install (add to root crontab on 10.10.5.252):
-#   0 3 * * * /opt/romvault/scripts/purge-trash.sh >> /var/log/romvault-purge.log 2>&1
+#   0 3 * * * /opt/cartdex/scripts/purge-trash.sh >> /var/log/cartdex-purge.log 2>&1
 #
-# The script needs to be deployed to /opt/romvault/scripts/ on the host.
+# The script needs to be deployed to /opt/cartdex/scripts/ on the host.
 # See DEPLOY.md for the full deployment procedure.
 
 set -euo pipefail

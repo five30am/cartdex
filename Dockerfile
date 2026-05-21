@@ -49,7 +49,7 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 # DB stored in /data volume; ROM files mounted at /roms by default
-ENV DB_PATH=/data/romvault.db
+ENV DB_PATH=/data/cartdex.db
 ENV ROM_ROOT=/roms
 
 # Metadata scraping credentials — set via docker-compose environment or -e flags
