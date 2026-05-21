@@ -53,6 +53,7 @@ export async function PUT(req: NextRequest) {
     path: "/",
     sameSite: "lax",
     httpOnly: false, // must be readable by the inline FOUC script
+    secure: process.env.NODE_ENV === "production",
   });
 
   return NextResponse.json({ ok: true, theme });
