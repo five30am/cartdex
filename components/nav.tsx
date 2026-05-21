@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ActionButtons } from "@/components/action-buttons";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Settings, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -66,8 +65,6 @@ export function Nav() {
         {/* Actions */}
         <div className="flex items-center gap-2">
           <ActionButtons />
-          <div className="w-px h-5" style={{ background: "var(--panel-border)" }} />
-          <ThemeToggle />
           <div className="w-px h-5" style={{ background: "var(--panel-border)" }} />
           <Link
             href="/audit"

@@ -378,8 +378,21 @@ export function ensureSchema() {
         `UPDATE games SET system_id = ? WHERE system_id = ? AND (file_path LIKE '%/arcade/%' OR file_path LIKE '%\\arcade\\%')`
       ).run(arcadeSystem.id, psx.id);
       if (fix.changes > 0) {
-        console.log(`  Reassigned ${fix.changes} arcade CHDs from psx → arcade system`);
+        console.log(`  Reassigned ${fix.changes} arcade CHDs from psx -> arcade system`);
       }
     }
   }
+
+  // ---------------------------------------------------------------------------
+  // Theming v1: user_preferences table
+  // Separate from settings (API keys + ROM paths). Stores user display preferences.
+  // ---------------------------------------------------------------------------
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS user_preferences (
+      key        TEXT PRIMARY KEY,
+      value      TEXT NOT NULL,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+  `);
+  console.log("  Ensured user_preferences table exists");
 }

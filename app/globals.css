@@ -1,4 +1,13 @@
+/*
+  Font loading strategy: both theme font sets are loaded upfront.
+  The app is self-hosted and single-user -- the payload cost is acceptable
+  for v1. Per-theme conditional loading is a future optimization.
+  Tatooine fonts (existing):
+*/
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap');
+/* SNES fonts: */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -8,9 +17,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: 'Rajdhani', system-ui, sans-serif;
-  --font-mono: 'Share Tech Mono', monospace;
-  --font-heading: 'Orbitron', system-ui, sans-serif;
+  --font-sans: var(--cd-font-body, 'Rajdhani', system-ui, sans-serif);
+  --font-mono: var(--cd-font-mono, 'Share Tech Mono', monospace);
+  --font-heading: var(--cd-font-heading, 'Orbitron', system-ui, sans-serif);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,9 +58,14 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* ═══ Star Wars / Earth Tone Palette ═══ */
+/* ═══════════════════════════════════════════════════════
+   THEME: TATOOINE (default)
+   Preserves all existing --sw-* raw tokens for backward compat.
+   Adds --cd-* abstraction layer for the theme switcher.
+   ═══════════════════════════════════════════════════════ */
+[data-theme="tatooine"],
 :root {
-  /* Raw palette tokens */
+  /* ── Raw palette tokens (--sw-* kept for backward compat) ── */
   --sand: #c4a46c;
   --sand-light: #d4bb8a;
   --sand-dim: #8a7450;
@@ -74,7 +88,53 @@
   --glow-sand: 0 0 20px rgba(196, 164, 108, 0.15);
   --glow-ochre: 0 0 12px rgba(181, 101, 29, 0.2);
 
-  /* shadcn semantic tokens mapped to the dark theme — this UI is always-dark */
+  /* ── CartDex theme namespace (--cd-*) ── */
+  --cd-bg:              #0d0a07;
+  --cd-panel:           #151009;
+  --cd-card:            #1a1208;
+  --cd-border:          #2a1f14;
+  --cd-border-active:   #8a7450;
+  --cd-text:            #d4c4a0;
+  --cd-text-dim:        #7a6b52;
+  --cd-text-faint:      #4a3d2a;
+  --cd-text-bright:     #e8dcc4;
+  --cd-accent-primary:  #c4a46c;
+  --cd-accent-secondary: #b5651d;
+  --cd-accent-success:  #4a6b3a;
+  --cd-accent-warn:     #c4a46c;
+  --cd-accent-danger:   #8b3a3a;
+  --cd-accent-info:     #4a7a9b;
+  --cd-shadow:          rgba(0,0,0,0.4);
+  --cd-glow-sand:       0 0 20px rgba(196, 164, 108, 0.15);
+  --cd-glow-ochre:      0 0 12px rgba(181, 101, 29, 0.2);
+
+  --cd-font-heading: 'Orbitron', system-ui, sans-serif;
+  --cd-font-body:    'Rajdhani', system-ui, sans-serif;
+  --cd-font-mono:    'Share Tech Mono', 'Courier New', monospace;
+
+  --cd-radius-none: 0px;
+  --cd-radius-sm:   3px;
+  --cd-radius-md:   6px;
+  --cd-radius-lg:   10px;
+  --cd-radius-full: 9999px;
+
+  --cd-shadow-card:       0 0 0 0 transparent;
+  --cd-shadow-card-hover: 0 0 20px rgba(196, 164, 108, 0.15);
+  --cd-card-border-width: 1px;
+  --cd-scanline-opacity:  0.03;
+
+  --cd-space-1:  4px;
+  --cd-space-2:  8px;
+  --cd-space-3:  12px;
+  --cd-space-4:  16px;
+  --cd-space-5:  20px;
+  --cd-space-6:  24px;
+  --cd-space-8:  32px;
+  --cd-space-10: 40px;
+  --cd-space-12: 48px;
+  --cd-space-16: 64px;
+
+  /* ── shadcn semantic tokens (Tatooine dark) ── */
   --background: #0d0a07;
   --foreground: #d4c4a0;
   --card: #1a1208;
@@ -109,7 +169,7 @@
   --sidebar-ring: #c4a46c;
 }
 
-/* Dark class mirrors :root — this theme is always dark */
+/* Tatooine dark mirrors :root — kept for any existing .dark class references */
 .dark {
   --background: #0d0a07;
   --foreground: #d4c4a0;
@@ -144,14 +204,153 @@
   --sidebar-ring: #c4a46c;
 }
 
+/* ═══════════════════════════════════════════════════════
+   THEME: SNES
+   Sets --cd-* tokens and aliases --sw-* so existing
+   components reading --sw-* vars get SNES values.
+   Sets --background / --foreground etc. for shadcn compat.
+   ═══════════════════════════════════════════════════════ */
+[data-theme="snes"] {
+  /* ── CartDex tokens ── */
+  --cd-bg:              #1a1530;
+  --cd-panel:           #0f0c20;
+  --cd-card:            #241d3d;
+  --cd-border:          #3a3060;
+  --cd-border-active:   #9e7bff;
+  --cd-text:            #e8e3ff;
+  --cd-text-dim:        #a89bd6;
+  --cd-text-faint:      #7a6da8;
+  --cd-text-bright:     #e8e3ff;
+  --cd-accent-primary:  #9e7bff;
+  --cd-accent-secondary: #6b4eb8;
+  --cd-accent-success:  #4eb84a;
+  --cd-accent-warn:     #ffb73a;
+  --cd-accent-danger:   #e84a4a;
+  --cd-accent-info:     #5e9cff;
+  --cd-shadow:          #0c0a1c;
+  --cd-glow-sand:       none;
+  --cd-glow-ochre:      none;
+
+  --cd-font-heading: 'Press Start 2P', 'Courier New', monospace;
+  --cd-font-body:    'VT323', 'Courier New', monospace;
+  --cd-font-mono:    'JetBrains Mono', 'Courier New', monospace;
+
+  --cd-radius-none: 0px;
+  --cd-radius-sm:   0px;
+  --cd-radius-md:   0px;
+  --cd-radius-lg:   0px;
+  --cd-radius-full: 0px;
+
+  --cd-shadow-card:       3px 3px 0 0 #0c0a1c;
+  --cd-shadow-card-hover: 4px 4px 0 0 #0c0a1c;
+  --cd-card-border-width: 2px;
+  --cd-scanline-opacity:  0.05;
+
+  /* Spacing identical to Tatooine */
+  --cd-space-1:  4px;
+  --cd-space-2:  8px;
+  --cd-space-3:  12px;
+  --cd-space-4:  16px;
+  --cd-space-5:  20px;
+  --cd-space-6:  24px;
+  --cd-space-8:  32px;
+  --cd-space-10: 40px;
+  --cd-space-12: 48px;
+  --cd-space-16: 64px;
+
+  /* ── Alias --sw-* to SNES values so existing components work ── */
+  --sand:         #9e7bff;
+  --sand-light:   #b89bff;
+  --sand-dim:     #6b4eb8;
+  --ochre:        #6b4eb8;
+  --ochre-glow:   #9e7bff;
+  --dark-bg:      #1a1530;
+  --panel-bg:     #0f0c20;
+  --panel-border: #3a3060;
+  --card-bg:      #241d3d;
+  --card-hover:   #2d2450;
+  --text-primary: #e8e3ff;
+  --text-dim:     #a89bd6;
+  --text-bright:  #e8e3ff;
+  --accent-blue:  #5e9cff;
+  --sw-danger:    #e84a4a;
+  --sw-success:   #4eb84a;
+  --glow-sand:    none;
+  --glow-ochre:   none;
+
+  /* ── shadcn semantic tokens (SNES) ── */
+  --background: #1a1530;
+  --foreground: #e8e3ff;
+  --card: #241d3d;
+  --card-foreground: #e8e3ff;
+  --popover: #0f0c20;
+  --popover-foreground: #e8e3ff;
+  --primary: #9e7bff;
+  --primary-foreground: #1a1530;
+  --secondary: #241d3d;
+  --secondary-foreground: #e8e3ff;
+  --muted: #241d3d;
+  --muted-foreground: #a89bd6;
+  --accent: #2d2450;
+  --accent-foreground: #e8e3ff;
+  --destructive: #e84a4a;
+  --border: #3a3060;
+  --input: #241d3d;
+  --ring: #9e7bff;
+  --chart-1: #9e7bff;
+  --chart-2: #6b4eb8;
+  --chart-3: #5e9cff;
+  --chart-4: #e84a4a;
+  --chart-5: #4eb84a;
+  --radius: 0rem;
+  --sidebar: #0f0c20;
+  --sidebar-foreground: #e8e3ff;
+  --sidebar-primary: #9e7bff;
+  --sidebar-primary-foreground: #1a1530;
+  --sidebar-accent: #2d2450;
+  --sidebar-accent-foreground: #e8e3ff;
+  --sidebar-border: #3a3060;
+  --sidebar-ring: #9e7bff;
+}
+
+/* ── SNES: hide ambient glow radials (Tatooine-only motif) ── */
+[data-theme="snes"] .sw-ambient-glow {
+  display: none;
+}
+
+/* ── SNES: hard-offset card shadow replaces lift + glow ── */
+[data-theme="snes"] .game-card-animated {
+  border-width: 2px;
+  border-color: var(--cd-border);
+  box-shadow: var(--cd-shadow-card);
+  transition: transform 0.1s steps(3, end), box-shadow 0.1s steps(3, end), border-color 0.1s steps(2, end);
+}
+
+[data-theme="snes"] .group:hover .game-thumb-hologram::after {
+  display: none;
+}
+
+/* ── SNES: zero border-radius overrides ── */
+[data-theme="snes"] input,
+[data-theme="snes"] button,
+[data-theme="snes"] .rounded-xl,
+[data-theme="snes"] .rounded-lg,
+[data-theme="snes"] .rounded-md,
+[data-theme="snes"] [class*="rounded"] {
+  border-radius: 0 !important;
+}
+
+/* ═══════════════════════════════════════════════════════
+   BASE STYLES (apply to all themes)
+   ═══════════════════════════════════════════════════════ */
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
-    background: var(--dark-bg);
-    color: var(--text-primary);
-    font-family: 'Rajdhani', system-ui, sans-serif;
+    background: var(--cd-bg, var(--dark-bg));
+    color: var(--cd-text, var(--text-primary));
+    font-family: var(--cd-font-body, 'Rajdhani', system-ui, sans-serif);
     font-feature-settings: "kern" 1, "liga" 1;
     -webkit-font-smoothing: antialiased;
     min-height: 100vh;
@@ -160,12 +359,12 @@
     padding-bottom: 44px;
   }
   html {
-    font-family: 'Rajdhani', system-ui, sans-serif;
-    /* Scale all rem-based sizing 1.5× for readability */
+    font-family: var(--cd-font-body, 'Rajdhani', system-ui, sans-serif);
+    /* Scale all rem-based sizing 1.5x for readability */
     font-size: 150%;
   }
 
-  /* Scanline overlay */
+  /* Scanline overlay — opacity driven by theme token */
   body::after {
     content: '';
     position: fixed;
@@ -176,8 +375,8 @@
       0deg,
       transparent,
       transparent 2px,
-      rgba(0, 0, 0, 0.03) 2px,
-      rgba(0, 0, 0, 0.03) 4px
+      rgba(0, 0, 0, var(--cd-scanline-opacity, 0.03)) 2px,
+      rgba(0, 0, 0, var(--cd-scanline-opacity, 0.03)) 4px
     );
   }
 
@@ -187,15 +386,72 @@
     height: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: var(--dark-bg);
+    background: var(--cd-bg, var(--dark-bg));
   }
   ::-webkit-scrollbar-thumb {
-    background: var(--panel-border);
-    border-radius: 3px;
+    background: var(--cd-border, var(--panel-border));
+    border-radius: var(--cd-radius-sm, 3px);
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--sand-dim);
+    background: var(--cd-border-active, var(--sand-dim));
   }
+}
+
+/* ═══ SNES: status bar ═══ */
+[data-theme="snes"] .cd-status-bar,
+[data-theme="snes"] .sw-status-bar {
+  font-family: var(--cd-font-mono);
+}
+
+[data-theme="snes"] .cd-status-dot,
+[data-theme="snes"] .sw-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 0;
+  background: var(--cd-accent-success);
+  box-shadow: none;
+  animation: cd-blink 1.6s steps(1, end) infinite;
+}
+
+@keyframes cd-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* Tatooine status dot stays circular (no animation) */
+[data-theme="tatooine"] .cd-status-dot,
+[data-theme="tatooine"] .sw-status-dot {
+  animation: none;
+}
+
+/* ═══ ThemeDivider: cartridge-slot notch (SNES) ═══ */
+.cd-divider {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin: var(--cd-space-10, 40px) 0;
+}
+
+.cd-divider::before {
+  content: '';
+  height: 3px;
+  width: 32px;
+  background: var(--cd-border);
+  flex-shrink: 0;
+}
+
+.cd-divider-notch {
+  width: 10px;
+  height: 11px;
+  background: var(--cd-accent-primary);
+  flex-shrink: 0;
+}
+
+.cd-divider::after {
+  content: '';
+  height: 3px;
+  flex: 1;
+  background: var(--cd-border);
 }
 
 /* ═══ Keyframe animations ═══ */
@@ -237,11 +493,21 @@
 .game-card-animated:nth-child(17) { animation-delay: 0.34s; }
 .game-card-animated:nth-child(18) { animation-delay: 0.36s; }
 
+/* ═══ SNES card entry: steps() easing ═══ */
+[data-theme="snes"] .game-card-animated {
+  animation: cd-enter 0.3s steps(6, end) both;
+}
+
+@keyframes cd-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* ═══ Game card hover states ═══ */
 .game-card-animated {
   transition: transform 0.25s ease;
 }
-.group:hover.game-card-animated {
+.group:hover .game-card-animated {
   transform: translateY(-4px);
 }
 .group:hover .game-thumb-hologram {
@@ -249,7 +515,7 @@
   box-shadow: var(--glow-sand) !important;
 }
 
-/* ═══ Hologram scan effect ═══ */
+/* ═══ Hologram scan effect (Tatooine only) ═══ */
 .game-thumb-hologram {
   position: relative;
   overflow: hidden;
@@ -277,23 +543,24 @@
 .cover-shimmer {
   background: linear-gradient(
     90deg,
-    #1a1208 25%,
-    #221a0f 50%,
-    #1a1208 75%
+    var(--cd-card, #1a1208) 25%,
+    var(--cd-border, #221a0f) 50%,
+    var(--cd-card, #1a1208) 75%
   );
   background-size: 200% 100%;
   animation: shimmer-sweep 1.6s ease-in-out infinite;
 }
 
 /* ═══ Status bar ═══ */
-.sw-status-bar {
+.sw-status-bar,
+.cd-status-bar {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   height: 44px;
-  background: var(--panel-bg);
-  border-top: 1px solid var(--panel-border);
+  background: var(--cd-panel, var(--panel-bg));
+  border-top: 1px solid var(--cd-border, var(--panel-border));
   display: flex;
   align-items: center;
   padding: 0 1rem;
@@ -301,55 +568,57 @@
   z-index: 100;
 }
 
-.sw-status-item {
-  font-family: 'Share Tech Mono', monospace;
+.sw-status-item,
+.cd-status-item {
+  font-family: var(--cd-font-mono, 'Share Tech Mono', monospace);
   font-size: 0.5rem;
   letter-spacing: 0.0625rem;
   text-transform: uppercase;
-  color: var(--text-dim);
+  color: var(--cd-text-dim, var(--text-dim));
   display: flex;
   align-items: center;
   gap: 0.375rem;
 }
 
-.sw-status-dot {
+.sw-status-dot,
+.cd-status-dot {
   width: 6px;
   height: 6px;
-  border-radius: 50%;
-  background: var(--sw-success);
+  border-radius: var(--cd-radius-full, 50%);
+  background: var(--cd-accent-success, var(--sw-success));
   box-shadow: 0 0 6px rgba(74, 107, 58, 0.5);
   flex-shrink: 0;
 }
 
-/* ═══ Nav/action buttons ═══ */
+/* ═══ Nav / action buttons ═══ */
 .sw-nav-btn:hover {
-  border-color: var(--sand-dim) !important;
-  color: var(--sand) !important;
+  border-color: var(--cd-border-active, var(--sand-dim)) !important;
+  color: var(--cd-accent-primary, var(--sand)) !important;
   background: rgba(196, 164, 108, 0.05) !important;
 }
 
 /* ═══ Breadcrumb ═══ */
 .sw-breadcrumb:hover {
-  color: var(--sand) !important;
+  color: var(--cd-accent-primary, var(--sand)) !important;
 }
 
 /* ═══ Search input ═══ */
 .sw-search-input::placeholder {
-  color: var(--text-dim);
+  color: var(--cd-text-dim, var(--text-dim));
   font-style: italic;
 }
 .sw-search-input:focus {
-  border-color: var(--sand-dim) !important;
+  border-color: var(--cd-border-active, var(--sand-dim)) !important;
   box-shadow: 0 0 0 2px rgba(196, 164, 108, 0.1);
 }
 
 /* ═══ Facet filter hover states ═══ */
 .facet-row:hover {
   background: rgba(196, 164, 108, 0.06) !important;
-  border-left-color: var(--sand-dim) !important;
+  border-left-color: var(--cd-border-active, var(--sand-dim)) !important;
 }
 
-/* ═══ Ambient glow elements ═══ */
+/* ═══ Ambient glow elements (Tatooine) ═══ */
 .sw-ambient-glow {
   position: fixed;
   pointer-events: none;
@@ -368,4 +637,13 @@
   width: 500px;
   height: 500px;
   background: radial-gradient(circle, rgba(74, 122, 155, 0.03) 0%, transparent 70%);
+}
+
+/* ═══ prefers-reduced-motion: no transitions on theme switch ═══ */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -129,6 +129,14 @@ export const settings = sqliteTable("settings", {
     .default(sql`(datetime('now'))`),
 });
 
+export const user_preferences = sqliteTable("user_preferences", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updated_at: text("updated_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
 // ---------------------------------------------------------------------------
 // DAT auditing — Ticket 1 (schema + storage foundation)
 // ---------------------------------------------------------------------------
