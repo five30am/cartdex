@@ -202,10 +202,10 @@ function SystemCard({
         {/* Console image area */}
         <div className="relative h-32 w-full bg-muted/40 overflow-hidden">
           <Image
-            src={`/images/systems/${system.slug}.png`}
+            src={`/icons/systems/${system.slug}-64.png`}
             alt={system.name}
             fill
-            className="object-contain p-5 opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300"
+            className="cd-system-icon object-contain p-4 opacity-80 group-hover:opacity-100 transition-all duration-200"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
           />
           {/* Subtle bottom fade */}
