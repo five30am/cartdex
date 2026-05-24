@@ -36,18 +36,47 @@ jobs:
             ghcr.io/five30am/cartdex:latest
             ghcr.io/five30am/cartdex:${{ steps.sha.outputs.short }}
 
-      - name: Trigger Portainer redeploy via webhook
+      - name: Trigger Portainer redeploy via API
         env:
           PORTAINER_URL: ${{ secrets.PORTAINER_URL }}
-          PORTAINER_WEBHOOK_TOKEN: ${{ secrets.PORTAINER_WEBHOOK_TOKEN }}
+          PORTAINER_API_KEY: ${{ secrets.PORTAINER_API_KEY }}
+          PORTAINER_STACK_ID: ${{ secrets.PORTAINER_STACK_ID }}
+          PORTAINER_ENDPOINT_ID: ${{ secrets.PORTAINER_ENDPOINT_ID }}
         run: |
-          echo "Triggering Portainer stack webhook..."
-          HTTP_STATUS=$(curl -sk -o /dev/null -w "%{http_code}" -X POST \
-            "${PORTAINER_URL}/api/stacks/webhooks/${PORTAINER_WEBHOOK_TOKEN}")
-          echo "Response status: $HTTP_STATUS"
-          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
-            echo "Redeploy triggered successfully."
+          # Guard: skip gracefully if secrets are not configured.
+          if [ -z "${PORTAINER_URL}" ] || [ -z "${PORTAINER_API_KEY}" ] || \
+             [ -z "${PORTAINER_STACK_ID}" ] || [ -z "${PORTAINER_ENDPOINT_ID}" ]; then
+            echo "WARNING: One or more Portainer secrets are not set."
+            echo "  Required: PORTAINER_URL, PORTAINER_API_KEY, PORTAINER_STACK_ID, PORTAINER_ENDPOINT_ID"
+            echo "The image was pushed to ghcr.io successfully."
+            echo "Manual redeploy needed: Portainer stack ${PORTAINER_STACK_ID:-<unset>} on ${PORTAINER_URL:-<unset>}"
+            exit 0
+          fi
+
+          echo "Fetching current stack file from Portainer..."
+          STACK_FILE=$(curl -sf -H "X-API-Key: ${PORTAINER_API_KEY}" \
+            "${PORTAINER_URL}/api/stacks/${PORTAINER_STACK_ID}/file" \
+            | python3 -c "import sys,json; print(json.load(sys.stdin)['StackFileContent'])")
+
+          if [ -z "${STACK_FILE}" ]; then
+            echo "ERROR: Could not retrieve stack file from Portainer. Manual redeploy needed."
+            exit 1
+          fi
+
+          echo "Redeploying stack ${PORTAINER_STACK_ID} (pull latest image)..."
+          HTTP_STATUS=$(curl -sk -o /tmp/portainer-redeploy.json -w "%{http_code}" \
+            -X PUT \
+            -H "X-API-Key: ${PORTAINER_API_KEY}" \
+            -H "Content-Type: application/json" \
+            "${PORTAINER_URL}/api/stacks/${PORTAINER_STACK_ID}?endpointId=${PORTAINER_ENDPOINT_ID}" \
+            -d "{\"stackFileContent\": $(python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))' <<< "${STACK_FILE}"), \"pullImage\": true, \"prune\": false}")
+
+          echo "Portainer API response: HTTP ${HTTP_STATUS}"
+          cat /tmp/portainer-redeploy.json || true
+
+          if [ "${HTTP_STATUS}" -ge 200 ] && [ "${HTTP_STATUS}" -lt 300 ]; then
+            echo "Portainer redeploy triggered successfully."
           else
-            echo "ERROR: Webhook returned HTTP $HTTP_STATUS"
+            echo "ERROR: Portainer API returned HTTP ${HTTP_STATUS}. Manual redeploy may be needed."
             exit 1
           fi
