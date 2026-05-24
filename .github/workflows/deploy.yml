@@ -54,7 +54,7 @@ jobs:
           fi
 
           echo "Fetching current stack file from Portainer..."
-          STACK_FILE=$(curl -sf -H "X-API-Key: ${PORTAINER_API_KEY}" \
+          STACK_FILE=$(curl -skf -H "X-API-Key: ${PORTAINER_API_KEY}" \
             "${PORTAINER_URL}/api/stacks/${PORTAINER_STACK_ID}/file" \
             | python3 -c "import sys,json; print(json.load(sys.stdin)['StackFileContent'])")
 
