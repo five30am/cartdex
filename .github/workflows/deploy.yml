@@ -39,23 +39,30 @@ jobs:
       - name: Trigger Portainer redeploy via API
         env:
           PORTAINER_URL: ${{ secrets.PORTAINER_URL }}
-          PORTAINER_API_KEY: ${{ secrets.PORTAINER_API_KEY }}
-          PORTAINER_STACK_ID: ${{ secrets.PORTAINER_STACK_ID }}
-          PORTAINER_ENDPOINT_ID: ${{ secrets.PORTAINER_ENDPOINT_ID }}
+          PORTAINER_KEY: ${{ secrets.PORTAINER_KEY }}
+          CARTDEX_API_TOKEN: ${{ secrets.CARTDEX_API_TOKEN }}
         run: |
+          # Stack 52 (cartdex) is a standalone compose stack -- the webhook endpoint
+          # POST /api/stacks/webhooks/:token only works for git-backed stacks and will
+          # 404 for standalone stacks. Use PUT /api/stacks/:id?endpointId=:endpointId
+          # with an explicit API key instead.
+          #
+          # IMPORTANT: Portainer's PUT endpoint REPLACES the env array -- it does not
+          # merge. CARTDEX_API_TOKEN must be included in every PUT or it will be wiped
+          # on the next container start, locking all API mutations.
+
           # Guard: skip gracefully if secrets are not configured.
-          if [ -z "${PORTAINER_URL}" ] || [ -z "${PORTAINER_API_KEY}" ] || \
-             [ -z "${PORTAINER_STACK_ID}" ] || [ -z "${PORTAINER_ENDPOINT_ID}" ]; then
-            echo "WARNING: One or more Portainer secrets are not set."
-            echo "  Required: PORTAINER_URL, PORTAINER_API_KEY, PORTAINER_STACK_ID, PORTAINER_ENDPOINT_ID"
+          if [ -z "${PORTAINER_URL}" ] || [ -z "${PORTAINER_KEY}" ] || [ -z "${CARTDEX_API_TOKEN}" ]; then
+            echo "WARNING: One or more required secrets are not set."
+            echo "  Required: PORTAINER_URL, PORTAINER_KEY, CARTDEX_API_TOKEN"
             echo "The image was pushed to ghcr.io successfully."
-            echo "Manual redeploy needed: Portainer stack ${PORTAINER_STACK_ID:-<unset>} on ${PORTAINER_URL:-<unset>}"
+            echo "Manual redeploy needed: Portainer stack 52 on ${PORTAINER_URL:-<unset>}"
             exit 0
           fi
 
           echo "Fetching current stack file from Portainer..."
-          STACK_FILE=$(curl -skf -H "X-API-Key: ${PORTAINER_API_KEY}" \
-            "${PORTAINER_URL}/api/stacks/${PORTAINER_STACK_ID}/file" \
+          STACK_FILE=$(curl -skf -H "X-API-Key: ${PORTAINER_KEY}" \
+            "${PORTAINER_URL}/api/stacks/52/file" \
             | python3 -c "import sys,json; print(json.load(sys.stdin)['StackFileContent'])")
 
           if [ -z "${STACK_FILE}" ]; then
@@ -63,13 +70,18 @@ jobs:
             exit 1
           fi
 
-          echo "Redeploying stack ${PORTAINER_STACK_ID} (pull latest image)..."
+          echo "Redeploying stack 52 (endpointId=3, pull latest image)..."
           HTTP_STATUS=$(curl -sk -o /tmp/portainer-redeploy.json -w "%{http_code}" \
             -X PUT \
-            -H "X-API-Key: ${PORTAINER_API_KEY}" \
+            -H "X-API-Key: ${PORTAINER_KEY}" \
             -H "Content-Type: application/json" \
-            "${PORTAINER_URL}/api/stacks/${PORTAINER_STACK_ID}?endpointId=${PORTAINER_ENDPOINT_ID}" \
-            -d "{\"stackFileContent\": $(python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))' <<< "${STACK_FILE}"), \"pullImage\": true, \"prune\": false}")
+            "${PORTAINER_URL}/api/stacks/52?endpointId=3" \
+            -d "{
+              \"stackFileContent\": $(python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))' <<< "${STACK_FILE}"),
+              \"env\": [{\"name\": \"CARTDEX_API_TOKEN\", \"value\": \"${CARTDEX_API_TOKEN}\"}],
+              \"pullImage\": true,
+              \"prune\": false
+            }")
 
           echo "Portainer API response: HTTP ${HTTP_STATUS}"
           cat /tmp/portainer-redeploy.json || true
