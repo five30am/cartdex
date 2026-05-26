@@ -113,6 +113,17 @@ export async function GET(
 
     // Optional: per-entry detail for a specific diff
     if (diffId !== null) {
+      // Verify the requested diff_id belongs to the same logical DAT as [id].
+      // getDiffTimeline returns all diffs for the DAT name that `datId` maps to,
+      // so any diff_id not in that set either doesn't exist or belongs to a
+      // different DAT entirely. Accepting an unvalidated diff_id would let any
+      // authenticated caller read another DAT's change history by guessing IDs —
+      // a no-op risk in single-user mode but a real authz gap under multi-user.
+      const diffBelongsToDat = timeline.some((entry) => entry.id === diffId);
+      if (!diffBelongsToDat) {
+        return apiErrorWithDetail(ApiErrorCode.INVALID_INPUT, "diff_id does not belong to this DAT");
+      }
+
       const total = getDiffEntryCount(diffId, changeType);
       const items = getDiffEntries(diffId, limit, offset, changeType);
 

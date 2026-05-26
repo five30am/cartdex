@@ -174,39 +174,36 @@ export async function fetchDat(options: FetchDatOptions): Promise<FetchDatResult
   // UPDATE after the insert. The transaction in ingestDat ensures the row exists
   // by the time we update it, and we're in the same process/connection.
 
-  // Before ingest: find the most recent existing DAT with the same name + this
-  // provider's source_kind "fetch". If found, we'll diff the new version against
-  // it after ingest.
+  // Before ingest: find the previous DAT ingested for this exact (provider, slug)
+  // pair by reading the dat_fetch_prev_id settings key.
   //
-  // We look up by name because there's no provider-ID column on dats — the
-  // logical DAT name is the stable identity used by the diff timeline. We only
-  // diff fetch-sourced DATs (not manual uploads) because the auto-diff workflow
-  // is specifically for tracking upstream provider changes.
+  // This scoping is critical for multi-provider correctness: two providers can
+  // produce DATs with the same logical name (e.g. both serve a "NES" DAT). A
+  // global most-recent-fetch query would silently pick the wrong provider's DAT
+  // as the diff base. Using the per-(provider, slug) settings key guarantees we
+  // always diff against the previous fetch from the same source.
+  //
+  // Key pattern mirrors the last-modified key: dat_fetch_prev_id:<providerId>:<slug>
+  const prevIdKey = buildPrevDatIdKey(providerId, systemSlug);
   let prevDatForDiff: { id: number; name: string } | undefined;
   {
-    // We need the DAT name to find the previous version, but we don't have it
-    // yet (it's inside the buffer). Use the provider + systemSlug settings key
-    // to look up the DAT we ingested last time. Since that's a timestamp string
-    // (not a dat_id), we instead query: most recently imported "fetch" DAT whose
-    // file_hash differs from the current one (which we already know is new).
-    // We'll narrow by name after parsing — see the post-ingest block below.
-    //
-    // Strategy: grab the most recently imported fetch-sourced DAT overall.
-    // After ingest gives us the new DAT's name, we cross-check the name matches.
-    // This is a best-effort lookup and only fires computeDiff when confident.
-    const recentFetch = db
-      .select({ id: dats.id, name: dats.name })
-      .from(dats)
-      .where(eq(dats.source_kind, "fetch"))
-      .orderBy(dats.imported_at)
-      .all();
-    // We want the most recently imported by imported_at — orderBy ASC gives us
-    // oldest first, so take the last element for the most recent.
-    // We exclude any DAT whose hash is the current file (already filtered by
-    // the duplicate check above — `existing` is null here, so all rows are prior).
-    if (recentFetch.length > 0) {
-      // Will be narrowed to name-match after ingest
-      prevDatForDiff = recentFetch[recentFetch.length - 1];
+    const prevIdRow = db
+      .select({ value: settings.value })
+      .from(settings)
+      .where(eq(settings.key, prevIdKey))
+      .get();
+    if (prevIdRow) {
+      const prevId = parseInt(prevIdRow.value, 10);
+      if (!isNaN(prevId)) {
+        const prevDat = db
+          .select({ id: dats.id, name: dats.name })
+          .from(dats)
+          .where(eq(dats.id, prevId))
+          .get();
+        if (prevDat) {
+          prevDatForDiff = prevDat;
+        }
+      }
     }
   }
 
@@ -240,7 +237,7 @@ export async function fetchDat(options: FetchDatOptions): Promise<FetchDatResult
     });
   }
 
-  // --- 6. Persist fetch timestamp ---
+  // --- 6. Persist fetch timestamp and previous-DAT pointer ---
   // Store current UTC time as the last-modified value. In a future version,
   // providers can return the server's Last-Modified header value here.
   const nowIso = new Date().toISOString();
@@ -248,6 +245,15 @@ export async function fetchDat(options: FetchDatOptions): Promise<FetchDatResult
   db.insert(settings)
     .values({ key: settingsKey, value: nowUtc, updated_at: nowIso })
     .onConflictDoUpdate({ target: settings.key, set: { value: nowUtc, updated_at: nowIso } })
+    .run();
+
+  // Persist the newly-ingested dat_id as the "previous" pointer for the next
+  // fetch of this (provider, slug). This is what scopes prevDatForDiff to the
+  // correct provider on subsequent runs — see the pre-ingest block in step 5.
+  const newDatId = String(result.dat_id);
+  db.insert(settings)
+    .values({ key: prevIdKey, value: newDatId, updated_at: nowIso })
+    .onConflictDoUpdate({ target: settings.key, set: { value: newDatId, updated_at: nowIso } })
     .run();
 
   return {
@@ -276,4 +282,21 @@ export async function fetchDat(options: FetchDatOptions): Promise<FetchDatResult
 function buildSettingsKey(providerId: string, systemSlug?: string): string {
   const slug = systemSlug ?? "__all__";
   return `dat_fetch_lm:${providerId}:${slug}`;
+}
+
+/**
+ * Build the settings table key for storing the dat_id of the most recently
+ * ingested DAT for a given (providerId, systemSlug) pair.
+ *
+ * Format: `dat_fetch_prev_id:<providerId>:<systemSlug|__all__>`
+ *
+ * This key is written after every successful ingest and read before the next
+ * fetch to scope the diff baseline to the exact same (provider, slug) — not
+ * just any fetch-sourced DAT with a matching name. Without this scoping, a
+ * second provider that produces a DAT with the same logical name would
+ * silently diff against the wrong provider's history.
+ */
+function buildPrevDatIdKey(providerId: string, systemSlug?: string): string {
+  const slug = systemSlug ?? "__all__";
+  return `dat_fetch_prev_id:${providerId}:${slug}`;
 }
