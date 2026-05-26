@@ -92,8 +92,24 @@ const SLUG_TO_DAT_FILE: Record<string, string> = {
   "wonderswancolor": "Bandai - WonderSwan Color.dat",
 };
 
+/**
+ * Pinned commit SHA for libretro-database.
+ *
+ * Fetching from `master` HEAD exposes a supply-chain attack surface: a
+ * compromised or force-pushed commit could swap DAT content without any
+ * change in CartDex code. Pinning to a known-good SHA removes that vector.
+ *
+ * To update: verify the new commit in the upstream repo, then replace the
+ * SHA below. Recommended cadence: quarterly, or after a CartDex DAT-schema
+ * change review.
+ *
+ * Pinned: 2026-05-26 (Vera audit L-3)
+ * Upstream: https://github.com/libretro/libretro-database/commit/8180568611548d67377e1f634ebb314ec369a295
+ */
+const LIBRETRO_DB_COMMIT = "8180568611548d67377e1f634ebb314ec369a295";
+
 const BASE_RAW_URL =
-  "https://raw.githubusercontent.com/libretro/libretro-database/master/metadat/no-intro/";
+  `https://raw.githubusercontent.com/libretro/libretro-database/${LIBRETRO_DB_COMMIT}/metadat/no-intro/`;
 
 export const libretroDatabaseProvider: DatProvider = {
   id: "libretro-database",
