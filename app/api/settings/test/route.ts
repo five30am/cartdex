@@ -16,14 +16,20 @@ async function testScreenScraper(): Promise<ServiceStatus> {
   }
 
   try {
+    // Dev credentials read from settings/env (SCREENSCRAPER_DEV_ID / SCREENSCRAPER_DEV_PASSWORD).
+    // No hardcoded fallback — omit from request when unconfigured.
+    const devId = await getSetting("screenscraper_dev_id");
+    const devPassword = await getSetting("screenscraper_dev_password");
+
     const params = new URLSearchParams({
-      devid: "Guijar",
-      devpassword: "BHwOpPqhgFO",
       ssid: username,
       sspassword: password,
       softname: "cartdex",
       output: "json",
     });
+
+    if (devId) params.set("devid", devId);
+    if (devPassword) params.set("devpassword", devPassword);
 
     const res = await fetch(
       `https://api.screenscraper.fr/api2/ssuserInfos.php?${params.toString()}`,

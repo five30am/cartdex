@@ -195,12 +195,16 @@ async function fetchFromScreenScraper(params: URLSearchParams): Promise<ScreenSc
     return null;
   }
 
-  // Dev credentials: prefer configured values, fall back to bundled defaults
-  const devId = (await getSetting("screenscraper_dev_id")) ?? "Guijar";
-  const devPassword = (await getSetting("screenscraper_dev_password")) ?? "BHwOpPqhgFO";
+  // Dev credentials: must be explicitly configured via settings UI or env vars
+  // (SCREENSCRAPER_DEV_ID / SCREENSCRAPER_DEV_PASSWORD). No hardcoded fallback.
+  // If unset, omit from request — ScreenScraper will accept the call at reduced
+  // rate limits under the anonymous dev quota rather than silently impersonating
+  // another developer's account.
+  const devId = await getSetting("screenscraper_dev_id");
+  const devPassword = await getSetting("screenscraper_dev_password");
 
-  params.set("devid", devId);
-  params.set("devpassword", devPassword);
+  if (devId) params.set("devid", devId);
+  if (devPassword) params.set("devpassword", devPassword);
   params.set("ssid", username);
   params.set("sspassword", password);
   params.set("softname", "cartdex");
