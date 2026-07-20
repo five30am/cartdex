@@ -1,0 +1,16 @@
+title = "cartdex gitleaks config"
+
+# Extends gitleaks' built-in default ruleset (AWS keys, Supabase/JWT patterns,
+# generic API keys/tokens, private keys, etc.) rather than replacing it.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known-safe paths: build output, deps, and example/template env files"
+paths = [
+  '''(^|/)node_modules/''',
+  '''(^|/)\.next/''',
+  '''(^|/)\.env\.example$''',
+  '''(^|/)package-lock\.json$''',
+  '''(^|/)tsconfig\.tsbuildinfo$''',
+]
