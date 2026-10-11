@@ -5,6 +5,11 @@ on:
     branches:
       - main
 
+# The :latest image push and the Portainer redeploy must run in commit order (#3061).
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
 jobs:
   build-and-push:
     runs-on: self-hosted
